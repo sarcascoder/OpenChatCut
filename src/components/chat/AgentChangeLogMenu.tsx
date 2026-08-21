@@ -29,8 +29,8 @@ export function AgentChangeLogMenu({
     <>
       <button
         type="button"
-        title={`${'Agent change log'}(${changeLog.length})`}
-        aria-label={`${'Agent change log'}(${changeLog.length})`}
+        title={`Agent change log (${changeLog.length})`}
+        aria-label={`Agent change log (${changeLog.length})`}
         onClick={() => setOpen(true)}
         onMouseEnter={(event) => { event.currentTarget.style.color = theme.text; event.currentTarget.style.background = theme.panelAlt; }}
         onMouseLeave={(event) => { event.currentTarget.style.color = theme.textDim; event.currentTarget.style.background = 'none'; }}
@@ -46,7 +46,7 @@ export function AgentChangeLogMenu({
             onClick={(event) => event.stopPropagation()} style={card}>
             <div style={header}>
               <span style={{ color: theme.accent, lineHeight: 0 }}><Icon name="clipboard" size={17} /></span>
-              <strong style={{ flex: 1, fontSize: 14 }}>Agent change log({changeLog.length})</strong>
+              <strong style={{ flex: 1, fontSize: 14 }}>Agent change log ({changeLog.length})</strong>
               <button type="button" onClick={() => setOpen(false)} title="Close" style={iconButton}>
                 <Icon name="x" size={15} />
               </button>

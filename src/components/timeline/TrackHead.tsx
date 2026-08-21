@@ -63,7 +63,7 @@ export function TrackHead({
   return (
     <div className="cc-track-head" style={{ width, ...(menuElevated ? { zIndex: 40 } : {}) }}>
       <div className="cc-track-head-controls">
-        <span className="cc-track-name" title={`${nameTitle}(${trackId})`} style={{ background: tagColor }}>
+        <span className="cc-track-name" title={`${nameTitle} (${trackId})`} style={{ background: tagColor }}>
           <span className="cc-track-name-title">{trackName}</span>
           {customName && <span className="cc-track-name-custom">{customName}</span>}
         </span>

@@ -25,7 +25,7 @@ const RULES: Rule[] = [
     service: 'image generation (still keyframes)',
     keywords: [
       'dall-e', 'dalle', 'midjourney', 'stable diffusion', 'sdxl', 'flux',
-      'image generation', 'imagegen', 'text-to-image', 'Image', 'Image generation', 'Image generation',
+      'image generation', 'imagegen', 'text-to-image',
       'keyframe', 'keyframes'
     ],
   },
@@ -33,8 +33,8 @@ const RULES: Rule[] = [
     kind: 'video',
     service: 'video generation',
     keywords: [
-      'sora', 'kling', 'Kling', 'seedance', 'runway', 'hailuo', 'veo',
-      'gemini omni', 'text-to-video', 'Video generation'
+      'sora', 'kling', 'seedance', 'runway', 'hailuo', 'veo',
+      'gemini omni', 'text-to-video', 'video generation'
     ],
   },
   {
@@ -43,26 +43,26 @@ const RULES: Rule[] = [
     keywords: [
       'elevenlabs', 'doubao tts', 'minimax tts', 'inworld tts', 'fish audio tts',
       'speechify tts', 'openai tts', 'gemini tts', 'mistral tts', 'cartesia tts',
-      'text-to-speech', 'tts ', 'Voice', 'voiceover', 'voice clone',
+      'text-to-speech', 'tts ', 'voiceover', 'voice clone',
       'indextts', 'narration voice'
     ],
   },
   {
     kind: 'music',
     service: 'music generation',
-    keywords: ['suno', 'music generation', 'Music', 'bgm generation'],
+    keywords: ['suno', 'music generation', 'bgm generation'],
   },
   {
     kind: 'sound',
     service: 'sound effects',
-    keywords: ['sound effects', 'sfx', 'Sound Effects'],
+    keywords: ['sound effects', 'sfx'],
   },
   {
     kind: 'transcription',
     service: 'transcription via the configured provider',
     keywords: [
       'assemblyai', 'whisper', 'openai transcription', 'deepgram', 'groq transcription',
-      'elevenlabs scribe', 'cartesia ink', 'transcription', 'Transcript'
+      'elevenlabs scribe', 'cartesia ink', 'transcription'
     ],
   },
   {

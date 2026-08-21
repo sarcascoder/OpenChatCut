@@ -3781,7 +3781,7 @@
     },
     {
       "name": "search_fonts",
-      "description": "Search the font catalog the local/headless renderer can load (Google Fonts bundled in-app + locally bundled Chinese foundry faces, source:\"bundled\"). Use when export reports unsupported fonts or when picking fontFamily for motion-graphic items / captions. Returns canonical family names to use verbatim. Substring-matches family AND native-name aliases (case/punctuation-insensitive) — e.g. \"inter\", \"playfair\", \"noto sc\", \"source han sans\", \"smiley sans\", \"douyin sans\". loadable=false means catalogued only; prefer a loadable alternative or confirmFontFallback on export.",
+      "description": "Search the font catalog the local/headless renderer can load (Google Fonts bundled in-app + locally bundled Chinese foundry faces, source:\"bundled\"). Use when export reports unsupported fonts or when picking fontFamily for motion-graphic items / captions. Returns canonical family names to use verbatim. Substring-matches family AND native-name aliases (case/punctuation-insensitive) — e.g. \"inter\", \"playfair\", \"noto sans sc\", \"smiley sans\", \"douyin meihao\". loadable=false means catalogued only; prefer a loadable alternative or confirmFontFallback on export.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -5647,7 +5647,7 @@
     },
     {
       "name": "search_fonts",
-      "description": "Search the font catalog the local/headless renderer can load (Google Fonts bundled in-app + locally bundled Chinese foundry faces, source:\"bundled\"). Use when export reports unsupported fonts or when picking fontFamily for motion-graphic items / captions. Returns canonical family names to use verbatim. Substring-matches family AND native-name aliases (case/punctuation-insensitive) — e.g. \"inter\", \"playfair\", \"noto sc\", \"source han sans\", \"smiley sans\", \"douyin sans\". loadable=false means catalogued only; prefer a loadable alternative or confirmFontFallback on export.",
+      "description": "Search the font catalog the local/headless renderer can load (Google Fonts bundled in-app + locally bundled Chinese foundry faces, source:\"bundled\"). Use when export reports unsupported fonts or when picking fontFamily for motion-graphic items / captions. Returns canonical family names to use verbatim. Substring-matches family AND native-name aliases (case/punctuation-insensitive) — e.g. \"inter\", \"playfair\", \"noto sans sc\", \"smiley sans\", \"douyin meihao\". loadable=false means catalogued only; prefer a loadable alternative or confirmFontFallback on export.",
       "input_schema": {
         "type": "object",
         "properties": {

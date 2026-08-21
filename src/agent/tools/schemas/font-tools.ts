@@ -10,8 +10,8 @@ export const FONT_TOOL_SCHEMAS: AgentToolSchema[] = [
       'names to use verbatim. Substring-matches family AND native-name aliases',
       // Native-name aliases (e.g. the Chinese names of the bundled foundry faces) also match,
       // so saved projects keep resolving; the examples here stay in English.
-      '(case/punctuation-insensitive) — e.g. "inter", "playfair", "noto sc", "source han sans", "smiley sans",',
-      '"douyin sans". loadable=false means catalogued only; prefer a loadable alternative or',
+      '(case/punctuation-insensitive) — e.g. "inter", "playfair", "noto sans sc", "smiley sans",',
+      '"douyin meihao". loadable=false means catalogued only; prefer a loadable alternative or',
       'confirmFontFallback on export.',
     ].join(' '),
     input_schema: {

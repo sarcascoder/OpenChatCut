@@ -124,7 +124,7 @@ function EarlierMessagesButton({ controller }: { controller: ChatPanelController
       }));
     }}
     style={{ display: 'block', margin: '4px auto 12px', padding: '5px 10px', border: `0.5px solid ${theme.border}`, borderRadius: 6, background: 'transparent', color: theme.textDim, cursor: 'pointer', fontSize: 12 }}>
-    Load earlier messages({visibleFrom})
+    Load earlier messages ({visibleFrom})
   </button>;
 }
 
