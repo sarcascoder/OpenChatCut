@@ -65,6 +65,11 @@ declare global {
       selectExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
       selectExportFile(suggestedFilename: string): Promise<DesktopExportFileGrant | null>;
       restoreExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
+      readProjectFile?(documentPath: string): Promise<string>;
+      writeProjectFile?(documentPath: string, contents: string): Promise<void>;
+      scaffoldProjectFolder?(root: string, projectName: string): Promise<{
+        root: string; documentPath: string; exportsDir: string; cacheDir: string;
+      }>;
       importLocalMedia(file: File): Promise<{ src: string; storedName: string; contentHash: string } | null>;
       prepareTransparentMovProxy(storedName: string): Promise<{ src: string } | null>;
       startImportDirectoryWatch(
