@@ -20,7 +20,7 @@ const base = {
 const textItem = {
   ...base,
   kind: 'text',
-  props: { text: '你好', fontSize: 96, color: '#ff0000', fontWeight: 700, align: 'center' },
+  props: { text: 'Hello', fontSize: 96, color: '#ff0000', fontWeight: 700, align: 'center' },
 } as TimelineItem;
 
 const textFields = previewTextEditFields(textItem);
@@ -28,7 +28,7 @@ assert.ok(textFields, 'text clips expose full edit fields');
 assert.equal(textFields!.colorKey, 'color');
 assert.equal(textFields!.fontSizeKey, 'fontSize');
 assert.equal(textFields!.textKey, 'text');
-assert.equal(textFields!.text, '你好');
+assert.equal(textFields!.text, 'Hello');
 assert.equal(textFields!.fontWeightKey, 'fontWeight');
 assert.equal(textFields!.alignKey, 'align');
 assert.equal(canPreviewTextEdit(textItem), true);
@@ -36,19 +36,19 @@ assert.equal(canPreviewTextEdit(textItem), true);
 const mgItem = {
   ...base,
   kind: 'motion-graphic',
-  props: { title: '叠字', textColor: '#00ff00', fontSize: 64 },
+  props: { title: 'Overlay', textColor: '#00ff00', fontSize: 64 },
   code: 'const X = () => null;',
 } as TimelineItem;
 const mgFields = previewTextEditFields(mgItem);
 assert.ok(mgFields, 'MG with textColor+fontSize+title is editable');
 assert.equal(mgFields!.colorKey, 'textColor');
 assert.equal(mgFields!.textKey, 'title');
-assert.equal(mgFields!.text, '叠字');
+assert.equal(mgFields!.text, 'Overlay');
 
 const textOnlyMg = {
   ...base,
   kind: 'motion-graphic',
-  props: { caption: '只有文案' },
+  props: { caption: 'Copy only' },
   code: 'const X = () => null;',
 } as TimelineItem;
 const textOnlyFields = previewTextEditFields(textOnlyMg);

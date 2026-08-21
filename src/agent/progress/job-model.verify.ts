@@ -1,4 +1,4 @@
-// 统一 Job 模型的黑盒 check(计划 A3)。跑:tsx src/agent/job-model.check.ts
+// Black-box check for the unified Job model (plan A3). Run: tsx src/agent/job-model.check.ts
 import assert from 'node:assert/strict';
 import {
   normalizeStatus,
@@ -9,17 +9,17 @@ import {
   type JobStatus,
 } from './job-model';
 
-// ── normalizeStatus:各家族 wire → canonical ───────────────────────────────
+// ── normalizeStatus: each family's wire value → canonical ─────────────────
 const NORM: ReadonlyArray<[string, JobStatus]> = [
   ['pending', 'pending'],
-  ['queued', 'pending'], // generation/export 家族的"排队"
+  ['queued', 'pending'], // the generation/export family's "queued"
   ['running', 'running'],
   ['processing', 'running'],
   ['complete', 'complete'],
-  ['completed', 'complete'], // 导出族终态 wire
-  ['succeeded', 'complete'], // 生成族终态 wire
+  ['completed', 'complete'], // export family terminal wire
+  ['succeeded', 'complete'], // generation family terminal wire
   ['success', 'complete'],
-  ['done', 'complete'], // 转写 store 终态 wire
+  ['done', 'complete'], // transcription store terminal wire
   ['failed', 'failed'],
   ['error', 'failed'],
   ['not_found', 'not_found'],
@@ -29,12 +29,12 @@ for (const [wire, canonical] of NORM) {
   assert.equal(normalizeStatus(wire), canonical, `normalizeStatus(${wire})`);
 }
 
-// 大小写 / 空白不敏感
+// Case / whitespace insensitive
 assert.equal(normalizeStatus('SUCCEEDED'), 'complete');
 assert.equal(normalizeStatus('  Done  '), 'complete');
 assert.equal(normalizeStatus('Queued'), 'pending');
 
-// 未知字符串 → running(非终态,继续轮询而非误判终态)
+// Unknown string → running (non-terminal, keep polling instead of misreading it as terminal)
 assert.equal(normalizeStatus('weird-status'), 'running');
 assert.equal(normalizeStatus(''), 'running');
 
@@ -53,17 +53,17 @@ for (const f of ['failed', 'error']) {
   assert.equal(isFailed(f), true, `isFailed(${f})`);
   assert.equal(isComplete(f), false, `isComplete(${f})`);
 }
-// not_found 是终态,但既非 complete 也非 failed
+// not_found is terminal, but neither complete nor failed
 assert.equal(isTerminal('not_found'), true);
 assert.equal(isComplete('not_found'), false);
 assert.equal(isFailed('not_found'), false);
 
-// TERMINAL_STATUSES 内容锁定
+// TERMINAL_STATUSES contents are locked down
 assert.deepEqual([...TERMINAL_STATUSES].sort(), ['complete', 'failed', 'not_found']);
 
-// ── 同构断言:三家族的终态 wire 全部由同一权威正确归类(A3 的核心目标)─────────
-// 生成族 succeeded / 导出族 completed / 转写 store done —— 都应判为"完成 + 终态";
-// 各自的在途状态(queued/running)都应判为"非终态"。
+// ── Isomorphism assertion: all three families' terminal wires are classified by the same authority (A3's core goal) ─────────
+// Generation succeeded / export completed / transcription store done — all should read as "complete + terminal";
+// each family's in-flight statuses (queued/running) should read as "non-terminal".
 const FAMILY_COMPLETE = ['succeeded', 'completed', 'done'];
 const FAMILY_INFLIGHT = ['queued', 'running'];
 for (const done of FAMILY_COMPLETE) {

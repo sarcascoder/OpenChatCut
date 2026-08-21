@@ -23,7 +23,7 @@ type UserPart = UserContentParts[number];
 export type VisionPurpose = 'user-attachment' | 'timeline-frames' | 'asset-frames' | 'qa-evidence';
 
 const VISION_SYSTEM = `You are a visual-analysis pass for a video editor whose main model cannot see images.
-Describe images in concise structured Chinese (中文) bullet points, focusing on facts a video editor needs.
+Describe images in concise structured English bullet points, focusing on facts a video editor needs.
 Never invent details; if something is unreadable or uncertain, say so explicitly.`;
 
 const VISION_TIMEOUT_MS = 30_000;
@@ -112,7 +112,7 @@ async function describedPart(
 ): Promise<UserPart> {
   try {
     const description = await describeImageWithVision(vision, image, 'user-attachment', signal);
-    return { type: 'text', text: `[图片内容] ${description}` };
+    return { type: 'text', text: `[Image content] ${description}` };
   } catch {
     return { type: 'text', text: IMAGE_OMITTED_FALLBACK };
   }

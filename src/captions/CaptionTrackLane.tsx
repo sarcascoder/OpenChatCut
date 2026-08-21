@@ -8,7 +8,6 @@ import {
 import type { CaptionPage, CaptionsData } from './types';
 import type { TranscriptWord } from '../transcript/types';
 import { theme, themeAlpha } from '../theme';
-import { useT } from '../i18n/locale';
 import {
   isManualCaptionEntry,
   resizeManualCue,
@@ -391,7 +390,6 @@ function CaptionCueBlock({
   onDelete: (target: ManualCueTarget) => void;
   onMenu: (event: ReactMouseEvent, target: ManualCueTarget, selection: CaptionSelectionRef) => void;
 }) {
-  const t = useT();
   const key = target ? `${target.laneId}:${target.index}` : `${page.start}:${index}`;
   const timing = target && trim.drag?.key === key
     ? resizedManualCueTiming(target.words, target.index, trim.drag.edge, trim.drag.deltaFrames * 1000 / fps)
@@ -407,9 +405,9 @@ function CaptionCueBlock({
   const handle = (edge: ManualCueEdge) => target && !locked ? <div
     className={`cc-caption-track-trim ${edge === 'start' ? 'left' : 'right'}`}
     role="separator" aria-orientation="vertical" tabIndex={0}
-    aria-label={t(edge === 'start' ? '拖动调整字幕开始时间' : '拖动调整字幕结束时间')}
+    aria-label={edge === 'start' ? 'Drag to adjust caption start' : 'Drag to adjust caption end'}
     aria-valuenow={Math.round(edge === 'start' ? startMs : endMs)}
-    title={t(edge === 'start' ? '拖动调整字幕开始时间' : '拖动调整字幕结束时间')}
+    title={edge === 'start' ? 'Drag to adjust caption start' : 'Drag to adjust caption end'}
     onPointerDown={(event) => trim.start(event, key, target, edge)}
     onPointerMove={(event) => trim.move(event, key)}
     onPointerUp={(event) => trim.finish(event, key)}
@@ -493,7 +491,6 @@ export function CaptionTrackLane({
   frameFromClientX?: (clientX: number) => number;
   onTrackContextMenu?: (menu: { trackId: TrackId; x: number; y: number; frame: number }) => void;
 }) {
-  const t = useT();
   const [localSelections, setLocalSelections] = useState<CaptionSelectionRef[]>([]);
   const selectedCaptions = controlledSelectedCaptions ?? localSelections;
   const selectCaption = (selection: CaptionSelectionRef | null, options?: CaptionSelectOptions) => {
@@ -591,7 +588,7 @@ export function CaptionTrackLane({
       return;
     }
     if (!captions || !timelineClipboard) {
-      setMenuError(t('剪贴板里没有可粘贴的文字'));
+      setMenuError('The clipboard has no text to paste.');
       return;
     }
     const patch = appendCaptionClipboardToTrack(
@@ -601,7 +598,7 @@ export function CaptionTrackLane({
       Math.round(playheadFrame * 1000 / state.fps),
     );
     if (!patch) {
-      setMenuError(t('剪贴板里没有可粘贴的文字'));
+      setMenuError('The clipboard has no text to paste.');
       return;
     }
     onUpdate(patch);
@@ -616,12 +613,12 @@ export function CaptionTrackLane({
     try {
       const [translated] = await translateLines([captionCueText(target)], language);
       const text = translated?.trim();
-      if (!text) throw new Error(t('字幕翻译没有返回文字'));
+      if (!text) throw new Error('Caption translation returned no text.');
       onTranslateCue(text, cue.start, cue.end);
       closeMenu();
     } catch (cause) {
       setMenuBusy(false);
-      setMenuError(cause instanceof Error ? cause.message : t('字幕翻译失败'));
+      setMenuError(cause instanceof Error ? cause.message : 'Caption translation failed');
     }
   };
   return (
@@ -650,7 +647,7 @@ export function CaptionTrackLane({
         event.stopPropagation();
         onTrackContextMenu({ trackId, x: event.clientX, y: event.clientY, frame: frameFromClientX(event.clientX) });
       }}>
-      {!pages.length && <span className="cc-caption-track-empty">{t('字幕轨道为空')}</span>}
+      {!pages.length && <span className="cc-caption-track-empty">Caption track is empty</span>}
       {pages.map((page, index) => {
         const target = page.words.length === 1 && page.words[0]?.id ? targets.get(page.words[0].id) : undefined;
         const cueId = target ? page.words[0]?.id : undefined;
@@ -682,16 +679,16 @@ export function CaptionTrackLane({
       {menu && <div className="cc-caption-cue-menu" data-caption-selection-owner="cue-menu" role="menu"
         style={{ left: menu.x, top: menu.y }} onPointerDown={(event) => event.stopPropagation()}>
         {translationOpen ? <>
-          <button type="button" role="menuitem" onClick={() => setTranslationOpen(false)}>{t('翻译')}</button>
+          <button type="button" role="menuitem" onClick={() => setTranslationOpen(false)}>translation</button>
           {CAPTION_CUE_TRANSLATION_LANGS.map((language) => <button key={language.label} type="button" role="menuitem"
             disabled={menuBusy} onClick={() => void translateCue(menu.target, language.label)}>
             {language.flag} {language.label}
           </button>)}
         </> : <>
-          <button type="button" role="menuitem" onClick={() => void copyCue(menu.selection)}>{t('复制')}</button>
-          <button type="button" role="menuitem" onClick={pasteCue}>{t('粘贴')}</button>
+          <button type="button" role="menuitem" onClick={() => void copyCue(menu.selection)}>Copy</button>
+          <button type="button" role="menuitem" onClick={pasteCue}>Paste</button>
           {onTranslateCue && <button type="button" role="menuitem" aria-haspopup="menu"
-            onClick={() => setTranslationOpen(true)}>{t('翻译')} ›</button>}
+            onClick={() => setTranslationOpen(true)}>translation ›</button>}
           {(onAddSelectionToChat || onSeedChat) && <button type="button" role="menuitem" onClick={() => {
             if (onAddSelectionToChat) {
               const selected = selectedCaptions.some((selection) => captionSelectionKey(selection) === captionSelectionKey(menu.selection));
@@ -705,10 +702,10 @@ export function CaptionTrackLane({
               onSeedChat?.(captionCueAgentSeed(captionCueText(menu.target)));
             }
             closeMenu();
-          }}>{t('添加到 AI 对话框')}</button>}
-          <button type="button" role="menuitem" onClick={() => remove(menu.target)}>{t('删除')}</button>
+          }}>Add to AI composer</button>}
+          <button type="button" role="menuitem" onClick={() => remove(menu.target)}>Delete</button>
         </>}
-        {menuBusy && <div role="status">{t('翻译中...')}</div>}
+        {menuBusy && <div role="status">Translating...</div>}
         {menuError && <div role="alert">{menuError}</div>}
       </div>}
     </div>

@@ -1,15 +1,15 @@
 export type ModelPackId = 'rhythm-lite' | 'music-semantics-lite' | 'visual-semantics-lite';
 
 export type ModelPackCapability =
-  | '节拍定位'
-  | '下拍定位'
-  | 'BPM 与拍号'
-  | '节拍能量'
-  | '音乐语义向量'
-  | '音乐相似度'
-  | '画面语义向量'
-  | '中文画面检索'
-  | '重复镜头检测';
+  | 'Beat tracking'
+  | 'Downbeat tracking'
+  | 'BPM and meter'
+  | 'Beat energy'
+  | 'Music-semantic embeddings'
+  | 'Music similarity'
+  | 'Visual-semantic embeddings'
+  | 'Chinese-text visual search'
+  | 'Duplicate shot detection';
 
 export interface ModelPackFile {
   readonly path: string;
@@ -54,14 +54,14 @@ const GIB = 1024 * 1024 * 1024;
 export const MODEL_PACKS = [
   {
     id: 'rhythm-lite',
-    label: '节奏分析轻量包',
-    description: '本地分析节拍、下拍、速度、拍号与节拍能量。',
+    label: 'Rhythm Lite',
+    description: 'Analyze beats, downbeats, tempo, meter, and beat energy locally.',
     modelId: 'musetric/beat-this-onnx',
     revision: '4e971bd43753023e1bf961c34a0cb74985cfcb88',
     license: 'MIT',
     sizeBytes: 83_407_111,
     recommendedMemoryBytes: 1 * GIB,
-    capabilities: ['节拍定位', '下拍定位', 'BPM 与拍号', '节拍能量'],
+    capabilities: ['Beat tracking', 'Downbeat tracking', 'BPM and meter', 'Beat energy'],
     files: [
       {
         path: 'beat_this.onnx',
@@ -82,14 +82,14 @@ export const MODEL_PACKS = [
   },
   {
     id: 'music-semantics-lite',
-    label: '音乐语义轻量包',
-    description: '在本机生成音乐语义向量，用于检索与相似度匹配。',
+    label: 'Music Semantics Lite',
+    description: 'Generate music-semantic embeddings locally for search and similarity matching.',
     modelId: 'Xenova/clap-htsat-unfused',
     revision: 'c28f2883575e590e04d3146ff0713c2448d691ba',
     license: 'Apache-2.0',
     sizeBytes: 34_302_907,
     recommendedMemoryBytes: 2 * GIB,
-    capabilities: ['音乐语义向量', '音乐相似度'],
+    capabilities: ['Music-semantic embeddings', 'Music similarity'],
     files: [
       {
         path: 'config.json',
@@ -110,14 +110,14 @@ export const MODEL_PACKS = [
   },
   {
     id: 'visual-semantics-lite',
-    label: '画面语义轻量包',
-    description: '在本机生成画面与中文文本向量，用于语义检索和重复镜头检测。',
+    label: 'Visual Semantics Lite',
+    description: 'Generate visual and Chinese-text embeddings locally for semantic search and duplicate shot detection.',
     modelId: 'Xenova/chinese-clip-vit-base-patch16',
     revision: 'f26904860903e70e050b8f48255e5f48401816e9',
     license: 'Apache-2.0',
     sizeBytes: 178_225_758,
     recommendedMemoryBytes: 2 * GIB,
-    capabilities: ['画面语义向量', '中文画面检索', '重复镜头检测'],
+    capabilities: ['Visual-semantic embeddings', 'Chinese-text visual search', 'Duplicate shot detection'],
     files: [
       {
         path: 'config.json',
@@ -164,12 +164,11 @@ export function modelPackDefinition(id: string): ModelPackDefinition | undefined
 
 /**
  * User-facing install guidance for missing model packs (used by agent tools).
- * Bilingual because the assistant relays it in the user's language.
  */
 export function modelPackInstallGuidance(packs: readonly { id: string }[]): string {
   const names = packs.map((pack) => {
     const def = MODEL_PACKS.find((entry) => entry.id === pack.id);
-    return def ? `${def.label}（${def.id}）` : pack.id;
-  }).join('、');
-  return `请到 设置 → 转写 → 本地模型 下载：${names}（Settings → Transcription → Local models: ${packs.map((pack) => pack.id).join(', ')}）`;
+    return def ? `${def.label} (${def.id})` : pack.id;
+  }).join(', ');
+  return `Download from Settings → Transcription → Local models: ${names}`;
 }

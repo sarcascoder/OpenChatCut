@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { theme, themeAlpha } from '../theme';
-import { getLocale, useT } from '../i18n/locale';
 import { SHORTCUT_GROUPS, type ShortcutAction } from './catalog';
 import { Icon } from '../components/icons';
 import {
@@ -20,10 +19,7 @@ interface Pending { id: string; keys: string; conflicts: ShortcutAction[] }
 /** Keyboard shortcut settings — click a binding to rebind it (persisted to localStorage),
  *  with conflict detection. Reset one action or the full default preset. */
 export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
-  const t = useT();
-  // The shortcut key directory comes with the official English label. Use it directly in English mode without entering the dictionary and repeating it.
-  const en = getLocale() === 'en';
-  const actionLabel = (a: Pick<ShortcutAction, 'label' | 'labelZh'>): string => (en ? a.label : a.labelZh);
+  const actionLabel = (a: Pick<ShortcutAction, 'label'>): string => a.label;
   const [, bump] = useState(0);
   const [capturingId, setCapturingId] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -60,7 +56,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
   return (
     <div
       role="dialog"
-      aria-label={t('键盘快捷键')}
+      aria-label="Keyboard Shortcuts"
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: themeAlpha.shadow(0.55), display: 'grid', placeItems: 'center', padding: 24 }}
       onClick={onClose}
     >
@@ -74,15 +70,15 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `0.5px solid ${theme.border}` }}>
           <Icon name="bookOpen" size={18} />
-          <b style={{ fontSize: 14, flex: 1 }}>{t('键盘快捷键')}</b>
-          <span style={{ fontSize: 11, color: theme.textDim }}>{t('点击快捷键可改绑')}</span>
+          <b style={{ fontSize: 14, flex: 1 }}>Keyboard Shortcuts</b>
+          <span style={{ fontSize: 11, color: theme.textDim }}>Click a shortcut to rebind</span>
           {customizedCount() > 0 && (
             <button type="button" onClick={() => { setCapturingId(null); setPending(null); resetAllBindings(); }}
               style={{ fontSize: 11, color: theme.accent, background: 'none', border: `0.5px solid ${theme.border}`, borderRadius: 6, padding: '3px 8px', cursor: 'pointer' }}>
-              {t('全部重置')}
+              Reset all
             </button>
           )}
-          <button type="button" onClick={onClose} title={t('关闭')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textDim, padding: 4, display: 'grid' }}>
+          <button type="button" onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textDim, padding: 4, display: 'grid' }}>
             <Icon name="x" size={16} />
           </button>
         </div>
@@ -92,7 +88,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
             if (!rows.length) return null;
             return (
               <div key={g.id} style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 11, color: theme.textDim, letterSpacing: 0.4, margin: '0 4px 6px' }}>{en ? g.label : `${g.labelZh} · ${g.label}`}</div>
+                <div style={{ fontSize: 11, color: theme.textDim, letterSpacing: 0.4, margin: '0 4px 6px' }}>{g.label}</div>
                 <div style={{ display: 'grid', gap: 2 }}>
                   {rows.map((a) => {
                     const capturing = capturingId === a.id;
@@ -101,7 +97,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', borderRadius: 3, background: theme.panelAlt }}>
                         <span style={{ flex: 1, fontSize: 12.5 }}>{actionLabel(a)}</span>
                         {isCustomized(a.id) && !capturing && (
-                          <button type="button" title={t('恢复默认')} onClick={() => resetBinding(a.id)}
+                          <button type="button" title="Restore default" onClick={() => resetBinding(a.id)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textDim, padding: 2, display: 'grid' }}>
                             <Icon name="undo" size={13} />
                           </button>
@@ -109,7 +105,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
                         <button
                           type="button"
                           onClick={() => startCapture(a.id)}
-                          title={t('点击改绑')}
+                          title="Click to rebind"
                           style={{
                             fontSize: 11, fontFamily: 'Geist Mono, ui-monospace, SFMono-Regular, Menlo, monospace',
                             color: capturing ? theme.accent : theme.text,
@@ -117,16 +113,16 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
                             borderRadius: 6, padding: '2px 8px', whiteSpace: 'nowrap', cursor: 'pointer', minWidth: 90, textAlign: 'center',
                           }}
                         >
-                          {capturing ? t('按下按键… (Esc)') : showKeys(a.keys)}
+                          {capturing ? 'Press keys… (Esc)' : showKeys(a.keys)}
                         </button>
                         {conflicting && pending && (
       <div style={{ position: 'absolute', right: 24, marginTop: 40, zIndex: 1, background: theme.panel, border: `0.5px solid ${theme.accent}`, borderRadius: 4, padding: 10, boxShadow: `0 8px 24px ${themeAlpha.shadow(0.67)}`, maxWidth: 300 }}>
                             <div style={{ fontSize: 11.5, marginBottom: 6 }}>
-                              <b>{showKeys(pending.keys)}</b> {t('已被占用：')}{pending.conflicts.map(actionLabel).join(en ? ', ' : '、')}
+                              <b>{showKeys(pending.keys)}</b> {'is already used by: '}{pending.conflicts.map(actionLabel).join(', ')}
                             </div>
                             <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                              <button type="button" onClick={() => setPending(null)} style={{ fontSize: 11, background: 'none', border: `0.5px solid ${theme.border}`, borderRadius: 6, padding: '3px 8px', color: theme.text, cursor: 'pointer' }}>{t('取消')}</button>
-                              <button type="button" onClick={() => { setBinding(pending.id, pending.keys); setPending(null); }} style={{ fontSize: 11, background: theme.accent, border: 'none', borderRadius: 6, padding: '3px 8px', color: theme.onAccent, cursor: 'pointer' }}>{t('仍要绑定')}</button>
+                              <button type="button" onClick={() => setPending(null)} style={{ fontSize: 11, background: 'none', border: `0.5px solid ${theme.border}`, borderRadius: 6, padding: '3px 8px', color: theme.text, cursor: 'pointer' }}>Cancel</button>
+                              <button type="button" onClick={() => { setBinding(pending.id, pending.keys); setPending(null); }} style={{ fontSize: 11, background: theme.accent, border: 'none', borderRadius: 6, padding: '3px 8px', color: theme.onAccent, cursor: 'pointer' }}>Bind anyway</button>
                             </div>
                           </div>
                         )}

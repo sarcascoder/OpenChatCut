@@ -14,57 +14,57 @@ const inWindow = (times: number[], lo: number, hi: number): boolean =>
 const ascending = (times: number[]): boolean =>
   times.every((t, i) => i === 0 || t >= times[i - 1]!);
 
-assert.deepEqual(frameSeekArgs(0), [], '静态图片零秒取帧不得在输入前 seek');
-assert.deepEqual(frameSeekArgs(1500), ['-ss', '1.5'], '视频正时间继续走快速 seek');
+assert.deepEqual(frameSeekArgs(0), [], 'grabbing a still image at zero seconds must not seek before the input');
+assert.deepEqual(frameSeekArgs(1500), ['-ss', '1.5'], 'positive video timestamps still use the fast seek');
 
 // ── Uniform sampling: equally divided block midpoint, number of bars, interval ──
 {
-  assert.deepEqual(sampleTimesMs(0, 12000, 6), [1000, 3000, 5000, 7000, 9000, 11000], '等分块中点');
-  assert.equal(sampleTimesMs(0, 1000, 99).length, 20, '受 MAX_SAMPLES 上限约束');
-  assert.equal(sampleTimesMs(0, 1000, 0).length, 1, 'count 0 至少给 1 个');
+  assert.deepEqual(sampleTimesMs(0, 12000, 6), [1000, 3000, 5000, 7000, 9000, 11000], 'midpoints of equal blocks');
+  assert.equal(sampleTimesMs(0, 1000, 99).length, 20, 'capped by the MAX_SAMPLES limit');
+  assert.equal(sampleTimesMs(0, 1000, 0).length, 1, 'count 0 still yields at least 1');
 }
 
 // ── No candidates → exactly the same as uniform sampling (the fallback path when scene analysis fails) ──
 {
-  assert.deepEqual(pickDistinctTimes([], 0, 18000, 6), sampleTimesMs(0, 18000, 6), '空候选=均匀取样');
+  assert.deepEqual(pickDistinctTimes([], 0, 18000, 6), sampleTimesMs(0, 18000, 6), 'no candidates = uniform sampling');
 }
 
 // ── Change points are selected first, and the rest are filled up to count using uniform sampling ──
 {
   const out = pickDistinctTimes([9000, 12000, 15000], 0, 18000, 6);
-  assert.equal(out.length, 6, '补齐到 count');
-  for (const t of [9000, 12000, 15000]) assert.ok(out.includes(t), `变化点 ${t} 必须入选`);
-  assert.ok(ascending(out) && inWindow(out, 0, 18000), '升序且落在窗口内');
+  assert.equal(out.length, 6, 'filled up to count');
+  for (const t of [9000, 12000, 15000]) assert.ok(out.includes(t), `change point ${t} must be selected`);
+  assert.ok(ascending(out) && inWindow(out, 0, 18000), 'ascending and inside the window');
 }
 
 // ── Candidates who are too close to each other will not occupy duplicate seats (otherwise one transition will take up multiple places) ──
 {
   const out = pickDistinctTimes([9000, 9050, 9100], 0, 18000, 6);
   const near = out.filter((t) => t >= 9000 && t <= 9100);
-  assert.equal(near.length, 1, '同一处变化只占一个名额');
+  assert.equal(near.length, 1, 'one change takes only one slot');
 }
 
 // ── There are more candidates than places → divide them evenly in order, not all at the beginning ──
 {
   const dense = Array.from({ length: 40 }, (_, i) => i * 250); // 0..9750ms dense candidates
   const out = pickDistinctTimes(dense, 0, 10000, 5);
-  assert.equal(out.length, 5, '不超过 count');
-  assert.ok(out[out.length - 1]! - out[0]! > 5000, `应覆盖整段而非挤在开头(实得 ${out.join(',')})`);
-  assert.ok(ascending(out), '升序');
+  assert.equal(out.length, 5, 'never exceeds count');
+  assert.ok(out[out.length - 1]! - out[0]! > 5000, `should span the whole range instead of bunching at the start (got ${out.join(',')})`);
+  assert.ok(ascending(out), 'ascending');
 }
 
 // ── Candidates outside the window are discarded ──
 {
   const out = pickDistinctTimes([-500, 500, 99000], 0, 3000, 3);
-  assert.ok(inWindow(out, 0, 3000), `窗口外候选必须丢弃(实得 ${out.join(',')})`);
-  assert.ok(out.includes(500), '窗口内候选保留');
+  assert.ok(inWindow(out, 0, 3000), `candidates outside the window must be dropped (got ${out.join(',')})`);
+  assert.ok(out.includes(500), 'candidates inside the window are kept');
 }
 
 // ── The interval that is not the starting point of the window (view_asset_frames will pass fromMs/toMs) ──
 {
   const out = pickDistinctTimes([7000], 5000, 9000, 3);
-  assert.ok(inWindow(out, 5000, 9000), '相对区间内');
-  assert.ok(out.includes(7000), '区间内变化点保留');
+  assert.ok(inWindow(out, 5000, 9000), 'inside the relative range');
+  assert.ok(out.includes(7000), 'change points inside the range are kept');
 }
 
-console.log('extract-frames.verify: ok (均匀取样/空候选兜底/变化优先/近邻去重/均摊/窗口裁剪)');
+console.log('extract-frames.verify: ok (uniform sampling/empty-candidate fallback/change priority/near-duplicate dedupe/even spread/window clipping)');

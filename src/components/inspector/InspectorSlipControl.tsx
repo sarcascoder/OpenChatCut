@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SlipPlan, SlipResult } from '../../editor/slip';
 import type { TimelineItem } from '../../editor/types';
-import { useT } from '../../i18n/locale';
 import { Icon } from '../icons';
 
 interface InspectorSlipControlProps {
@@ -11,7 +10,6 @@ interface InspectorSlipControlProps {
 }
 
 export function InspectorSlipControl({ item, plan, onSlip }: InspectorSlipControlProps) {
-  const t = useT();
   const [step, setStep] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -27,7 +25,7 @@ export function InspectorSlipControl({ item, plan, onSlip }: InspectorSlipContro
       return;
     }
     setNotice(result.clamped
-      ? t(result.sourceDomain === 'edited-stream' ? '已到达编辑词流边界' : '已到达源素材边界')
+      ? result.sourceDomain === 'edited-stream' ? 'Reached the edited word-stream boundary' : 'Reached the source media boundary'
       : null);
   };
 
@@ -43,14 +41,14 @@ export function InspectorSlipControl({ item, plan, onSlip }: InspectorSlipContro
   return (
     <div className="cc-insp-stack">
       <div className="cc-insp-row">
-        <span className="cc-insp-label">{t(plan.sourceDomain === 'edited-stream' ? '编辑词流区间' : '源区间')}</span>
+        <span className="cc-insp-label">{plan.sourceDomain === 'edited-stream' ? 'Edited word-stream range' : 'Source range'}</span>
         <span className="cc-insp-muted" style={{ fontVariantNumeric: 'tabular-nums' }}>
           {sourceFrame(plan.sourceWindow.startFrame)}–{sourceFrame(sourceOutFrame)}f
         </span>
         <span className="cc-insp-val">{displayedRate.toFixed(2)}×</span>
       </div>
       <div className="cc-insp-row">
-        <label className="cc-insp-label" htmlFor={`slip-step-${item.id}`}>{t('步长')}</label>
+        <label className="cc-insp-label" htmlFor={`slip-step-${item.id}`}>Step size</label>
         <input
           id={`slip-step-${item.id}`}
           className="cc-insp-number"
@@ -64,7 +62,7 @@ export function InspectorSlipControl({ item, plan, onSlip }: InspectorSlipContro
           }}
           aria-describedby={`slip-help-${item.id}`}
         />
-        <span className="cc-insp-val">{t('时间线帧')}</span>
+        <span className="cc-insp-val">Timeline frames</span>
       </div>
       <div className="cc-insp-actions">
         <button
@@ -72,22 +70,22 @@ export function InspectorSlipControl({ item, plan, onSlip }: InspectorSlipContro
           className="cc-insp-btn"
           disabled={!canEarlier}
           onClick={() => run(-1)}
-          title={t('将源区间向前滑移，时间线位置和时长不变')}
+          title="Slip the source range forward; timeline position and duration stay unchanged"
         >
-          <Icon name="prev" size={11} />{t('向前')}
+          <Icon name="prev" size={11} />Forward
         </button>
         <button
           type="button"
           className="cc-insp-btn"
           disabled={!canLater}
           onClick={() => run(1)}
-          title={t('将源区间向后滑移，时间线位置和时长不变')}
+          title="Slip the source range backward; timeline position and duration stay unchanged"
         >
-          {t('向后')}<Icon name="next" size={11} />
+          Backward<Icon name="next" size={11} />
         </button>
       </div>
       <div id={`slip-help-${item.id}`} className="cc-insp-muted" style={{ fontSize: 10 }}>
-        {notice ?? t('Enter 向后滑移 · Shift+Enter 向前滑移；仅改变源入点。')}
+        {notice ?? 'Enter slips backward · Shift+Enter slips forward; only the source in-point changes.'}
       </div>
     </div>
   );

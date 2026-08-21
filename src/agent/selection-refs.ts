@@ -144,7 +144,7 @@ export function timepointRef(frame: number, state: TimelineState): SelectionRefe
   const f = Math.max(0, Math.round(frame));
   return {
     id: `time:${f}`,
-    name: `${formatFrameTime(f, state.fps)} 时间点`,
+    name: `${formatFrameTime(f, state.fps)} timepoint`,
     kind: 'timepoint',
     metadata: { fps: state.fps, timelineId: timelineIdOf(state), timelineFrameStart: f },
   };
@@ -302,7 +302,7 @@ export function canvasRegionRef(region: RegionRect, frame: number, state: Timeli
   const f = Math.max(0, Math.round(frame));
   return {
     id: `region:${region.x},${region.y},${region.width},${region.height}@${f}`,
-    name: contained.length ? `画面区域（${contained.length} 个片段）` : '画面区域',
+    name: contained.length ? `Canvas region (${contained.length} clips)` : 'Canvas region',
     kind: 'canvas-region',
     metadata: {
       fps: state.fps,
@@ -351,7 +351,7 @@ export function transcriptSelectionRef(
   const label = text.length > TRANSCRIPT_LABEL_MAX ? `${text.slice(0, TRANSCRIPT_LABEL_MAX)}…` : text;
   return {
     id: `transcript:${item.id}:${gis[0]}-${gis[gis.length - 1]}`,
-    name: `“${label}”（${gis.length} 词）`,
+    name: `"${label}" (${gis.length} words)`,
     kind: 'transcript-selection',
     metadata: {
       fps,

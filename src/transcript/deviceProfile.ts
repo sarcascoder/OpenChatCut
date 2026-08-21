@@ -49,7 +49,7 @@ export async function detectDeviceProfile(): Promise<DeviceProfile> {
 }
 
 /**
- * Backend + model tier. User's explicit setting (settings → 本地模型 → 默认模型,
+ * Backend + model tier. User's explicit setting (settings → Local models → Default model,
  *  synced to localStorage 'cc.asrModel') wins; otherwise base. Measured:
  *  wasm small runs at RTF ~0.9 (a 10-min clip takes ~9 min) while base is
  *  ~2.5x faster with comparable quality for typical speech, so the auto
@@ -70,7 +70,7 @@ export function chooseAsrConfig(profile: DeviceProfile): AsrConfig {
     : 'base';
   const model = asrModelEntry(tier);
   if (!model) throw new Error(`Unsupported local ASR model tier: ${tier}`);
-  // WebGPU is an explicit opt-in (settings → 本地模型 → WebGPU 加速) and only
+  // WebGPU is an explicit opt-in (settings → Local models → WebGPU acceleration) and only
   // applies to tiers with fp16/fp32 catalog files (medium has none registered:
   // its fp32 encoder alone is 1.2GB). Once a WebGPU run produced an empty
   // transcript we remember it and stay on wasm from then on.

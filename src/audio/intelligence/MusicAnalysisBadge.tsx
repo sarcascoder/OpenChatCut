@@ -12,7 +12,6 @@ import {
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/icons';
 import type { MediaAsset } from '../../editor/types';
-import { tData, useT } from '../../i18n/locale';
 import { enqueueMusicAnalysis, refreshMusicAnalysis } from './jobs';
 import {
   getAutoMusicAnalysisEnabled,
@@ -25,21 +24,20 @@ import './music-analysis.css';
 
 const TAG_KINDS = ['genre', 'mood', 'instrument', 'usage'] as const satisfies readonly MusicTagKind[];
 const TAG_LABELS: Record<MusicTagKind, string> = {
-  genre: '流派',
-  mood: '情绪',
-  instrument: '乐器',
-  usage: '用途',
+  genre: 'Genre',
+  mood: 'Mood',
+  instrument: 'Instrument',
+  usage: 'Usage',
 };
 const SECTION_LABELS: Record<MusicSectionRole, string> = {
-  'intro-like': '前奏',
-  build: '推进',
-  peak: '高潮',
-  break: '间奏',
-  steady: '平稳',
-  'outro-like': '尾奏',
+  'intro-like': 'Intro',
+  build: 'Build',
+  peak: 'Peak',
+  break: 'Break',
+  steady: 'Steady',
+  'outro-like': 'Outro',
 };
 const TIMING_POINT_PREVIEW_LIMIT = 48;
-type Translate = (key: string, params?: Record<string, string | number>) => string;
 
 interface MusicAnalysisBadgeProps {
   asset: MediaAsset;
@@ -61,9 +59,9 @@ function bestTag(analysis: MusicAnalysis, kind?: MusicTagKind): MusicTag | undef
   return best;
 }
 
-function tagText(label: string, t: Translate): string {
-  if (label === 'unknown') return t('未知');
-  return tData(label);
+function tagText(label: string): string {
+  if (label === 'unknown') return 'Unknown';
+  return label;
 }
 
 function percent(value: number): string {
@@ -84,47 +82,42 @@ function preciseTimeLabel(ms: number): string {
 }
 
 function TimingPointList({ label, points }: { label: string; points: readonly number[] }) {
-  const t = useT();
   const shown = points.slice(0, TIMING_POINT_PREVIEW_LIMIT);
   const remaining = points.length - shown.length;
   return (
     <div className="cc-music-analysis-timing-row">
       <b>{label}</b>
       <p>{shown.length ? shown.map(preciseTimeLabel).join(' · ') : '—'}</p>
-      {remaining > 0 && <small>{t('另有 {count} 个时间点', { count: remaining })}</small>}
+      {remaining > 0 && <small>{`${remaining} more timestamps`}</small>}
     </div>
   );
 }
 
 function RhythmDetails({ analysis }: { analysis: MusicAnalysis }) {
-  const t = useT();
   return (
     <details className="cc-music-analysis-rhythm">
-      <summary><span>{t('节奏详情')}</span><small>{t('{beats} 个节拍 · {downbeats} 个重拍', {
-        beats: analysis.beatsMs.length,
-        downbeats: analysis.downbeatsMs.length,
-      })}</small></summary>
-      <TimingPointList label={t('节拍时间点')} points={analysis.beatsMs} />
-      <TimingPointList label={t('重拍时间点')} points={analysis.downbeatsMs} />
+      <summary><span>Rhythm details</span><small>{`${analysis.beatsMs.length} beats · ${analysis.downbeatsMs.length} downbeats`}</small></summary>
+      <TimingPointList label="Beat timestamps" points={analysis.beatsMs} />
+      <TimingPointList label="Downbeat timestamps" points={analysis.downbeatsMs} />
     </details>
   );
 }
 
-function badgeText(state: MusicAnalysisCardState, t: Translate): string {
-  if (state.state === 'checking') return t('检查模型');
-  if (state.state === 'unavailable') return t('模型未安装');
-  if (state.state === 'idle') return t('分析音乐');
-  if (state.state === 'queued') return t('排队中');
+function badgeText(state: MusicAnalysisCardState): string {
+  if (state.state === 'checking') return 'Checking models';
+  if (state.state === 'unavailable') return 'Models not installed';
+  if (state.state === 'idle') return 'Analyze music';
+  if (state.state === 'queued') return 'Queued';
   if (state.state === 'running') return `${Math.round(state.progress * 100)}%`;
-  if (state.state === 'error') return t('分析失败');
+  if (state.state === 'error') return 'Analysis failed';
   const tag = bestTag(state.analysis);
-  return `${Math.round(state.analysis.bpm)} BPM${tag ? ` · ${tagText(tag.label, t)}` : ''}`;
+  return `${Math.round(state.analysis.bpm)} BPM${tag ? ` · ${tagText(tag.label)}` : ''}`;
 }
 
-function phaseLabel(phase: 'decode' | 'rhythm' | 'semantic', t: Translate): string {
-  if (phase === 'decode') return t('解码音频');
-  if (phase === 'rhythm') return t('分析节拍');
-  return t('理解音乐内容');
+function phaseLabel(phase: 'decode' | 'rhythm' | 'semantic'): string {
+  if (phase === 'decode') return 'Decoding audio';
+  if (phase === 'rhythm') return 'Analyzing rhythm';
+  return 'Understanding music';
 }
 
 function usePopoverPosition(
@@ -193,7 +186,6 @@ function stopCardInteraction(event: ReactMouseEvent<HTMLElement>): void {
 }
 
 export function MusicAnalysisBadge({ asset, state }: MusicAnalysisBadgeProps) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -203,7 +195,7 @@ export function MusicAnalysisBadge({ asset, state }: MusicAnalysisBadgeProps) {
   }, []);
   const position = usePopoverPosition(open, triggerRef, panelRef);
   usePopoverDismiss(open, triggerRef, panelRef, close);
-  const text = badgeText(state, t);
+  const text = badgeText(state);
   return (
     <>
       <button
@@ -215,7 +207,7 @@ export function MusicAnalysisBadge({ asset, state }: MusicAnalysisBadgeProps) {
         className="cc-music-analysis-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={t('音乐分析：{name}，{status}', { name: asset.name, status: text })}
+        aria-label={`Music analysis: ${asset.name}, ${text}`}
         title={text}
         onPointerDown={stopCardInteraction}
         onClick={(event) => {
@@ -247,12 +239,11 @@ interface MusicAnalysisPopoverProps {
 }
 
 function MusicAnalysisPopover({ asset, state, panelRef, position, onClose }: MusicAnalysisPopoverProps) {
-  const t = useT();
   return (
     <div
       ref={panelRef}
       role="dialog"
-      aria-label={t('{name} 的音乐分析', { name: asset.name })}
+      aria-label={`Music analysis for ${asset.name}`}
       className="cc-music-analysis-popover"
       style={position}
       onDragStart={(event) => {
@@ -273,12 +264,12 @@ function MusicAnalysisPopover({ asset, state, panelRef, position, onClose }: Mus
       }}
     >
       <header className="cc-music-analysis-head">
-        <div className="cc-music-analysis-title"><strong>{t('音乐分析')}</strong><span title={asset.name}>{asset.name}</span></div>
-        <button type="button" className="cc-music-analysis-close" aria-label={t('关闭')} onClick={onClose}><Icon name="x" size={15} /></button>
+        <div className="cc-music-analysis-title"><strong>Music analysis</strong><span title={asset.name}>{asset.name}</span></div>
+        <button type="button" className="cc-music-analysis-close" aria-label="Close" onClick={onClose}><Icon name="x" size={15} /></button>
       </header>
       <AnalysisContent state={state} />
       {state.state === 'ready' && state.modelPacksAvailable === false && (
-        <p className="cc-music-analysis-state">{t('已显示缓存结果；重新分析需要先安装模型包。')}</p>
+        <p className="cc-music-analysis-state">Showing the cached result. Install the model packs before analyzing again.</p>
       )}
       <AnalysisAction asset={asset} state={state} />
     </div>
@@ -286,14 +277,13 @@ function MusicAnalysisPopover({ asset, state, panelRef, position, onClose }: Mus
 }
 
 function AnalysisAction({ asset, state }: { asset: MediaAsset; state: MusicAnalysisCardState }) {
-  const t = useT();
   const busy = state.state === 'queued' || state.state === 'running' || state.state === 'checking';
   const canAnalyze = state.modelPacksAvailable === true && !busy;
   const label = state.state === 'error'
-    ? t('重试分析')
+    ? 'Retry analysis'
     : state.state === 'ready'
-      ? t('重新分析')
-      : t('分析音乐');
+      ? 'Analyze again'
+      : 'Analyze music';
   const run = () => {
     if (state.state === 'error' || state.state === 'ready') void refreshMusicAnalysis(asset);
     else void enqueueMusicAnalysis(asset);
@@ -302,37 +292,35 @@ function AnalysisAction({ asset, state }: { asset: MediaAsset; state: MusicAnaly
 }
 
 function AnalysisContent({ state }: { state: MusicAnalysisCardState }) {
-  const t = useT();
   if (state.state === 'ready') return <ReadyAnalysis analysis={state.analysis} />;
-  if (state.state === 'running') return <p className="cc-music-analysis-state">{phaseLabel(state.phase, t)} · {Math.round(state.progress * 100)}%<progress className="cc-music-analysis-progress" max={1} value={state.progress} /></p>;
-  if (state.state === 'queued') return <p className="cc-music-analysis-state">{t('已加入本地分析队列。')}</p>;
-  if (state.state === 'error') return <p className="cc-music-analysis-state error">{t('分析失败：{message}', { message: state.message })}</p>;
-  if (state.state === 'unavailable') return <p className="cc-music-analysis-state">{t('尚未安装所需模型包。请在本地 AI 设置中分别下载节拍与音乐语义模型；这里不会自动下载。')}</p>;
-  if (state.state === 'checking') return <p className="cc-music-analysis-state">{t('正在检查本地模型…')}</p>;
-  return <p className="cc-music-analysis-state">{t('在本机分析节拍、结构和音乐语义。音频不会上传。')}</p>;
+  if (state.state === 'running') return <p className="cc-music-analysis-state">{phaseLabel(state.phase)} · {Math.round(state.progress * 100)}%<progress className="cc-music-analysis-progress" max={1} value={state.progress} /></p>;
+  if (state.state === 'queued') return <p className="cc-music-analysis-state">Added to the local analysis queue.</p>;
+  if (state.state === 'error') return <p className="cc-music-analysis-state error">{`Analysis failed: ${state.message}`}</p>;
+  if (state.state === 'unavailable') return <p className="cc-music-analysis-state">The required model packs are not installed. Download the rhythm and music semantics models separately in Local AI settings; this control never downloads them automatically.</p>;
+  if (state.state === 'checking') return <p className="cc-music-analysis-state">Checking local models…</p>;
+  return <p className="cc-music-analysis-state">Analyze rhythm, structure, and music meaning on this device. Audio is never uploaded.</p>;
 }
 
 function ReadyAnalysis({ analysis }: { analysis: MusicAnalysis }) {
-  const t = useT();
   return (
     <>
       <div className="cc-music-analysis-metrics">
-        <Metric label={t('速度')} value={`${Math.round(analysis.bpm)} BPM`} />
-        <Metric label={t('拍号')} value={`${analysis.meter}/4`} />
-        <Metric label={t('置信度')} value={percent(analysis.beatConfidence)} />
+        <Metric label="Tempo" value={`${Math.round(analysis.bpm)} BPM`} />
+        <Metric label="Meter" value={`${analysis.meter}/4`} />
+        <Metric label="Confidence" value={percent(analysis.beatConfidence)} />
       </div>
       <RhythmDetails analysis={analysis} />
-      <h4 className="cc-music-analysis-section-title">{t('音乐标签')}</h4>
+      <h4 className="cc-music-analysis-section-title">Music tags</h4>
       <dl className="cc-music-analysis-tags">
         {TAG_KINDS.map((kind) => {
           const tag = bestTag(analysis, kind);
-          return <div key={kind}><dt>{t(TAG_LABELS[kind])}</dt><dd>{tag ? <><span>{tagText(tag.label, t)}</span><small>{percent(tag.score)}</small></> : '—'}</dd></div>;
+          return <div key={kind}><dt>{TAG_LABELS[kind]}</dt><dd>{tag ? <><span>{tagText(tag.label)}</span><small>{percent(tag.score)}</small></> : '—'}</dd></div>;
         })}
       </dl>
-      <h4 className="cc-music-analysis-section-title">{t('段落')}</h4>
+      <h4 className="cc-music-analysis-section-title">Sections</h4>
       {analysis.sections.length > 0
-        ? <ol className="cc-music-analysis-sections">{analysis.sections.map((section, index) => <li key={`${section.fromMs}:${index}`}><time>{timeLabel(section.fromMs)}–{timeLabel(section.toMs)}</time><b>{t(SECTION_LABELS[section.role])}</b><span className="cc-music-analysis-section-scores"><span>{t('能量')} {percent(section.energy)}</span><span>{t('边界')} {percent(section.boundaryConfidence)}</span></span></li>)}</ol>
-        : <p className="cc-music-analysis-state">{t('未识别到明确段落')}</p>}
+        ? <ol className="cc-music-analysis-sections">{analysis.sections.map((section, index) => <li key={`${section.fromMs}:${index}`}><time>{timeLabel(section.fromMs)}–{timeLabel(section.toMs)}</time><b>{SECTION_LABELS[section.role]}</b><span className="cc-music-analysis-section-scores"><span>Energy {percent(section.energy)}</span><span>Boundary {percent(section.boundaryConfidence)}</span></span></li>)}</ol>
+        : <p className="cc-music-analysis-state">No clear sections detected</p>}
     </>
   );
 }
@@ -342,7 +330,6 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 export function MusicAutoAnalysisPreference() {
-  const t = useT();
   const enabled = useSyncExternalStore(
     subscribeAutoMusicAnalysis,
     getAutoMusicAnalysisEnabled,
@@ -357,10 +344,10 @@ export function MusicAutoAnalysisPreference() {
         aria-checked={enabled}
         onClick={() => setAutoMusicAnalysisEnabled(!enabled)}
       >
-        <span>{t('自动分析新导入的音视频')}</span>
+        <span>Analyze newly imported audio and video</span>
         <span className="cc-music-analysis-switch" aria-hidden="true" />
       </button>
-      <p className="cc-music-analysis-pref-note">{t('需要先在本地 AI 设置中单独下载模型包；开启此选项不会自动下载。')}</p>
+      <p className="cc-music-analysis-pref-note">Download the model packs separately in Local AI settings first. Enabling this never starts a download.</p>
     </div>
   );
 }

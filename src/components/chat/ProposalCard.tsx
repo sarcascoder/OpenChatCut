@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Proposal } from '../../agent/proposal';
-import { useT } from '../../i18n/locale';
 import { Icon } from '../icons';
 
 export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, onForceApply, onRePropose }: {
@@ -13,7 +12,6 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
   onForceApply?: (selected: Set<number>) => void;
   onRePropose?: () => void;
 }) {
-  const t = useT();
   const ops = proposal.options[0].operations;
   const [selected, setSelected] = useState<Set<number>>(() => new Set(ops.map((_, i) => i)));
   const [preview, setPreview] = useState(false);
@@ -47,8 +45,8 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
           </span>
           <div className="cc-proposal-titles">
             <div className="cc-proposal-title-row">
-              <h3 className="cc-proposal-title">{proposal.title || t('编辑提案')}</h3>
-              <span className="cc-proposal-badge">{t('待确认')}</span>
+              <h3 className="cc-proposal-title">{proposal.title || 'Edit proposal'}</h3>
+              <span className="cc-proposal-badge">Pending review</span>
             </div>
             {proposal.summary ? (
               <p className="cc-proposal-summary">{proposal.summary}</p>
@@ -56,17 +54,17 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
           </div>
         </div>
         {proposal.totalImpact ? (
-          <span className="cc-proposal-impact" title={t('影响范围')}>{proposal.totalImpact}</span>
+          <span className="cc-proposal-impact" title="Impact">{proposal.totalImpact}</span>
         ) : null}
       </header>
 
       <div className="cc-proposal-ops-bar">
         <span className="cc-proposal-ops-label">
-          {t('将执行')} <strong>{selected.size}</strong> {t('/ {total} 项', { total: ops.length })}
+          Will apply <strong>{selected.size}</strong> {`of ${ops.length} ops`}
         </span>
         <div className="cc-proposal-ops-actions">
-          <button type="button" className="cc-proposal-link" onClick={selectAll} disabled={allOn}>{t('全选')}</button>
-          <button type="button" className="cc-proposal-link" onClick={selectNone} disabled={noneOn}>{t('清空')}</button>
+          <button type="button" className="cc-proposal-link" onClick={selectAll} disabled={allOn}>Select all</button>
+          <button type="button" className="cc-proposal-link" onClick={selectNone} disabled={noneOn}>Clear</button>
         </div>
       </div>
 
@@ -103,7 +101,7 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
 
       {stale && (
         <div className="cc-proposal-warning" role="alert">
-          {t('工程已在提案生成后发生变化：直接应用可能落错位置。')}
+          The project changed after this proposal was generated — applying as-is may land edits in the wrong place.
         </div>
       )}
       <footer className="cc-proposal-foot">
@@ -111,21 +109,21 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
           type="button"
           className={`cc-proposal-preview${preview ? ' on' : ''}`}
           onClick={togglePreview}
-          title={t('在预览窗查看提案结果（不改正式时间线）')}
+          title="Preview the result in the player (does not change the real timeline)"
         >
           <span className="cc-proposal-preview-dot" />
-          {preview ? t('预览中') : t('预览结果')}
+          {preview ? 'Previewing' : 'Preview result'}
         </button>
         <div className="cc-proposal-foot-right">
-          <button type="button" className="cc-proposal-reject" onClick={reject}>{stale ? t('取消') : t('拒绝')}</button>
+          <button type="button" className="cc-proposal-reject" onClick={reject}>{stale ? 'Cancel' : 'Reject'}</button>
           {stale ? (
             <>
               {onRePropose && (
-                <button type="button" className="cc-proposal-reject" onClick={() => { onPreview(false); onRePropose(); }}>{t('重新提案')}</button>
+                <button type="button" className="cc-proposal-reject" onClick={() => { onPreview(false); onRePropose(); }}>Re-propose</button>
               )}
               <button type="button" className="cc-proposal-apply" disabled={noneOn}
                 onClick={() => { onPreview(false); onForceApply?.(selected); }}>
-                {t('仍然应用')}
+                Apply anyway
               </button>
             </>
           ) : (
@@ -135,7 +133,7 @@ export function ProposalCard({ proposal, onApply, onReject, onPreview, stale, on
               disabled={noneOn}
               onClick={apply}
             >
-              {t('应用')}{noneOn ? '' : ` ${selected.size}`}
+              Apply{noneOn ? '' : ` ${selected.size}`}
             </button>
           )}
         </div>

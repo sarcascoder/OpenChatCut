@@ -15,11 +15,12 @@ const words = (texts: string[]) => texts.map((text, index) => ({
 const pageText = (texts: string[], per: number, breaks?: Set<number>, chars = CAPTION_MAX_CHARS_PER_LINE, lines = CAPTION_MAX_VISUAL_LINES) =>
   paginate(words(texts), 'phrase', per, breaks, chars, lines).map((page) => joinCaptionWords(page.words));
 const estimatedUnits = (text: string) => Array.from(text)
-  .reduce((total, char) => total + (/[㐀-鿿぀-ヿ가-힯]/u.test(char) ? 2 : 1), 0);
+  .reduce((total, char) => total + (/[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/u.test(char) ? 2 : 1), 0);
 
+// "hello, world" split per character - CJK punctuation-attachment input
 assert.deepEqual(
-  pageText(['你', '好', '，', '世', '界'], 2, undefined, 4, 1),
-  ['你好，', '世界'],
+  pageText(['\u4f60', '\u597d', '\uff0c', '\u4e16', '\u754c'], 2, undefined, 4, 1),
+  ['\u4f60\u597d\uff0c', '\u4e16\u754c'],
   'CJK punctuation stays with the preceding phrase',
 );
 assert.deepEqual(
@@ -27,16 +28,18 @@ assert.deepEqual(
   ['We build tools', 'for the future'],
   'Latin function words are not orphaned at a page edge',
 );
-const cjkWords = words(['啊，', '这么', '大的', '太阳能', '拍', '好看', '吗？']);
+// "ah,", "so", "big", "solar power", "shoot", "good-looking", "huh?" - inline CJK run input
+const cjkWords = words(['\u554a\uff0c', '\u8fd9\u4e48', '\u5927\u7684', '\u592a\u9633\u80fd', '\u62cd', '\u597d\u770b', '\u5417\uff1f']);
 assert.deepEqual(
   buildCaptionWordRuns(cjkWords, false).map((run) => run.words.map((word) => word.text)),
-  [['啊，', '这么', '大的', '太阳能', '拍', '好看', '吗？']],
+  [['\u554a\uff0c', '\u8fd9\u4e48', '\u5927\u7684', '\u592a\u9633\u80fd', '\u62cd', '\u597d\u770b', '\u5417\uff1f']],
   'inline CJK tokens share one flex run without synthetic word gaps',
 );
 assert.deepEqual(
-  buildCaptionWordRuns(words(['OpenChatCut', '让', '剪辑', '更', '简单', 'today']), false)
+  // "lets", "editing", "more", "simple" - CJK tokens between Latin words
+  buildCaptionWordRuns(words(['OpenChatCut', '\u8ba9', '\u526a\u8f91', '\u66f4', '\u7b80\u5355', 'today']), false)
     .map((run) => run.words.map((word) => word.text)),
-  [['OpenChatCut'], ['让', '剪辑', '更', '简单'], ['today']],
+  [['OpenChatCut'], ['\u8ba9', '\u526a\u8f91', '\u66f4', '\u7b80\u5355'], ['today']],
   'mixed-script captions preserve spacing only at script boundaries',
 );
 assert.equal(
@@ -54,18 +57,20 @@ assert.deepEqual(forced.map((page) => page.words.map((word) => word.text)), [
 const segmenter = Intl.Segmenter;
 if (typeof segmenter === 'function') {
   assert.deepEqual(
-    pageText(['今', '天', '天气', '很好'], 1, undefined, 2, 1),
-    ['今天', '天气', '很好'],
+    // "to", "day", "weather", "very good" - Intl.Segmenter CJK word-boundary input
+    pageText(['\u4eca', '\u5929', '\u5929\u6c14', '\u5f88\u597d'], 1, undefined, 2, 1),
+    ['\u4eca\u5929', '\u5929\u6c14', '\u5f88\u597d'],
     'Intl word boundaries keep one CJK word together',
   );
 }
 Object.defineProperty(Intl, 'Segmenter', { configurable: true, value: undefined });
 try {
-  const first = pageText(['今', '天', '，', '去', '吧'], 2, undefined, 4, 1);
-  const second = pageText(['今', '天', '，', '去', '吧'], 2, undefined, 4, 1);
+  // "to", "day", ",", "go", "then" - CJK fallback segmentation input
+  const first = pageText(['\u4eca', '\u5929', '\uff0c', '\u53bb', '\u5427'], 2, undefined, 4, 1);
+  const second = pageText(['\u4eca', '\u5929', '\uff0c', '\u53bb', '\u5427'], 2, undefined, 4, 1);
   assert.deepEqual(first, second, 'Intl-unavailable fallback is deterministic');
-  assert.equal(first.join(''), '今天，去吧', 'fallback preserves every token');
-  assert.ok(first.every((page) => !/^[，。！？]/u.test(page)), 'fallback never opens with punctuation');
+  assert.equal(first.join(''), '\u4eca\u5929\uff0c\u53bb\u5427', 'fallback preserves every token');
+  assert.ok(first.every((page) => !/^[\uff0c\u3002\uff01\uff1f]/u.test(page)), 'fallback never opens with punctuation');
 } finally {
   Object.defineProperty(Intl, 'Segmenter', { configurable: true, value: segmenter });
 }

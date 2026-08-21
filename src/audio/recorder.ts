@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-import { t } from '../i18n/locale';
 
 // Microphone voiceover recorder used by the toolbar.
 // getUserMedia(audio) → MediaRecorder → one Blob on stop, handed to onComplete
@@ -23,7 +22,7 @@ export function useRecorder(onComplete: (blob: Blob) => void): Recorder {
   const start = useCallback(async () => {
     setError(null);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError(t('此浏览器不支持录音'));
+      setError('Recording is not supported in this browser');
       return;
     }
     try {
@@ -41,7 +40,7 @@ export function useRecorder(onComplete: (blob: Blob) => void): Recorder {
       rec.start();
       setRecording(true);
     } catch (e) {
-      setError(e instanceof Error && e.name === 'NotAllowedError' ? t('麦克风权限被拒绝') : t('无法访问麦克风'));
+      setError(e instanceof Error && e.name === 'NotAllowedError' ? 'Microphone permission denied' : 'Could not access the microphone');
       setRecording(false);
     }
   }, []);

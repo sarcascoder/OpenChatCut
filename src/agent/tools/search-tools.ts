@@ -14,10 +14,10 @@ function describeHit(hit: SearchHit): string {
   if (hit.kind === 'chat') {
     const index = hit.ref.lastIndexOf(':');
     const messageIndex = index >= 0 ? Number(hit.ref.slice(index + 1)) : NaN;
-    return `工程 ${hit.projectId} 第 ${Number.isFinite(messageIndex) ? messageIndex + 1 : '?'} 条消息`;
+    return `project ${hit.projectId} message #${Number.isFinite(messageIndex) ? messageIndex + 1 : '?'}`;
   }
-  if (hit.kind === 'caption') return `工程 ${hit.projectId} 的字幕`;
-  return `工程 ${hit.projectId} 的转写文本`;
+  if (hit.kind === 'caption') return `captions of project ${hit.projectId}`;
+  return `transcript text of project ${hit.projectId}`;
 }
 
 export async function execSearchTool(name: string, args: Args): Promise<unknown> {
@@ -50,8 +50,8 @@ export async function execSearchTool(name: string, args: Args): Promise<unknown>
       query,
       count: hits.length,
       note: hits.length
-        ? '命中按相关度降序；传 projectId 可缩小范围。'
-        : '无命中。尝试换关键词或 ≥3 字词（中文 2 字词已支持）。',
+        ? 'Hits are sorted by relevance, descending; pass projectId to narrow the scope.'
+        : 'No hits. Try different keywords or terms of 3+ characters (2-character Chinese terms are supported).',
       hits,
     };
   } catch (error) {

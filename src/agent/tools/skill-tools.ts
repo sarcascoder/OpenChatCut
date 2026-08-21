@@ -38,10 +38,10 @@ async function doList(ctx: AgentContext): Promise<unknown> {
 /** Currently activated creative mode. Its body is loaded separately through load_skill. */
 async function doCurrent(ctx: AgentContext): Promise<unknown> {
   const id = ctx.getCreativeMode();
-  if (!id) return { active: null, note: '当前未选创作模式。' };
+  if (!id) return { active: null, note: 'No creative mode is currently selected.' };
   await refresh().catch(() => []); // Custom skills need to re-read the registry; node checks the environment and skips silently if there is no IDB.
   const s = findSkill(id);
-  if (!s) return { active: { id }, note: '该技能定义已被删除,模式仍挂着旧 id;可 activate 换一个或传空串清除。' };
+  if (!s) return { active: { id }, note: 'This skill definition was deleted but the mode still points at the old id; activate another one or pass an empty string to clear it.' };
   return { active: { ...brief(s), builtin: isBuiltin(id) } };
 }
 
@@ -51,13 +51,13 @@ async function doActivate(args: Args, ctx: AgentContext): Promise<unknown> {
   const id = strArg(args.skillId);
   if (!id) {
     ctx.setCreativeMode(null);
-    return { ok: true, active: null, note: '已清除创作模式。' };
+    return { ok: true, active: null, note: 'Creative mode cleared.' };
   }
   await refresh().catch(() => []);
   const s = findSkill(id);
   if (!s) return { error: `no skill "${id}"; use list to see available ids` };
   ctx.setCreativeMode(id);
-  return { ok: true, active: { ...brief(s), builtin: isBuiltin(id) }, note: '已切换;下一条消息会先按需加载该技能正文。' };
+  return { ok: true, active: { ...brief(s), builtin: isBuiltin(id) }, note: 'Switched; the next message loads this skill body on demand first.' };
 }
 
 async function doGet(args: Args): Promise<unknown> {
@@ -96,7 +96,7 @@ async function doCreate(args: Args): Promise<unknown> {
     ok: true,
     created: brief(skill),
     installedAt: `~/.openchatcut/skills/${skill.slug}`,
-    note: '自定义技能已保存到用户技能目录，可直接编辑 ~/.openchatcut/skills/<slug>/SKILL.md',
+    note: 'The custom skill was saved to the user skill directory; you can edit ~/.openchatcut/skills/<slug>/SKILL.md directly',
   };
 }
 

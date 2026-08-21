@@ -140,7 +140,7 @@ try {
       manifest,
       ...mediaRows(victimSrc, 'abc'),
       `${JSON.stringify({ type: 'corrupt-tail' })}\n`,
-    ])), /未知记录/);
+    ])), /unknown record/);
     assert.equal(await (await getMediaBlob(victimSrc))?.blob.text(), 'victim-idb');
     assert.equal(serverMedia.get(victimSrc), 'victim-server');
     assert.equal(await getMediaBlob(isolatedSrc), undefined);
@@ -288,16 +288,17 @@ try {
 {
   resetProjectStoreMemory();
   resetMediaBlobMemory();
-  const originalFilePath = '/Users/private-editor/旅行/源文件.bin';
+  // "travel" / "source file.bin" — a non-ASCII path + filename that must round-trip through the export stream
+  const originalFilePath = '/Users/private-editor/\u65c5\u884c/\u6e90\u6587\u4ef6.bin';
   const exportDoc = structuredClone(doc);
   exportDoc.assets[0] = {
     ...exportDoc.assets[0]!,
-    sourceFilename: '源文件.bin',
+    sourceFilename: '\u6e90\u6587\u4ef6.bin',
     originalFilePath,
   };
   const sourceItem = {
     ...exportDoc.timelines[0]!.items[0]!,
-    sourceFilename: '源文件.bin',
+    sourceFilename: '\u6e90\u6587\u4ef6.bin',
     originalFilePath,
   };
   exportDoc.timelines[0]!.items[0] = sourceItem;
@@ -356,19 +357,19 @@ try {
   assert.equal('media' in (lines[0] ?? {}), false, 'manifest never aggregates media base64 beside ProjectDoc');
   assert.equal(JSON.stringify(lines[0]).includes(originalFilePath), false, 'portable manifests never expose desktop absolute paths');
   const manifestDoc = lines[0]?.doc as ProjectDoc;
-  assert.equal(manifestDoc.assets[0]?.sourceFilename, '源文件.bin', 'portable original filenames remain available');
+  assert.equal(manifestDoc.assets[0]?.sourceFilename, '\u6e90\u6587\u4ef6.bin', 'portable original filenames remain available');
   assert.equal(manifestDoc.assets[0]?.originalFilePath, undefined);
-  assert.equal(manifestDoc.timelines[0]?.items[0]?.sourceFilename, '源文件.bin');
+  assert.equal(manifestDoc.timelines[0]?.items[0]?.sourceFilename, '\u6e90\u6587\u4ef6.bin');
   assert.equal(manifestDoc.timelines[0]?.items[0]?.originalFilePath, undefined);
   assert.equal(manifestDoc.timelines[0]?.multicamGroups?.[0]?.angles[0]?.source.originalFilePath, undefined);
-  assert.equal(manifestDoc.timelines[0]?.multicamGroups?.[0]?.angles[0]?.source.sourceFilename, '源文件.bin');
+  assert.equal(manifestDoc.timelines[0]?.multicamGroups?.[0]?.angles[0]?.source.sourceFilename, '\u6e90\u6587\u4ef6.bin');
   const manifestChat = lines[0]?.chat as PersistedChat;
   const manifestBeforeDoc = (manifestChat.changeLog?.[0] as { beforeDoc?: ProjectDoc } | undefined)?.beforeDoc;
   assert.ok(manifestBeforeDoc);
   assert.equal(manifestBeforeDoc.assets[0]?.originalFilePath, undefined);
   assert.equal(manifestBeforeDoc.timelines[0]?.items[0]?.originalFilePath, undefined);
   assert.equal(manifestBeforeDoc.timelines[0]?.multicamGroups?.[0]?.angles[0]?.source.originalFilePath, undefined);
-  assert.equal(manifestBeforeDoc.assets[0]?.sourceFilename, '源文件.bin');
+  assert.equal(manifestBeforeDoc.assets[0]?.sourceFilename, '\u6e90\u6587\u4ef6.bin');
   assert.equal(exportDoc.assets[0]?.originalFilePath, originalFilePath, 'export sanitization never mutates the live document');
   const liveBeforeDoc = (exportChat.changeLog?.[0] as { beforeDoc?: ProjectDoc } | undefined)?.beforeDoc;
   assert.ok(liveBeforeDoc);

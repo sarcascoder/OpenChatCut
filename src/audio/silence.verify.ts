@@ -25,35 +25,35 @@ const spansOf = (samples: Float32Array, params = {}) =>
 // ── Voice - long pause - voice: find the dead breath segment in the middle, and the boundary includes the breathing port ──
 const talkPauseTalk = synth([[0.3, 2000], [0.002, 1500], [0.3, 2000]]);
 const spans = spansOf(talkPauseTalk);
-assert.equal(spans.length, 1, '一段长停顿 → 一个死气段');
+assert.equal(spans.length, 1, 'one long pause → one dead-air span');
 const [span] = spans;
-assert.ok(span!.startMs >= 2000 && span!.startMs <= 2000 + 300, `起点在停顿开始+呼吸口附近(${span!.startMs})`);
-assert.ok(span!.endMs <= 3500 - 100 && span!.endMs >= 3500 - 400, `终点留呼吸口(${span!.endMs})`);
+assert.ok(span!.startMs >= 2000 && span!.startMs <= 2000 + 300, `start sits near the pause start plus the breathing room (${span!.startMs})`);
+assert.ok(span!.endMs <= 3500 - 100 && span!.endMs >= 3500 - 400, `end leaves breathing room (${span!.endMs})`);
 
 // ── Short pause (< minSilenceMs) without moving ──
-assert.equal(spansOf(synth([[0.3, 1000], [0.002, 400], [0.3, 1000]])).length, 0, '400ms 停顿不删');
+assert.equal(spansOf(synth([[0.3, 1000], [0.002, 400], [0.3, 1000]])).length, 0, 'a 400ms pause is not removed');
 
 // ──Customized minSilenceMs takes effect──
-assert.equal(spansOf(synth([[0.3, 1000], [0.002, 400], [0.3, 1000]]), { minSilenceMs: 300 }).length, 1, '调低下限后 400ms 可删');
+assert.equal(spansOf(synth([[0.3, 1000], [0.002, 400], [0.3, 1000]]), { minSilenceMs: 300 }).length, 1, 'lowering the floor makes the 400ms pause removable');
 
 // ── Music bed: continuous sound, zero life ──
-assert.equal(spansOf(synth([[0.2, 5000]])).length, 0, '持续音乐不切');
+assert.equal(spansOf(synth([[0.2, 5000]])).length, 0, 'continuous music is not cut');
 
 // ── Pure noise (no voice reference): no segment ──
-assert.equal(spansOf(synth([[0.003, 5000]])).length, 0, '整段没语音 → 不动');
+assert.equal(spansOf(synth([[0.003, 5000]])).length, 0, 'no speech anywhere → leave it alone');
 
 // ── Relative threshold: soft voice segments (lower than speech but not low enough) are not considered dead ──
 const softMid = synth([[0.3, 1500], [0.05, 1500], [0.3, 1500]]);
-assert.equal(spansOf(softMid).length, 0, '-16dB 的轻声不删');
+assert.equal(spansOf(softMid).length, 0, 'a -16dB soft voice is not removed');
 const deadMid = synth([[0.3, 1500], [0.005, 1500], [0.3, 1500]]);
-assert.equal(spansOf(deadMid).length, 1, '-36dB 的死气删');
+assert.equal(spansOf(deadMid).length, 1, '-36dB dead air is removed');
 
 // ──Multiple pauses to hit one by one──
 const multi = synth([[0.3, 1200], [0.002, 900], [0.3, 1200], [0.002, 800], [0.3, 1200]]);
-assert.equal(spansOf(multi).length, 2, '两段停顿 → 两个死气段');
+assert.equal(spansOf(multi).length, 2, 'two pauses → two dead-air spans');
 
 // ── Empty input / illegal window ──
-assert.deepEqual(spansOf(new Float32Array(0)), [], '空输入');
-assert.deepEqual(detectSilentSpans(new Float32Array(0), 0), [], '零窗口');
+assert.deepEqual(spansOf(new Float32Array(0)), [], 'empty input');
+assert.deepEqual(detectSilentSpans(new Float32Array(0), 0), [], 'zero window');
 
-console.log('silence.verify: ok (相对阈值/呼吸口/最短时长/音乐床/底噪守门)');
+console.log('silence.verify: ok (relative threshold / breathing room / minimum duration / music bed / noise-floor guard)');

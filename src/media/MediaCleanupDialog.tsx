@@ -2,7 +2,6 @@
 // Then list the uploaded files that are not referenced by all projects, check and delete them in batches (disk + IDB cache).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { theme, themeAlpha } from '../theme';
-import { useT } from '../i18n/locale';
 import { Icon } from '../components/icons';
 import { scanUnreferenced, deleteUploadFile, type UploadFileInfo } from '../persist/mediaCleanup';
 
@@ -22,7 +21,6 @@ function fmtDate(ms: number): string {
 }
 
 export function MediaCleanupDialog({ onClose }: MediaCleanupDialogProps) {
-  const t = useT();
   const [files, setFiles] = useState<UploadFileInfo[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -34,12 +32,12 @@ export function MediaCleanupDialog({ onClose }: MediaCleanupDialogProps) {
       const scan = await scanUnreferenced();
       setFiles(scan.files);
       setPicked(new Set(scan.files.map((f) => f.name)));
-      if (scan.orphanDocsPurged > 0) setNote(t('已顺手清掉 {n} 份孤儿工程文档(测试残留)', { n: scan.orphanDocsPurged }));
+      if (scan.orphanDocsPurged > 0) setNote(`Also purged ${scan.orphanDocsPurged} orphaned project docs (test leftovers)`);
     } catch (err) {
       setFiles([]);
-      setNote(t('扫描失败:{msg}', { msg: err instanceof Error ? err.message : String(err) }));
+      setNote(`Scan failed: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [t]);
+  }, []);
   useEffect(() => { void rescan(); }, [rescan]);
 
   const pickedBytes = useMemo(
@@ -67,7 +65,7 @@ export function MediaCleanupDialog({ onClose }: MediaCleanupDialogProps) {
       else fail += 1;
     }
     setBusy(false);
-    setNote(fail ? t('已删 {ok} 个,{fail} 个失败', { ok, fail }) : t('已删 {n} 个文件', { n: ok }));
+    setNote(fail ? `Deleted ${ok}, ${fail} failed` : `Deleted ${ok} files`);
     await rescan();
   };
 
@@ -76,14 +74,14 @@ export function MediaCleanupDialog({ onClose }: MediaCleanupDialogProps) {
       <div style={panel} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: `0.5px solid ${theme.border}` }}>
           <span style={{ color: theme.accent, display: 'inline-flex' }}><Icon name="trash" size={15} /></span>
-          <b style={{ fontSize: 13.5 }}>{t('清理素材')}</b>
-          <span style={{ color: theme.textDim, fontSize: 12 }}>{t('列出所有工程都不引用的上传文件')}</span>
-          <button onClick={onClose} style={{ ...miniBtn, marginLeft: 'auto' }} title={t('关闭')}>✕</button>
+          <b style={{ fontSize: 13.5 }}>Clean Up Media</b>
+          <span style={{ color: theme.textDim, fontSize: 12 }}>Uploads not referenced by any project</span>
+          <button onClick={onClose} style={{ ...miniBtn, marginLeft: 'auto' }} title="Close">✕</button>
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '6px 8px' }}>
-          {files === null && <div style={hint}>{t('扫描中…(逐工程收集引用)')}</div>}
-          {files !== null && files.length === 0 && <div style={hint}>{t('没有无主素材,盘上很干净 ✨')}</div>}
+          {files === null && <div style={hint}>Scanning… (collecting references per project)</div>}
+          {files !== null && files.length === 0 && <div style={hint}>No orphaned media — the disk is clean ✨</div>}
           {files?.map((f) => (
             <label key={f.name} style={row}>
               <input type="checkbox" checked={picked.has(f.name)} onChange={() => toggle(f.name)} style={{ accentColor: theme.accent }} />
@@ -97,10 +95,10 @@ export function MediaCleanupDialog({ onClose }: MediaCleanupDialogProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderTop: `0.5px solid ${theme.border}` }}>
           {note && <span style={{ color: theme.textDim, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>}
           <span style={{ marginLeft: 'auto', color: theme.textDim, fontSize: 12, flexShrink: 0 }}>
-            {t('已选 {n} 个 · {size}', { n: picked.size, size: fmtBytes(pickedBytes) })}
+            {`${picked.size} selected · ${fmtBytes(pickedBytes)}`}
           </span>
           <button onClick={() => void removePicked()} disabled={busy || picked.size === 0} style={dangerBtn}>
-            {busy ? t('删除中…') : t('删除所选')}
+            {busy ? 'Deleting…' : 'Delete selected'}
           </button>
         </div>
       </div>

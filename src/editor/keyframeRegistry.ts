@@ -29,7 +29,7 @@ const scaleRange = {
 
 export const KEYFRAME_PROPERTY_REGISTRY: Record<KeyframeProp, KeyframePropertyDefinition> = {
   scale: {
-    id: 'scale', label: '缩放比例', ...scaleRange, supports: visual,
+    id: 'scale', label: 'Scale', ...scaleRange, supports: visual,
     getBaseValue: (item) => {
       const { scaleX, scaleY } = resolveClipScaleAxes(item.transform);
       return Math.abs(scaleX - scaleY) < 1e-6 ? scaleX : (item.transform?.scale ?? scaleX);
@@ -38,50 +38,50 @@ export const KEYFRAME_PROPERTY_REGISTRY: Record<KeyframeProp, KeyframePropertyDe
     toTransformPatch: (scale) => uniformScalePatch(scale),
   },
   scaleX: {
-    id: 'scaleX', label: '横向缩放', ...scaleRange, supports: visual,
+    id: 'scaleX', label: 'Horizontal scale', ...scaleRange, supports: visual,
     getBaseValue: (item) => resolveClipScaleAxes(item.transform).scaleX,
     toTransformPatch: (scaleX) => ({ scaleX }),
   },
   scaleY: {
-    id: 'scaleY', label: '纵向缩放', ...scaleRange, supports: visual,
+    id: 'scaleY', label: 'Vertical scale', ...scaleRange, supports: visual,
     getBaseValue: (item) => resolveClipScaleAxes(item.transform).scaleY,
     toTransformPatch: (scaleY) => ({ scaleY }),
   },
   x: {
-    id: 'x', label: '水平', valueRange: [-400, 400], editorRange: [-100, 100],
+    id: 'x', label: 'Horizontal', valueRange: [-400, 400], editorRange: [-100, 100],
     step: 1, defaultValue: 0, supports: visual,
     getBaseValue: (item) => item.transform?.x ?? 0,
     toTransformPatch: (x) => ({ x }), format: percent,
   },
   y: {
-    id: 'y', label: '垂直', valueRange: [-400, 400], editorRange: [-100, 100],
+    id: 'y', label: 'Vertical', valueRange: [-400, 400], editorRange: [-100, 100],
     step: 1, defaultValue: 0, supports: visual,
     getBaseValue: (item) => item.transform?.y ?? 0,
     toTransformPatch: (y) => ({ y }), format: percent,
   },
   rotation: {
-    id: 'rotation', label: '旋转', valueRange: [-3600, 3600], editorRange: [-180, 180],
+    id: 'rotation', label: 'Rotation', valueRange: [-3600, 3600], editorRange: [-180, 180],
     step: 1, defaultValue: 0, supports: visual,
     getBaseValue: (item) => item.transform?.rotation ?? 0,
     toTransformPatch: (rotation) => ({ rotation }),
     format: (value) => `${compact(value)}°`,
   },
   opacity: {
-    id: 'opacity', label: '透明', valueRange: [0, 1], editorRange: [0, 1],
+    id: 'opacity', label: 'Opacity', valueRange: [0, 1], editorRange: [0, 1],
     step: 0.01, defaultValue: 1, supports: visual,
     getBaseValue: (item) => item.transform?.opacity ?? 1,
     toTransformPatch: (opacity) => ({ opacity }),
     format: (value) => `${compact(value * 100)}%`,
   },
   borderRadius: {
-    id: 'borderRadius', label: '圆角', valueRange: [0, 1000], editorRange: [0, 500],
+    id: 'borderRadius', label: 'Corner Radius', valueRange: [0, 1000], editorRange: [0, 500],
     step: 1, defaultValue: 0, supports: roundableVisual,
     getBaseValue: (item) => item.transform?.borderRadius ?? 0,
     toTransformPatch: (borderRadius) => ({ borderRadius }),
     format: (value) => `${compact(value)}px`,
   },
   volume: {
-    id: 'volume', label: '音量', valueRange: [0, 2], editorRange: [0, 2],
+    id: 'volume', label: 'Volume', valueRange: [0, 2], editorRange: [0, 2],
     step: 0.05, defaultValue: 1, supports: audible,
     getBaseValue: (item) => item.volume ?? 1,
     format: (value) => `${compact(value * 100)}%`,

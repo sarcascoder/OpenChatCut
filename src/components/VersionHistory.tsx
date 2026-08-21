@@ -3,7 +3,6 @@ import { theme, themeAlpha } from '../theme';
 import { Icon } from './icons';
 import type { ProjectDoc } from '../editor/types';
 import { listVersions, saveVersion, deleteVersion, type ProjectVersion } from '../persist/versionStore';
-import { t, useT } from '../i18n/locale';
 
 interface VersionHistoryProps {
   projectId: string;
@@ -16,16 +15,15 @@ interface VersionHistoryProps {
 function relTime(ms: number): string {
   const diff = Math.max(0, Date.now() - ms);
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return t('刚刚');
-  if (min < 60) return t('{n} 分钟前', { n: min });
+  if (min < 1) return 'Just now';
+  if (min < 60) return `${min} min ago`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return t('{n} 小时前', { n: hr });
-  return t('{n} 天前', { n: Math.floor(hr / 24) });
+  if (hr < 24) return `${hr} hr ago`;
+  return `${Math.floor(hr / 24)} d ago`;
 }
 
 /** Version history - named project snapshot + one-click rollback to restore reused atomic applyDoc. */
 export function VersionHistory({ projectId, currentDoc, onRestore, onClose }: VersionHistoryProps) {
-  const t = useT();
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingName, setSavingName] = useState<string | null>(null); // null = input box hidden
@@ -59,16 +57,16 @@ export function VersionHistory({ projectId, currentDoc, onRestore, onClose }: Ve
         {/* header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 16px', borderBottom: `0.5px solid ${theme.border}` }}>
           <span style={{ color: theme.accent, lineHeight: 0 }}><Icon name="history" size={17} /></span>
-          <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{t('历史版本')}</span>
-          <button onClick={onClose} title={t('关闭')} style={iconBtn}><Icon name="x" size={15} /></button>
+          <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Version History</span>
+          <button onClick={onClose} title="Close" style={iconBtn}><Icon name="x" size={15} /></button>
         </div>
 
         {/* list */}
         <div style={{ padding: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120 }}>
           {loading ? (
-            <div style={emptyState}>{t('加载中…')}</div>
+            <div style={emptyState}>Loading…</div>
           ) : versions.length === 0 ? (
-            <div style={emptyState}>{t('还没有保存过版本')}</div>
+            <div style={emptyState}>No versions saved yet</div>
           ) : (
             versions.map((v) => (
               <div key={v.id} style={row}>
@@ -77,8 +75,8 @@ export function VersionHistory({ projectId, currentDoc, onRestore, onClose }: Ve
                   <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.name}</div>
                   <div style={{ fontSize: 11, color: theme.textDim }}>{relTime(v.createdAt)}</div>
                 </div>
-                <button onClick={() => { onRestore(v.doc); onClose(); }} style={ghostBtn}>{t('恢复')}</button>
-                <button onClick={() => handleDelete(v.id)} title={t('删除此版本')} style={iconBtn}><Icon name="x" size={13} /></button>
+                <button onClick={() => { onRestore(v.doc); onClose(); }} style={ghostBtn}>Restore</button>
+                <button onClick={() => handleDelete(v.id)} title="Delete this version" style={iconBtn}><Icon name="x" size={13} /></button>
               </div>
             ))
           )}
@@ -88,15 +86,15 @@ export function VersionHistory({ projectId, currentDoc, onRestore, onClose }: Ve
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 16px', borderTop: `0.5px solid ${theme.border}` }}>
           {savingName !== null ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input autoFocus value={savingName} placeholder={t('版本名称')}
+              <input autoFocus value={savingName} placeholder="Version name"
                 onChange={(e) => setSavingName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setSavingName(null); }}
                 style={textInput} />
-              <button onClick={handleSave} style={primaryBtn}>{t('确定')}</button>
-              <button onClick={() => setSavingName(null)} style={ghostBtn}>{t('取消')}</button>
+              <button onClick={handleSave} style={primaryBtn}>OK</button>
+              <button onClick={() => setSavingName(null)} style={ghostBtn}>Cancel</button>
             </div>
           ) : (
-            <button onClick={() => setSavingName('')} style={primaryBtn}>{t('保存当前版本')}</button>
+            <button onClick={() => setSavingName('')} style={primaryBtn}>Save Current Version</button>
           )}
         </div>
       </div>

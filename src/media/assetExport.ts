@@ -1,5 +1,4 @@
 import type { MediaAsset, TimelineItem, TimelineState } from '../editor/types';
-import { t } from '../i18n/locale';
 import { exportClipMov } from './clipExport';
 import { sanitizeFileName } from './fileName';
 
@@ -14,7 +13,7 @@ export function mediaAssetDownloadName(asset: MediaAsset): string {
 }
 
 export function motionGraphicExport(asset: MediaAsset, fps: number): { state: TimelineState; item: TimelineItem } {
-  if (asset.kind !== 'motion-graphic' || !asset.code) throw new Error(t('MG 素材缺少动画代码'));
+  if (asset.kind !== 'motion-graphic' || !asset.code) throw new Error('The MG asset is missing animation code');
   const width = asset.width && asset.width > 0 ? asset.width : DEFAULT_CANVAS.width;
   const height = asset.height && asset.height > 0 ? asset.height : DEFAULT_CANVAS.height;
   const durationInFrames = asset.durationInFrames > 0 ? Math.round(asset.durationInFrames) : Math.round(fps * 3);
@@ -34,7 +33,7 @@ export async function exportMediaAsset(asset: MediaAsset, fps: number): Promise<
   }
   const url = new URL(asset.src, window.location.href);
   const localHttp = (url.protocol === 'http:' || url.protocol === 'https:') && url.origin === window.location.origin;
-  if (!localHttp && url.protocol !== 'blob:' && url.protocol !== 'data:') throw new Error(t('素材地址无效'));
+  if (!localHttp && url.protocol !== 'blob:' && url.protocol !== 'data:') throw new Error('The media URL is invalid');
   const anchor = document.createElement('a');
   anchor.href = url.href;
   anchor.download = mediaAssetDownloadName(asset);

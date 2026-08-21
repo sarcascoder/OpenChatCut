@@ -18,7 +18,7 @@ function resolveRequestedTrack(args: Args, ctx: AgentContext): TrackId | undefin
   if (args.track === undefined || args.track === null || String(args.track).trim() === '') return undefined;
   const ref = String(args.track).trim();
   const trackId = resolveTrackId(ctx.getState(), ref);
-  if (!trackId) throw new Error(`轨道「${ref}」不存在`);
+  if (!trackId) throw new Error(`track "${ref}" does not exist`);
   return trackId;
 }
 
@@ -35,7 +35,7 @@ export async function execScriptTool(name: string, args: Args, ctx: AgentContext
     }
     case 'apply_script': {
       const md = String(args.timelineMd ?? '');
-      if (!md.trim()) return { error: 'timelineMd is required（传回完整编辑后的 timeline.md）' };
+      if (!md.trim()) return { error: 'timelineMd is required (send back the complete edited timeline.md)' };
       try {
         const trackId = resolveRequestedTrack(args, ctx);
         if (args.preview === true) {

@@ -270,7 +270,6 @@ function browserDeliveryContext(options: BrowserDeliveryContextOptions): VideoEx
     setProgress: () => undefined,
     setQa: () => undefined,
     setRenderEngine: () => undefined,
-    t: (key) => key,
     verifyCompletedExport: options.verifyCompletedExport ?? (async () => undefined),
   };
 }

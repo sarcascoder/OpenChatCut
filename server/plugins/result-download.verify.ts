@@ -45,12 +45,12 @@ async function settleWithin<T>(operation: Promise<T>, timeoutMs = 500): Promise<
 
 // ── Backoff and retry determination ──
 {
-  assert.deepEqual([downloadBackoffMs(1), downloadBackoffMs(2)], [400, 800], '指数退避');
+  assert.deepEqual([downloadBackoffMs(1), downloadBackoffMs(2)], [400, 800], 'exponential backoff');
   for (const code of [408, 425, 429, 500, 502, 503, 504]) {
-    assert.ok(isRetryableDownloadStatus(code), `${code} 应重试`);
+    assert.ok(isRetryableDownloadStatus(code), `${code} should be retried`);
   }
   for (const code of [400, 401, 403, 404, 410, 422]) {
-    assert.ok(!isRetryableDownloadStatus(code), `${code} 是请求本身不对,重试只是再烧一遍`);
+    assert.ok(!isRetryableDownloadStatus(code), `${code} means the request itself is wrong; retrying just burns money again`);
   }
 }
 
@@ -74,7 +74,7 @@ async function settleWithin<T>(operation: Promise<T>, timeoutMs = 500): Promise<
 {
   const s = scriptedFetch([status(502), ok()]);
   const res = await fetchGeneratedResult(URL_, 'video', s);
-  assert.equal(res.status, 200, 'CDN 抖动被消化掉,用户无感');
+  assert.equal(res.status, 200, 'CDN jitter is absorbed, invisible to the user');
   assert.equal(s.calls.length, 2);
   assert.deepEqual(s.waits, [400]);
 }
@@ -113,11 +113,11 @@ async function settleWithin<T>(operation: Promise<T>, timeoutMs = 500): Promise<
 {
   const s = scriptedFetch([status(503), status(503), status(503)]);
   const error = await fetchGeneratedResult(URL_, 'video', s).then(() => null, (e: unknown) => e);
-  assert.ok(error instanceof ResultDownloadError, '必须是可识别的类型,任务层靠它留住结果');
-  assert.equal(error.url, URL_, 'URL 要带出来——成品已经生成,钱已经付了');
-  assert.match(error.message, /video/, '错误文案说明是哪一类成品');
-  assert.match(error.message, /503/, '带上最后一次失败原因');
-  assert.equal(s.calls.length, 3, '共三次尝试');
+  assert.ok(error instanceof ResultDownloadError, 'must be a recognisable type; the task layer relies on it to hold on to the result');
+  assert.equal(error.url, URL_, 'the URL must be carried out — the result exists and has already been paid for');
+  assert.match(error.message, /video/, 'the error text says which kind of result it was');
+  assert.match(error.message, /503/, 'carries the last failure reason');
+  assert.equal(s.calls.length, 3, 'three attempts in total');
   assert.deepEqual(s.waits, [400, 800]);
 }
 
@@ -127,8 +127,8 @@ async function settleWithin<T>(operation: Promise<T>, timeoutMs = 500): Promise<
   const error = await fetchGeneratedResult(URL_, 'image', s).then(() => null, (e: unknown) => e);
   assert.ok(error instanceof ResultDownloadError);
   assert.equal(error.url, URL_);
-  assert.equal(s.calls.length, 1, '404 不重试');
-  assert.deepEqual(s.waits, [], '也不该等待');
+  assert.equal(s.calls.length, 1, '404 is not retried');
+  assert.deepEqual(s.waits, [], 'and it should not wait either');
 }
 
 // ── Successful responses must be media, never provider HTML/error payloads ──

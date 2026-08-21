@@ -1,6 +1,6 @@
-// 多车道字幕三兄弟检查:npx tsx src/agent/tools/captions-lanes.check.ts
-// ① lanes.ts 引擎(auto-stack/single-lane/manual-slots/positions 分组语义)
-// ② ensureEntries 提升 ③ matchEntries 选择器 ④ 三个 action 的写入与校验
+// Check for the three multi-lane caption siblings: npx tsx src/agent/tools/captions-lanes.check.ts
+// (1) the lanes.ts engine (auto-stack/single-lane/manual-slots/positions grouping semantics)
+// (2) ensureEntries promotion (3) matchEntries selectors (4) the writes and validation of the three actions
 import assert from 'node:assert/strict';
 import type { CaptionsData, CaptionSourceEntry } from '../../captions/types';
 import { buildLaneGroups } from '../../captions/lanes';
@@ -8,7 +8,7 @@ import type { TimelineItem, TimelineState } from '../../editor/types';
 import type { AgentContext } from '../context';
 import { ensureEntries, matchEntries, execLayoutPolicy, execPositions, execSourceUpdate } from './captions-lanes';
 
-// fps=1000 → ms 即帧。两条转写 audio:a 说 0-200ms,b 说 50-250ms(重叠期两车道同时活跃)。
+// fps=1000 → ms equals frames. Two transcribed audio clips: a speaks 0-200ms, b speaks 50-250ms (both lanes active during the overlap).
 const itemA: TimelineItem = {
   id: 'a', kind: 'audio', name: 'voA', track: 'A1', startFrame: 0, durationInFrames: 200,
   transcript: [{ text: 'hi', start: 0, end: 100 }, { text: 'there', start: 100, end: 200 }],
@@ -23,41 +23,41 @@ const entries2: CaptionSourceEntry[] = [{ id: 's1', itemId: 'a' }, { id: 's2', i
 const cap = (over: Partial<CaptionsData>): CaptionsData =>
   ({ enabled: true, template: 'plain', pacing: 'word', sourceEntries: entries2, ...over }) as CaptionsData;
 
-// ── 引擎:默认 auto-stack,同一共享块上下堆叠(列表序 = 上→下)──────────────
+// ── engine: default auto-stack, stacked top-to-bottom in one shared block (list order = top→bottom) ──
 {
   const groups = buildLaneGroups(cap({}), S.items, S.fps, 60, 6)!;
-  assert.equal(groups.length, 1, '无 anchor → 一个共享块组');
+  assert.equal(groups.length, 1, 'no anchor → a single shared-block group');
   assert.equal(groups[0].anchor, undefined);
-  assert.deepEqual(groups[0].lanes.map((l) => l.entry.id), ['s1', 's2'], '列表序渲染,第一个在最上');
+  assert.deepEqual(groups[0].lanes.map((l) => l.entry.id), ['s1', 's2'], 'rendered in list order, the first one on top');
   assert.deepEqual(groups[0].lanes.map((l) => l.page.words[0].text), ['hi', 'yo']);
 }
-// maxVisibleSources=1 截断
+// maxVisibleSources=1 truncates
 {
   const groups = buildLaneGroups(cap({ layoutPolicy: { mode: 'auto-stack', maxVisibleSources: 1 } }), S.items, S.fps, 60, 6)!;
   assert.deepEqual(groups[0].lanes.map((l) => l.entry.id), ['s1']);
 }
-// single-lane:默认只显 1 条;priority 小者优先
+// single-lane: shows only 1 by default; the lower priority wins
 {
   const g1 = buildLaneGroups(cap({ layoutPolicy: { mode: 'single-lane' } }), S.items, S.fps, 60, 6)!;
-  assert.deepEqual(g1[0].lanes.map((l) => l.entry.id), ['s1'], '缺省按列表序');
+  assert.deepEqual(g1[0].lanes.map((l) => l.entry.id), ['s1'], 'defaults to list order');
   const withPrio: CaptionSourceEntry[] = [{ id: 's1', itemId: 'a', priority: 5 }, { id: 's2', itemId: 'b', priority: 0 }];
   const g2 = buildLaneGroups(cap({ sourceEntries: withPrio, layoutPolicy: { mode: 'single-lane' } }), S.items, S.fps, 60, 6)!;
-  assert.deepEqual(g2[0].lanes.map((l) => l.entry.id), ['s2'], 'priority 仲裁');
+  assert.deepEqual(g2[0].lanes.map((l) => l.entry.id), ['s2'], 'priority arbitrates');
 }
-// per-entry anchor:不同锚点分组;相同锚点合成一个堆叠块。
+// per-entry anchor: different anchors group apart; identical anchors merge into one stacked block.
 {
   const placed: CaptionSourceEntry[] = [
     { id: 's1', itemId: 'a', anchor: 'top-center', offsetYRatio: 0.08 },
     { id: 's2', itemId: 'b', anchor: 'bottom-center', offsetYRatio: -0.08 },
   ];
   const groups = buildLaneGroups(cap({ sourceEntries: placed }), S.items, S.fps, 60, 6)!;
-  assert.equal(groups.length, 2, '两个锚点 → 两组');
+  assert.equal(groups.length, 2, 'two anchors → two groups');
   const sameAnchor = placed.map((e) => ({ ...e, anchor: 'top-center' as const, offsetYRatio: 0.08 }));
   const merged = buildLaneGroups(cap({ sourceEntries: sameAnchor }), S.items, S.fps, 60, 6)!;
-  assert.equal(merged.length, 1, '同锚点 → 同一个堆叠块');
+  assert.equal(merged.length, 1, 'same anchor → the same stacked block');
   assert.equal(merged[0].lanes.length, 2);
 }
-// manual-slots:slotId 钉槽位
+// manual-slots: slotId pins a slot
 {
   const pinned: CaptionSourceEntry[] = [{ id: 's1', itemId: 'a', slotId: 'top' }, { id: 's2', itemId: 'b', slotId: 'bottom' }];
   const groups = buildLaneGroups(cap({
@@ -66,7 +66,7 @@ const cap = (over: Partial<CaptionsData>): CaptionsData =>
   }), S.items, S.fps, 60, 6)!;
   assert.deepEqual(groups.map((g) => g.anchor).sort(), ['bottom-center', 'top-center']);
 }
-// 不可见车道不渲染;无 sourceEntries → null(单流旧路径)
+// invisible lanes are not rendered; no sourceEntries → null (legacy single-stream path)
 {
   const hidden: CaptionSourceEntry[] = [{ id: 's1', itemId: 'a', visible: false }, { id: 's2', itemId: 'b' }];
   const groups = buildLaneGroups(cap({ sourceEntries: hidden }), S.items, S.fps, 60, 6)!;
@@ -74,7 +74,7 @@ const cap = (over: Partial<CaptionsData>): CaptionsData =>
   assert.equal(buildLaneGroups(cap({ sourceEntries: undefined }), S.items, S.fps, 60, 6), null);
 }
 
-// ── ensureEntries 提升 + matchEntries 选择器 ────────────────────────────────
+// ── ensureEntries promotion + matchEntries selectors ───────────────────────
 {
   const fromItem = ensureEntries({ enabled: true, template: 'plain', pacing: 'word', sourceItemId: 'a' } as CaptionsData, S);
   assert.equal(fromItem.length, 1);
@@ -96,16 +96,16 @@ const cap = (over: Partial<CaptionsData>): CaptionsData =>
   assert.deepEqual(matchEntries(entries2, { trackId: 'A2' }, S), [1]);
   assert.deepEqual(matchEntries(entries2, { itemId: 'a' }, S), [0]);
   const err = matchEntries(entries2, { speakerId: 'sp1' }, S);
-  assert.ok('error' in (err as object), 'speakerId → 显式不支持');
+  assert.ok('error' in (err as object), 'speakerId → explicitly unsupported');
   const miss = matchEntries(entries2, { label: 'nope' }, S);
   assert.ok('error' in (miss as object));
 }
 
-// ── action 层(mock ctx 捕获 updateCaptions patch)──────────────────────────
+// ── action layer (a mock ctx captures the updateCaptions patch) ────────────
 let lastPatch: Partial<CaptionsData> | null = null;
 const ctx = { commands: { updateCaptions: (p: Partial<CaptionsData>) => { lastPatch = p; } } } as unknown as AgentContext;
 
-// positions:摆两条车道;anchor 校验;写入 sourceEntries
+// positions: place two lanes; validate the anchor; write sourceEntries
 {
   lastPatch = null;
   const r = execPositions({ positions: [
@@ -116,9 +116,9 @@ const ctx = { commands: { updateCaptions: (p: Partial<CaptionsData>) => { lastPa
   assert.equal(lastPatch!.sourceEntries![0].anchor, 'bottom-center');
   assert.equal(lastPatch!.sourceEntries![1].anchor, 'top-center');
   const bad = execPositions({ positions: [{ sourceId: 's1', anchor: 'nowhere' }] }, cap({}), ctx, S);
-  assert.ok(bad.error, 'anchor 非法要报错');
+  assert.ok(bad.error, 'an invalid anchor must error');
 }
-// layout_policy:三模式 + perSource + 清除 + 校验
+// layout_policy: three modes + perSource + clearing + validation
 {
   lastPatch = null;
   const r = execLayoutPolicy({ mode: 'auto-stack', maxVisibleSources: 2 }, cap({}), ctx);
@@ -139,7 +139,7 @@ const ctx = { commands: { updateCaptions: (p: Partial<CaptionsData>) => { lastPa
   assert.equal(clear.ok, true);
   assert.equal(lastPatch!.layoutPolicy, null);
 }
-// source_update:visible/anchor/style(sizePx→fontSize 比例)/variant 校验
+// source_update: visible/anchor/style (sizePx→fontSize ratio)/variant validation
 {
   lastPatch = null;
   const r = execSourceUpdate({ updates: [
@@ -149,11 +149,11 @@ const ctx = { commands: { updateCaptions: (p: Partial<CaptionsData>) => { lastPa
   assert.equal(r.ok, true, JSON.stringify(r));
   const es = lastPatch!.sourceEntries!;
   assert.equal(es[1].anchor, 'top-center');
-  assert.ok(Math.abs((es[1].style!.fontSize ?? 0) - 54 / 1080) < 1e-9, 'sizePx → fontSize 比例(canvasHeight)');
+  assert.ok(Math.abs((es[1].style!.fontSize ?? 0) - 54 / 1080) < 1e-9, 'sizePx → fontSize ratio (canvasHeight)');
   assert.equal(es[1].style!.color, '#fff');
   assert.equal(es[0].visible, false);
   const noVar = execSourceUpdate({ updates: [{ sourceId: 's1', languageCode: 'en' }] }, cap({}), ctx, S);
-  assert.ok(noVar.error, '无翻译变体时 variant 切换要报错(先 translation_ensure)');
+  assert.ok(noVar.error, 'switching variant must error when no translation variant exists (run translation_ensure first)');
 }
 
-console.log('captions-lanes.check: ok (引擎 6 组语义 / 提升 / 选择器 / 三 action 写入+校验)');
+console.log('captions-lanes.check: ok (6 engine grouping semantics / promotion / selectors / three action writes + validation)');

@@ -27,7 +27,7 @@ const hardware: ExportEngineInfo = {
 };
 const efficient: BrowserExportInspection = { status: 'supported', issues: [], powerEfficient: true };
 const compatible: BrowserExportInspection = { status: 'supported', issues: [], powerEfficient: false };
-const unsupported: BrowserExportInspection = { status: 'unsupported', issues: ['webgl'], reason: '包含 WebGL 转场' };
+const unsupported: BrowserExportInspection = { status: 'unsupported', issues: ['webgl'], reason: 'Contains WebGL transitions' };
 
 try {
   assert.equal(chooseSupportedRoute(unsupported, hardware).route, 'server');
@@ -40,7 +40,7 @@ try {
   }));
   const measured = chooseSupportedRoute(efficient, software);
   assert.equal(measured.route, 'server');
-  assert.equal(measured.reason, '历史实测显示本机渲染器更快');
+  assert.equal(measured.reason, 'Previous local exports measured the native renderer as faster');
 
   values.clear();
   recordExportPerformance(hardware, { width: 1920, height: 1080, frames: 30, elapsedMs: 1000 });

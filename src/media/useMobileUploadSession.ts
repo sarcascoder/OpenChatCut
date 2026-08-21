@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { getLocale } from '../i18n/locale';
 import {
   closeMobileUploadSession,
   createMobileUploadSession,
@@ -23,7 +22,7 @@ function useCreatedSession(setError: SetError): [MobileUploadSession | null, Set
   useEffect(() => {
     let active = true;
     let createdId: string | null = null;
-    void createMobileUploadSession(getLocale()).then((created) => {
+    void createMobileUploadSession().then((created) => {
       createdId = created.id;
       if (!active) { void closeMobileUploadSession(created.id).catch(() => undefined); return; }
       setSession(created);

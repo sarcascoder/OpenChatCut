@@ -32,14 +32,14 @@ interface ServerCapabilities {
 function browserEngine(powerEfficient?: boolean): ExportEngineInfo {
   return {
     id: 'webcodecs',
-    label: powerEfficient ? 'WebCodecs · 硬件加速' : 'WebCodecs · 本机编码',
+    label: powerEfficient ? 'WebCodecs · Hardware accelerated' : 'WebCodecs · Local encoding',
     hardware: powerEfficient === true,
     transport: 'browser',
   };
 }
 
 function unknownServerEngine(): ExportEngineInfo {
-  return { id: 'local-renderer', label: '本机兼容渲染', hardware: false, transport: 'server' };
+  return { id: 'local-renderer', label: 'Local compatibility renderer', hardware: false, transport: 'server' };
 }
 
 async function loadServerCapabilities(signal?: AbortSignal): Promise<ServerCapabilities> {
@@ -60,7 +60,7 @@ async function inspectBrowser(options: BrowserExportOptions): Promise<BrowserExp
     if (isAbortError(error)) throw error;
     return {
       status: 'unsupported',
-      reason: error instanceof Error ? error.message : '浏览器快导失败',
+      reason: error instanceof Error ? error.message : 'Browser fast export failed',
       issues: [],
     };
   }
@@ -98,11 +98,11 @@ export function chooseSupportedRoute(browser: BrowserExportInspection, server: E
     return { route: 'server' as const, engine: server, reason: browser.reason };
   }
   const measured = measuredRoute(web, server);
-  if (measured === 'browser') return { route: measured, engine: web, reason: '历史实测显示浏览器路径更快' };
-  if (measured === 'server') return { route: measured, engine: server, reason: '历史实测显示本机渲染器更快' };
-  if (browser.powerEfficient) return { route: 'browser' as const, engine: web, reason: '浏览器确认支持硬件高效编码' };
-  if (server.hardware) return { route: 'server' as const, engine: server, reason: '检测到本机硬件编码器' };
-  return { route: 'browser' as const, engine: web, reason: '浏览器兼容且无需额外渲染进程' };
+  if (measured === 'browser') return { route: measured, engine: web, reason: 'Previous local exports measured the browser path as faster' };
+  if (measured === 'server') return { route: measured, engine: server, reason: 'Previous local exports measured the native renderer as faster' };
+  if (browser.powerEfficient) return { route: 'browser' as const, engine: web, reason: 'The browser reports power-efficient hardware encoding' };
+  if (server.hardware) return { route: 'server' as const, engine: server, reason: 'A working local hardware encoder was detected' };
+  return { route: 'browser' as const, engine: web, reason: 'The compatible browser path avoids an extra render process' };
 }
 
 export async function planVideoExportRoute(options: BrowserExportOptions): Promise<ExportRoutePlan> {
@@ -116,7 +116,7 @@ export async function planVideoExportRoute(options: BrowserExportOptions): Promi
   if (options.codec === 'prores') {
     const mezzanine = {
       id: 'prores-mezzanine',
-      label: 'ProRes 422 HQ · 本机母带',
+      label: 'ProRes 422 HQ · local master',
       hardware: false,
       transport: 'server' as const,
     };
@@ -126,7 +126,7 @@ export async function planVideoExportRoute(options: BrowserExportOptions): Promi
       serverEngine: mezzanine,
       route: 'server',
       engine: mezzanine,
-      reason: 'ProRes 母带仅支持本机渲染',
+      reason: 'ProRes mezzanine is server-rendered only',
     };
   }
   return {

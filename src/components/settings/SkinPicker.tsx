@@ -3,19 +3,17 @@
 // localStorage is persistent; TopBar is shared with Dashboard header.
 import { useState } from 'react';
 import { theme, themeAlpha } from '../../theme';
-import { useT } from '../../i18n/locale';
 import { SKINS, applySkin, getSkin } from '../../skins';
 import { Icon } from '../icons';
 
 export function SkinPicker() {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(getSkin);
   const pick = (id: string): void => { applySkin(id); setCurrent(id); };
 
   return (
     <div style={{ position: 'relative', display: 'inline-flex' }}>
-      <button type="button" data-tip={t('皮肤')} aria-label={t('皮肤')}
+      <button type="button" data-tip="Skin" aria-label="Skin"
         aria-haspopup="menu" aria-expanded={open} className="cc-header-btn cc-tip cc-tip-r" onClick={() => setOpen((o) => !o)}
         style={{ ...trigger, color: open ? theme.text : theme.textDim, background: open ? theme.panelAlt : 'none' }}>
         <Icon name="brush" size={16} />
@@ -23,8 +21,8 @@ export function SkinPicker() {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 120 }} />
-          <div role="menu" aria-label={t('皮肤')} style={pop}>
-            <div style={head}>{t('皮肤')}</div>
+          <div role="menu" aria-label="Skin" style={pop}>
+            <div style={head}>Skin</div>
             {SKINS.map((s) => {
               const active = current === s.id;
               return (
@@ -37,7 +35,7 @@ export function SkinPicker() {
                     <span style={dot(s.tokens.panelAlt)} />
                     <span style={dot(s.tokens.accent)} />
                   </span>
-                  <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(s.nameZh)}</span>
+                  <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.nameZh}</span>
                   {active && <span style={{ color: theme.accent, display: 'inline-flex' }}><Icon name="check" size={12} strokeWidth={2.4} /></span>}
                 </button>
               );

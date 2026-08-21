@@ -15,7 +15,7 @@ type Args = Record<string, unknown>;
 function resolveDims(a: { ratio?: unknown; width?: unknown; height?: unknown }): { width: number; height: number } | null | { error: string } {
   if (typeof a.ratio === 'string' && a.ratio) {
     const preset = ASPECT_PRESETS.find((p) => p.label === a.ratio);
-    return preset ? { width: preset.width, height: preset.height } : { error: `unknown ratio ${a.ratio}（可选 ${ASPECT_PRESETS.map((p) => p.label).join('/')}）` };
+    return preset ? { width: preset.width, height: preset.height } : { error: `unknown ratio ${a.ratio} (choose from ${ASPECT_PRESETS.map((p) => p.label).join('/')})` };
   }
   if (typeof a.width === 'number' && typeof a.height === 'number' && a.width > 0 && a.height > 0) {
     return { width: Math.round(a.width), height: Math.round(a.height) };
@@ -105,7 +105,7 @@ export async function execTimelineTool(name: string, args: Args, ctx: AgentConte
         ctx.commands.setTimelineHidden(t.id, args.hidden);
         changed.push('hidden');
       }
-      if (!changed.length) return { error: 'update 需要 name / ratio / width+height / fit / hidden 至少一项' };
+      if (!changed.length) return { error: 'update needs at least one of name / ratio / width+height / fit / hidden' };
       const after = ctx.getDoc();
       const updated = findTimeline(after, t.id);
       return { ok: true, changed, timeline: updated ? describe(updated, after) : t.id };
@@ -151,10 +151,10 @@ export async function execTimelineTool(name: string, args: Args, ctx: AgentConte
         ctx.commands.deleteTimeline(t.id);
         deleted.push(t.name);
       }
-      return { ok: deleted.length > 0, deleted, ...(kept.length ? { kept, note: '至少保留一条序列、被嵌套实例引用或未找到的已跳过' } : {}), ...(blocked.length ? { blocked } : {}) };
+      return { ok: deleted.length > 0, deleted, ...(kept.length ? { kept, note: 'skipped: at least one sequence must remain, or it is referenced by a nested instance, or it was not found' } : {}), ...(blocked.length ? { blocked } : {}) };
     }
 
     default:
-      return { error: `unknown action ${args.action}（可选 list/create/duplicate/switch/update/delete/insert）` };
+      return { error: `unknown action ${args.action} (choose from list/create/duplicate/switch/update/delete/insert)` };
   }
 }

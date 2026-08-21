@@ -6,17 +6,16 @@ import {
   type AgentSettings,
   type MgTier,
 } from '../../agent/settings/agentSettings';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 
 const TIER_LABELS: Record<MgTier, string> = {
-  speed: '速度',
-  balance: '均衡',
-  quality: '质量',
+  speed: 'Speed',
+  balance: 'Balanced',
+  quality: 'Quality',
 };
 const CACHE_LABELS: Record<AgentCacheMode, string> = {
-  short: '短对话',
-  long: '长对话',
+  short: 'Short session',
+  long: 'Long session',
 };
 
 interface AgentComposerSettingsProps {
@@ -40,54 +39,53 @@ function choiceStyle(active: boolean): CSSProperties {
 }
 
 export function AgentComposerSettings(props: AgentComposerSettingsProps) {
-  const t = useT();
   const { autoApply, onAutoApplyChange, settings, onSettingsChange } = props;
   return (
     <>
-      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>{t('模式')}</div>
+      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>Mode</div>
       <div style={{ display: 'flex', gap: 4, padding: '0 10px' }}>
         {(['ask', 'yolo'] as const).map((mode) => {
           const active = (mode === 'yolo') === autoApply;
           return (
             <button key={mode} onClick={() => onAutoApplyChange(mode === 'yolo')} style={choiceStyle(active)}>
-              {mode === 'ask' ? t('Ask 模式') : t('YOLO 模式')}
+              {mode === 'ask' ? 'Ask Mode' : 'YOLO Mode'}
             </button>
           );
         })}
       </div>
       <div style={{ fontSize: 11, color: theme.textDim, padding: '0 10px 6px' }}>
         {autoApply
-          ? t('YOLO 模式：提案自动应用，工具直接执行；仅在缺少关键信息时询问。')
-          : t('Ask 模式：时间线提案等待你应用；工具直接执行，关键选项仍会询问。')}
+          ? 'YOLO Mode: proposals apply automatically and tools run directly; questions are asked only when critical information is missing.'
+          : 'Ask Mode: timeline proposals wait for you to apply them; tools run directly, while critical choices are still asked.'}
       </div>
-      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>{t('MG 质量')}</div>
+      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>MG quality</div>
       <div style={{ display: 'flex', gap: 4, padding: '0 10px' }}>
         {MG_TIERS.map((tier) => (
           <button key={tier} onClick={() => onSettingsChange({ mgTier: tier })}
-            style={choiceStyle(settings.mgTier === tier)}>{t(TIER_LABELS[tier])}</button>
+            style={choiceStyle(settings.mgTier === tier)}>{TIER_LABELS[tier]}</button>
         ))}
       </div>
       <div style={{ fontSize: 11, color: theme.textDim, padding: '4px 10px 6px' }}>
-        {t('速度=最快出活 / 均衡 / 质量=打磨动效细节。')}
+        Speed = fastest output / Balanced / Quality = polished motion detail.
       </div>
-      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>{t('缓存时长')}</div>
+      <div style={{ padding: '8px 10px 4px', color: theme.text, fontSize: 12.5 }}>Cache duration</div>
       <div style={{ display: 'flex', gap: 4, padding: '0 10px' }}>
         {AGENT_CACHE_MODES.map((mode) => (
           <button key={mode} onClick={() => onSettingsChange({ cacheMode: mode })}
-            style={choiceStyle(settings.cacheMode === mode)}>{t(CACHE_LABELS[mode])}</button>
+            style={choiceStyle(settings.cacheMode === mode)}>{CACHE_LABELS[mode]}</button>
         ))}
       </div>
       <div style={{ fontSize: 11, color: theme.textDim, padding: '4px 10px 6px' }}>
-        {t('短对话使用默认缓存；长对话在支持的模型厂商上请求 1 小时缓存。')}
+        Short sessions use the default cache; long sessions request a 1-hour cache from supported providers.
       </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', cursor: 'pointer', color: theme.text, fontSize: 12.5 }}>
         <input type="checkbox" checked={settings.planMode}
           onChange={(event) => onSettingsChange({ planMode: event.target.checked })}
           style={{ accentColor: theme.accent }} />
-        {t('计划模式')}
+        Plan mode
       </label>
       <div style={{ fontSize: 11, color: theme.textDim, padding: '0 10px 10px' }}>
-        {t('先出编号计划，确认后再动手。')}
+        Presents a numbered plan first; acts after you confirm.
       </div>
     </>
   );

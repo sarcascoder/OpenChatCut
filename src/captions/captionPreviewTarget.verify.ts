@@ -23,7 +23,7 @@ import type { CaptionsData } from './types';
 
 let captions = newManualCaptions();
 const laneId = captions.sourceEntries![0]!.id;
-captions = { ...captions, ...appendManualCue(captions, laneId, '画面里可编辑', 1_000, 2_000) };
+captions = { ...captions, ...appendManualCue(captions, laneId, 'Editable on canvas', 1_000, 2_000) };
 
 const overriddenCaptions = {
   ...captions,
@@ -37,7 +37,7 @@ const templatePatch = captionTemplatePatch(overriddenCaptions, 'tiktok');
 assert.equal(templatePatch.template, 'tiktok', 'choosing a template writes the selected template');
 assert.equal(templatePatch.styleOverride, undefined, 'choosing a template clears track-level style overrides');
 assert.equal(templatePatch.sourceEntries?.[0]?.style, undefined, 'choosing a template clears lane-level style overrides');
-assert.equal(templatePatch.sourceEntries?.[0]?.words?.[0]?.text, '画面里可编辑', 'template changes preserve caption content');
+assert.equal(templatePatch.sourceEntries?.[0]?.words?.[0]?.text, 'Editable on canvas', 'template changes preserve caption content');
 
 const karaokePreset = {
   ...effectivePreset(overriddenCaptions),
@@ -130,10 +130,10 @@ assert.deepEqual(
 
 const target = findCaptionPreviewTarget(captions, [], 30, 1_500);
 assert.equal(target?.kind, 'manual', 'manual multi-lane captions expose a preview edit target');
-assert.equal(target?.cue.text, '画面里可编辑');
+assert.equal(target?.cue.text, 'Editable on canvas');
 
-const textPatch = captionPreviewTextPatch(captions, target!, '预览已改字');
-assert.equal(textPatch?.sourceEntries?.[0]?.words?.[0]?.text, '预览已改字');
+const textPatch = captionPreviewTextPatch(captions, target!, 'Preview edited text');
+assert.equal(textPatch?.sourceEntries?.[0]?.words?.[0]?.text, 'Preview edited text');
 
 const stylePatch = captionPreviewStylePatch(captions, target!, { color: '#ff0000' });
 assert.equal(stylePatch.sourceEntries?.[0]?.style?.color, '#ff0000');
@@ -189,7 +189,7 @@ const autoItem = {
   kind: 'video' as const,
   name: 'clip',
   src: 'x.mp4',
-  transcript: [{ text: '海风', start: 0, end: 1_500 }],
+  transcript: [{ text: 'Sea breeze', start: 0, end: 1_500 }],
 };
 const autoOnly: CaptionsData = {
   enabled: true,
@@ -199,6 +199,6 @@ const autoOnly: CaptionsData = {
 };
 const autoTarget = findCaptionPreviewTarget(autoOnly, [autoItem], 30, 500);
 assert.equal(autoTarget?.kind, 'single', 'auto multi-lane falls back to a clickable single cue target');
-assert.match(autoTarget?.cue.text ?? '', /海风/);
+assert.match(autoTarget?.cue.text ?? '', /Sea breeze/);
 
 console.log('captionPreviewTarget.verify: ok');

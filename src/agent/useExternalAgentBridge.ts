@@ -29,7 +29,6 @@ import {
   unregisterEditorBridge,
 } from './external-bridge-registration';
 import { handleExternalBridgeAttemptError } from './external-bridge-attempt-error';
-import { useT } from '../i18n/locale';
 import {
   parseExternalCall,
   parseExternalCancellation as parseCancellation,
@@ -437,7 +436,6 @@ function useExternalGuard(
   runtime: ExternalRuntimeController,
   projectId: string,
   setError: StateSetter<string | null>,
-  t: (key: string, params?: Record<string, string | number>) => string,
 ) {
   const [pendingGuard, setPendingGuard] = useState<ExternalGuardRequest | null>(null);
   const confirmGuard = useCallback(async (id: string, allow: boolean) => {
@@ -448,9 +446,9 @@ function useExternalGuard(
       await bridge.confirmRealTool(id, allow);
       setPendingGuard((current) => (current?.id === id ? null : current));
     } catch (confirmationError) {
-      setError(t('工具确认未保存，请重试：{message}', { message: errorMessage(confirmationError) }));
+      setError(`The tool confirmation could not be saved. Please retry: ${errorMessage(confirmationError)}`);
     }
-  }, [runtime.runtimeRef, setError, t]);
+  }, [runtime.runtimeRef, setError]);
   useEffect(() => {
     const slot = runtime.runtimeRef.current;
     if (!slot) return undefined;
@@ -468,11 +466,10 @@ function useExternalGuard(
 export function useExternalAgentBridge(ctx: AgentContext, projectId: string): ExternalProposalController {
   const [snapshot, setSnapshot] = useState<ExternalProposalSnapshot>({ proposal: null, stale: false });
   const [error, setError] = useState<string | null>(null);
-  const t = useT();
   const runtime = useExternalRuntime(ctx, projectId, setSnapshot, setError);
   useExternalPolling(projectId, runtime, setError);
   const actions = useExternalActions(runtime.runtimeRef, setError);
-  const guard = useExternalGuard(runtime, projectId, setError, t);
+  const guard = useExternalGuard(runtime, projectId, setError);
   return {
     proposal: snapshot.proposal,
     proposalStale: snapshot.stale,

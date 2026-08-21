@@ -36,7 +36,7 @@ function consumeRun(words: { text: string }[], wi: number, run: ParsedRun, line:
     i++;
   }
   if (acc !== target) {
-    throw new Error(`timeline.md 第 ${line} 行: 文本与源口播不匹配（"${run.text.slice(0, 20)}"）——只能删词/恢复词，不能改写口播`);
+    throw new Error(`timeline.md line ${line}: text does not match the source speech ("${run.text.slice(0, 20)}") — you can only delete/restore words, not rewrite the speech`);
   }
   return i;
 }
@@ -45,24 +45,24 @@ function consumeRun(words: { text: string }[], wi: number, run: ParsedRun, line:
 interface WordPlan { item: TimelineItem; toDelete: number[]; toRestore: number[]; removeWhole: boolean }
 
 function planSegRows(item: TimelineItem, canonRows: SegRow[], parsedRows: ParsedSegRow[]): WordPlan {
-  if (!hasOperationalTranscript(item)) throw new Error(`「${item.name}」的转写已失效，请重新转写后再应用脚本编辑`);
+  if (!hasOperationalTranscript(item)) throw new Error(`The transcript for “${item.name}” is no longer valid — re-transcribe it before applying script edits`);
   const words = item.transcript!;
   const currentDeleted = new Set(item.deletedWordIdx ?? []);
   const bySn = new Map<number, ParsedSegRow>();
   for (const r of parsedRows) {
-    if (r.occurrence !== undefined) throw new Error(`timeline.md 第 ${r.line} 行: [s${r.sn}@${r.occurrence}] 重复占位暂不支持`);
-    if (bySn.has(r.sn)) throw new Error(`timeline.md 第 ${r.line} 行: [s${r.sn}] 出现两次（重放暂不支持）`);
+    if (r.occurrence !== undefined) throw new Error(`timeline.md line ${r.line}: [s${r.sn}@${r.occurrence}] repeated placeholders are not supported yet`);
+    if (bySn.has(r.sn)) throw new Error(`timeline.md line ${r.line}: [s${r.sn}] appears twice (replay is not supported yet)`);
     bySn.set(r.sn, r);
   }
   const knownSns = new Set(canonRows.map((r) => r.sn));
   for (const r of parsedRows) {
-    if (!knownSns.has(r.sn)) throw new Error(`timeline.md 第 ${r.line} 行: [s${r.sn}] 不在当前时间线上（新增/重放暂不支持）`);
+    if (!knownSns.has(r.sn)) throw new Error(`timeline.md line ${r.line}: [s${r.sn}] is not on the current timeline (adding/replay is not supported yet)`);
   }
   // v1: segment order within the item must be unchanged
   const parsedOrder = parsedRows.map((r) => r.sn);
   const canonOrder = canonRows.map((r) => r.sn).filter((sn) => bySn.has(sn));
   if (parsedOrder.join(',') !== canonOrder.join(',')) {
-    throw new Error(`「${item.name}」: 段落重排暂不支持（可整体移动素材行，不能在素材内部调换 [sN] 顺序）`);
+    throw new Error(`“${item.name}”: reordering segments is not supported yet (you can move a whole clip row, but not swap [sN] order inside a clip)`);
   }
 
   const desiredDeleted = new Set<number>();
@@ -102,12 +102,12 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
   const base = getState();
   const parsed = parseScript(md);
   if (options.trackId && parsed.trackId && options.trackId !== parsed.trackId) {
-    throw new Error('timeline.md 的轨道作用域与 apply_script 指定轨道不一致');
+    throw new Error('The track scope of timeline.md does not match the track passed to apply_script');
   }
   const trackId = options.trackId ?? parsed.trackId ?? undefined;
   const { model, stamp } = serializeTimeline(base, { trackId, showSilence: parsed.showSilence });
-  if (!parsed.stamp) throw new Error('缺少 script-stamp 注释——请保留 read_script 输出顶部的注释行');
-  if (parsed.stamp !== stamp) throw new Error('时间线已被外部修改（stale）——请重新 read_script 后再改');
+  if (!parsed.stamp) throw new Error('Missing the script-stamp comment — keep the comment line at the top of the read_script output');
+  if (parsed.stamp !== stamp) throw new Error('The timeline was changed elsewhere (stale) — run read_script again before editing');
 
   const items = itemById(base);
   const removed: string[] = [];
@@ -121,7 +121,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
 
   for (const canonTrack of model) {
     const parsedTrack = parsed.tracks.find((t) => t.track === canonTrack.track);
-    if (!parsedTrack) throw new Error(`缺少 ## ${canonTrack.track} 轨道段——删空轨道请显式删除行，不要删掉整段`);
+    if (!parsedTrack) throw new Error(`Missing the ## ${canonTrack.track} track section — to empty a track, delete its rows explicitly instead of dropping the whole section`);
 
     // canonical lookups for this track
     const canonSegByItem = new Map<string, SegRow[]>();
@@ -146,7 +146,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
     const transcriptItemBySource = new Map<string, string>();
     for (const [itemId] of canonSegByItem) {
       const it = items.get(itemId)!;
-      if (transcriptItemBySource.has(it.name)) throw new Error(`同轨有两个同名口播素材「${it.name}」——v1 暂不支持（先重命名素材）`);
+      if (transcriptItemBySource.has(it.name)) throw new Error(`Two transcript clips named “${it.name}” on the same track — not supported in v1 (rename one of them first)`);
       transcriptItemBySource.set(it.name, itemId);
     }
 
@@ -159,12 +159,12 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
         const canonical = silenceBySource.get(region.source) ?? [];
         const edited = region.rows.filter((row): row is ParsedSilenceRow => row.kind === 'silence');
         if (edited.length !== canonical.length) {
-          throw new Error(`「${region.source}」: silence 标记数量已改变——请保留标记并用 ~~...~~ 删除或用 → 压缩`);
+          throw new Error(`“${region.source}”: the number of silence markers changed — keep the markers and use ~~...~~ to delete or → to compress`);
         }
         edited.forEach((row, index) => {
           const canon = canonical[index]!;
           if (Math.abs(row.originalMs - canon.originalMs) > 1) {
-            throw new Error(`timeline.md 第 ${row.line} 行: silence 原始时长与源口播不一致`);
+            throw new Error(`timeline.md line ${row.line}: the silence's original duration does not match the source speech`);
           }
           const desired = row.struck ? 0 : row.targetMs;
           if (desired === undefined) {
@@ -180,7 +180,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
           else removed.push(`[gap ${row.frames}f]`);
         } else if (row.kind === 'clip') {
           const canon = clipByKey.get(`${region.source}#c${row.cn}`);
-          if (!canon) throw new Error(`timeline.md 第 ${row.line} 行: [c${row.cn}] 不在「${region.source}」下（新增片段请用 add 工具）`);
+          if (!canon) throw new Error(`timeline.md line ${row.line}: [c${row.cn}] is not under “${region.source}” (use the add tool to add new clips)`);
           if (row.struck) {
             removeIds.push(canon.itemId);
             removed.push(`${region.source} [c${row.cn}]`);
@@ -190,7 +190,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
           }
         } else if (row.kind === 'seg') {
           const itemId = transcriptItemBySource.get(region.source);
-          if (!itemId) throw new Error(`timeline.md 第 ${row.line} 行: 「${region.source}」不是本轨的口播素材`);
+          if (!itemId) throw new Error(`timeline.md line ${row.line}: “${region.source}” is not a transcript clip on this track`);
           const list = parsedSegByItem.get(itemId) ?? [];
           list.push(row);
           parsedSegByItem.set(itemId, list);
@@ -206,10 +206,10 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
       const plan = planSegRows(items.get(itemId)!, canonRows, parsedSegByItem.get(itemId) ?? []);
       if (plan.removeWhole) {
         removeIds.push(itemId);
-        removed.push(`${plan.item.name}（整段口播）`);
+        removed.push(`${plan.item.name} (entire speech)`);
       } else {
-        if (plan.toDelete.length) changes.push(`${plan.item.name}: 删 ${plan.toDelete.length} 词`);
-        if (plan.toRestore.length) changes.push(`${plan.item.name}: 恢复 ${plan.toRestore.length} 词`);
+        if (plan.toDelete.length) changes.push(`${plan.item.name}: deleted ${plan.toDelete.length} words`);
+        if (plan.toRestore.length) changes.push(`${plan.item.name}: restored ${plan.toRestore.length} words`);
         wordPlans.push(plan);
       }
     }
@@ -231,7 +231,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
   }
   for (const plan of silencePlans) {
     commands.setGapCap(plan.row.itemId, plan.row.afterWordIndex, plan.maxMs);
-    changes.push(`${items.get(plan.row.itemId)?.name ?? plan.row.itemId}: 调整停顿`);
+    changes.push(`${items.get(plan.row.itemId)?.name ?? plan.row.itemId}: adjusted pause`);
   }
   for (const id of removeIds) commands.removeItem(id);
   // repack: body order = playback order; frames re-derived from live durations.
@@ -251,7 +251,7 @@ export function applyScript(getState: () => TimelineState, commands: Cmds, md: s
       orderedIds.push(tok.id);
       if (live.startFrame !== cursor) {
         starts[tok.id] = cursor;
-        changes.push(`${live.name}: 移到 ${cursor}f`);
+        changes.push(`${live.name}: moved to ${cursor}f`);
       }
       cursor += live.durationInFrames;
     }

@@ -35,9 +35,11 @@ function silentWavBytes(seconds = 1): Uint8Array {
 }
 
 const workRoot = await mkdtemp(join(tmpdir(), 'occ84-e2e-'));
-await mkdir(join(workRoot, '素材盘'), { recursive: true });
-const importRoot = await realpath(join(workRoot, '素材盘'));
-const sourceName = '访谈素材.wav';
+// '\u7d20\u6750\u76d8' = "footage drive", '\u8bbf\u8c08\u7d20\u6750' = "interview footage" —
+// non-ASCII directory and filename must survive the import round-trip byte for byte.
+await mkdir(join(workRoot, '\u7d20\u6750\u76d8'), { recursive: true });
+const importRoot = await realpath(join(workRoot, '\u7d20\u6750\u76d8'));
+const sourceName = '\u8bbf\u8c08\u7d20\u6750.wav';
 const sourcePath = join(importRoot, sourceName);
 await writeFile(sourcePath, silentWavBytes());
 

@@ -49,12 +49,12 @@ async function serveR2Media(
       sendError(res, 404, `media not found: ${name}`);
       return;
     }
-    if (!resolved.cached) logger.info(`[R2 回源] ${name} (${resolved.bytes} bytes)`);
+    if (!resolved.cached) logger.info(`[R2 origin fetch] ${name} (${resolved.bytes} bytes)`);
     res.setHeader(MEDIA_AUTHORITY_HEADER, 'server');
     await serveDiskFile(req, res, resolved.file);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error(`[R2 回源] ${name}: ${message}`);
+    logger.error(`[R2 origin fetch] ${name}: ${message}`);
     if (!res.headersSent) {
       if (error instanceof UploadTooLargeError) sendError(res, 413, message);
       else sendError(res, 502, `R2 read failed: ${message}`);

@@ -49,7 +49,7 @@ const base: DirectoryImportedFile = {
   assert.equal(asset.durationInFrames, 300, 'source FPS never replaces project FPS');
   await assert.rejects(
     directoryFileToAsset(original, 30, { createId: () => 'asset-unsafe' }),
-    /尚未完成兼容性处理/,
+    /before compatibility processing completed/,
     'ordinary watched video descriptors must be normalized before renderer publication',
   );
 }

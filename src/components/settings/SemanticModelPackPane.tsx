@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 import {
   fetchModelPackCatalog,
@@ -12,11 +11,10 @@ const SEMANTIC_PACK_ID = 'visual-semantics-lite' as const;
 const PACK_POLL_MS = 1500;
 
 /**
- * 画面语义搜索模型包管理（设置 → 本地模型 → 画面语义搜索）。
- * 只负责模型包的探测 / 下载 / 状态；索引与搜索在媒体池面板内完成。
+ * Model pack management for visual semantic search (Settings → Local models → Visual semantic search).
+ * Only handles probing / downloading / status of the pack; indexing and search happen in the Media Pool panel.
  */
 export function SemanticModelPackPane() {
-  const t = useT();
   const [status, setStatus] = useState<ModelPackStatus | 'checking' | 'skipped'>('checking');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -72,19 +70,19 @@ export function SemanticModelPackPane() {
     <section style={sectionStyle} aria-labelledby="semantic-pack-heading">
       <div>
         <div id="semantic-pack-heading" style={{ fontSize: 12.5, fontWeight: 650 }}>
-          {t('画面语义搜索模型包')}
+          Visual semantic search model pack
         </div>
         <div style={{ marginTop: 3, fontSize: 11.5, color: theme.textDim }}>
-          {t('按画面内容搜索素材的本地向量模型（约 178MB）。模型在本机运行，素材不会上传。')}
+          A local vector model for searching media by visual content (~178 MB). It runs on this device and never uploads your media.
         </div>
       </div>
-      {error && <div role="alert" style={errorStyle}>{t('操作失败：{err}', { err: error })}</div>}
-      {status === 'checking' && <div style={hintStyle}>{t('读取中…')}</div>}
-      {status === 'skipped' && <div style={hintStyle}>{t('未检测到模型包服务。')}</div>}
+      {error && <div role="alert" style={errorStyle}>{`Operation failed: ${error}`}</div>}
+      {status === 'checking' && <div style={hintStyle}>Loading…</div>}
+      {status === 'skipped' && <div style={hintStyle}>The model-pack service is unavailable.</div>}
       {absent && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
           <button type="button" style={{ ...smallBtn, ...primaryBtn }} disabled={busy} onClick={() => void install()}>
-            {t('下载并启用')}
+            Download and enable
           </button>
         </div>
       )}
@@ -92,13 +90,13 @@ export function SemanticModelPackPane() {
         <div style={{ marginTop: 8 }}>
           <progress max={100} value={progress} style={{ width: '100%', height: 5, accentColor: theme.accent }} />
           <div style={{ marginTop: 4, fontSize: 11, color: theme.textDim }}>
-            {Math.round(progress)}% · {t('下载中…')}
+            {Math.round(progress)}% · Downloading…
           </div>
         </div>
       )}
       {ready && (
         <div style={hintStyle}>
-          {t('已安装。打开媒体池 → 语义搜索面板即可索引素材并按画面搜索。')}
+          Installed. Open Media Pool → Semantic Search to index media and search by visual content.
         </div>
       )}
     </section>

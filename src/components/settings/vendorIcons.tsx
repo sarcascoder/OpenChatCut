@@ -63,7 +63,7 @@ const SVG_ICONS: Partial<Record<VendorId, SvgIcon>> = {
   deepseek: { svg: deepseekSvg },
   mistral: { svg: mistralSvg },
   minimax: { svg: minimaxSvg },
-  stepfun: { svg: stepfunSvg },                         // Official StepFun (阶跃星辰) color mark
+  stepfun: { svg: stepfunSvg },                         // Official StepFun color mark
   fishaudio: { svg: fishaudioSvg, tint: '#0F9D8B' },    // Official single-color mark + brand teal
   xiaomi: { svg: xiaomimimoSvg, tint: '#FF6900' },      // Official Xiaomi MiMo mark + brand orange
   mureka: { svg: murekaSvg },                           // Official Mureka gradient mark

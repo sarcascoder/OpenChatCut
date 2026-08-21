@@ -2,11 +2,11 @@
 // We cycle one
 // per running turn instead of a plain "Thinking about...".
 export const THINKING_PHRASES: string[] = [
-  '拉焦中', '推轨道车', '检查片门', '打板儿', '同期声走起', '走位走位',
-  'Action!', '卡点卡点', '架灯架灯', '找感觉', '推翻重来', '勘景去',
-  '摇一个', '推推推', '跟上跟上', '甩一个', '手持走起', '摇臂升',
-  '拉远点', '给个全景', '怼近点', '跳切跳切', '硬切', '叠化过渡',
-  '匹配剪辑', '交叉来', '蒙太奇一下', 'L切走起', '接胶片',
+  'Pulling focus', 'Pushing the dolly', 'Checking the gate', 'Clapping the slate', 'Rolling sound', 'Blocking the scene',
+  'Action!', 'Hitting the beat', 'Rigging lights', 'Finding the vibe', 'Take two', 'Scouting locations',
+  'Panning over', 'Pushing in', 'Tracking along', 'Whip panning', 'Going handheld', 'Craning up',
+  'Pulling wide', 'Going wide', 'Punching in', 'Jump cutting', 'Hard cutting', 'Cross dissolving',
+  'Match cutting', 'Cross cutting', 'Montage time', 'Rolling an L-cut', 'Splicing film',
 ];
 
 /** deterministic pick so a given turn keeps one phrase (index varies by seed). */

@@ -14,7 +14,6 @@ import { motionGraphicRenderFilename, motionGraphicRenderKey } from './motionGra
 import type {
   ExportProgress,
   StateSetter,
-  Translate,
   UseExportWorkflowOptions,
 } from './exportWorkflowTypes';
 
@@ -26,7 +25,6 @@ interface ArtifactExportContext {
   options: UseExportWorkflowOptions;
   setBusy: StateSetter<string | null>;
   setProgress: StateSetter<ExportProgress | null>;
-  t: Translate;
 }
 
 
@@ -57,12 +55,12 @@ async function exportMgBatch(context: ArtifactExportContext, signal?: AbortSigna
   for (let index = 0; index < mgItems.length; index++) {
     signal?.throwIfAborted();
     const item = mgItems[index];
-    context.setBusy(context.t('渲染 MG {i}/{n} · {name}', { i: index + 1, n: mgItems.length, name: item.name }));
+    context.setBusy(`Rendering MG ${index + 1}/${mgItems.length} · ${item.name}`);
     context.setProgress((current) => current ? {
       ...current,
       phase: 'rendering',
       percent: Math.round((index / mgItems.length) * 95),
-      detail: context.t('正在渲染第 {i}/{n} 个动态图层', { i: index + 1, n: mgItems.length }),
+      detail: `Rendering motion layer ${index + 1}/${mgItems.length}`,
     } : current);
     signal?.throwIfAborted();
     const rendered = await renderClipMovBlob(state, item, { signal });
@@ -78,7 +76,7 @@ async function exportMgBatch(context: ArtifactExportContext, signal?: AbortSigna
   }
   const destinationId = exportHistoryDestinationId(context.destination);
   void recordExport({
-    name: `${mgItems.length} 个 MG · ProRes 4444`,
+    name: `${mgItems.length} MG · ProRes 4444`,
     format: 'video',
     codec: 'prores',
     createdAt: Date.now(),
@@ -89,12 +87,12 @@ async function exportMgBatch(context: ArtifactExportContext, signal?: AbortSigna
 async function exportSubtitles(context: ArtifactExportContext, signal?: AbortSignal): Promise<void> {
   signal?.throwIfAborted();
   const { subtitleCaptions, subtitleFormat, state, base } = context.options;
-  if (!subtitleCaptions) throw new Error(context.t('请先开启字幕'));
+  if (!subtitleCaptions) throw new Error('Turn on captions first');
   const text = subtitleFormat === 'srt'
     ? captionsToSrt(subtitleCaptions, state.items, state.fps)
     : captionsToTxt(subtitleCaptions, state.items, state.fps);
   signal?.throwIfAborted();
-  if (!text) throw new Error(context.t('当前字幕轨没有可导出的内容'));
+  if (!text) throw new Error('The current caption track has nothing to export');
   const filename = `${base}.${subtitleFormat}`;
   await writeArtifactBlob(
     context,
@@ -130,12 +128,12 @@ async function renderXmlMgItems(
   for (let index = 0; index < items.length; index++) {
     signal?.throwIfAborted();
     const [renderKey, item] = items[index];
-    context.setBusy(context.t('渲染 MG {i}/{n} · {name}', { i: index + 1, n: items.length, name: item.name }));
+    context.setBusy(`Rendering MG ${index + 1}/${items.length} · ${item.name}`);
     context.setProgress((current) => current ? {
       ...current,
       phase: 'rendering',
       percent: Math.round((index / items.length) * 90),
-      detail: context.t('正在渲染第 {i}/{n} 个动态图层', { i: index + 1, n: items.length }),
+      detail: `Rendering motion layer ${index + 1}/${items.length}`,
     } : current);
     try {
       signal?.throwIfAborted();
@@ -199,7 +197,7 @@ async function exportXml(context: ArtifactExportContext, signal?: AbortSignal): 
   if (failedRenderNames.length) {
     context.setProgress((current) => current ? {
       ...current,
-      detail: context.t('{n} 个动态图层渲染失败，XML 已保留占位', { n: failedRenderNames.length }),
+      detail: `${failedRenderNames.length} motion layers failed to render; placeholders were kept in the XML`,
     } : current);
   }
 }

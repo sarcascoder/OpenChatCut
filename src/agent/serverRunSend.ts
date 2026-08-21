@@ -129,7 +129,7 @@ async function prepareServerRunPayload(
     || refs.running.current) return null;
   const choice = getActiveAgentModelChoice();
   if (!choice || (choice.backend !== 'api' && choice.backend !== 'codex')) {
-    environment.appendMessage({ role: 'error', text: '服务端运行仅支持已配置的 API / Codex 模型。' });
+    environment.appendMessage({ role: 'error', text: 'Server-side runs only support configured API / Codex models.' });
     return null;
   }
   const settings = refs.settings.current;
@@ -414,7 +414,7 @@ async function confirmUncertainAdmission(
       if (!active.abort.signal.aborted) {
         surfaceAdmissionFailure(
           environment,
-          `服务端任务未能启动：${error instanceof Error ? error.message : String(error)}`,
+          `The server-side task failed to start: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
       settleUnacceptedFailure(environment, active, true);
@@ -494,7 +494,7 @@ export async function sendServerRun(
   if (!await acquireServerRunOwnership(environment.projectId, prepared.payload.runId)) {
     environment.appendMessage({
       role: 'error',
-      text: '服务端任务已由另一个页面接管，本页不会重复执行。',
+      text: 'The server-side task has been taken over by another page; it will not run again here.',
     });
     return;
   }

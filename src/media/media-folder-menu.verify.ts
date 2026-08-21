@@ -8,15 +8,15 @@ const panel = readFileSync(new URL('./MediaPoolPanel.tsx', import.meta.url), 'ut
 const menus = readFileSync(new URL('./MediaPoolMenus.tsx', import.meta.url), 'utf8');
 const grid = readFileSync(new URL('./MediaPoolGrid.tsx', import.meta.url), 'utf8');
 
-assert.match(card, /onContextMenu/, '文件夹卡片必须响应右键');
-assert.match(card, /onOpenMenu/, '文件夹卡片必须暴露菜单入口');
-assert.match(card, /cc-folder-more/, '文件夹卡片应有 ⋯ 按钮');
-assert.match(overlays, /export function FolderMenuPortal/, '必须有文件夹菜单 portal');
-assert.match(overlays, /只能删除空文件夹/, '非空文件夹删除应禁用并提示');
+assert.match(card, /onContextMenu/, 'folder card must respond to right-click');
+assert.match(card, /onOpenMenu/, 'folder card must expose a menu entry point');
+assert.match(card, /cc-folder-more/, 'folder card should have a ⋯ button');
+assert.match(overlays, /export function FolderMenuPortal/, 'a folder-menu portal must exist');
+assert.match(overlays, /Only empty folders can be deleted/, 'deleting a non-empty folder must be disabled with a hint');
 assert.match(menus, /FolderMenuPortal/, 'domain-local media menus must mount the folder portal');
-assert.match(panel, /MediaPoolMenus/, '素材池面板必须挂载提取后的文件夹菜单');
-assert.match(panel, /onOpenFolderMenu/, '网格必须接收文件夹菜单回调');
-assert.match(grid, /onOpenFolderMenu/, '网格必须把文件夹菜单传给卡片');
-assert.match(panel, /currentFolderId === state\.id/, '删除非当前文件夹时不得跳转导航');
+assert.match(panel, /MediaPoolMenus/, 'the media pool panel must mount the extracted folder menu');
+assert.match(panel, /onOpenFolderMenu/, 'the grid must receive the folder-menu callback');
+assert.match(grid, /onOpenFolderMenu/, 'the grid must pass the folder menu down to the card');
+assert.match(panel, /currentFolderId === state\.id/, 'deleting a folder other than the current one must not navigate away');
 
-console.log('media-folder-menu.verify: ok (右键/⋯/portal/空文件夹删除/导航)');
+console.log('media-folder-menu.verify: ok (right-click/⋯/portal/empty-folder delete/navigation)');

@@ -1,4 +1,4 @@
-// Runnable check: `npx tsx src/persist/version-store.check.ts`（挂 verify:persist，随 pretest 执行）。
+// Runnable check: `npx tsx src/persist/version-store.check.ts` (wired into verify:persist, runs with pretest).
 // Round-trip versionStore named project snapshots.
 // through a minimal in-memory IndexedDB shim; asserts save→list (newest-first),
 // restore-shape (migrateProjectDoc-clean doc), delete, and corrupt-entry drop.
@@ -32,9 +32,9 @@ const doc = docFromTimeline({ fps: 30, width: 1920, height: 1080, selectedId: nu
 assert.deepStrictEqual(await listVersions('p1'), []);
 
 // save → list (newest-first)
-const v1 = await saveVersion('p1', '第一版', doc);
+const v1 = await saveVersion('p1', 'First cut', doc);
 await new Promise((r) => setTimeout(r, 2)); // ensure createdAt strictly increases
-const v2 = await saveVersion('p1', '第二版', doc);
+const v2 = await saveVersion('p1', 'Second cut', doc);
 const listed = await listVersions('p1');
 assert.strictEqual(listed.length, 2);
 assert.strictEqual(listed[0].id, v2.id, 'newest first');
@@ -57,7 +57,7 @@ assert.strictEqual(afterDelete[0].id, v1.id);
 // Read-time migration is in-memory only; listing cannot rewrite legacy snapshot bytes.
 const legacyVersions = [{
   id: 'legacy',
-  name: '旧版本',
+  name: 'Legacy snapshot',
   createdAt: 1,
   doc: { ...doc, version: 2 },
 }];
@@ -69,9 +69,9 @@ assert.strictEqual(JSON.stringify(mem.get('versions:legacy')), legacyBytes);
 
 // corrupt entry dropped on load (missing name, and a doc that fails migration)
 mem.set('versions:p3', [
-  { id: 'ok', name: '正常', createdAt: 1, doc },
+  { id: 'ok', name: 'Healthy', createdAt: 1, doc },
   { id: 'bad1', createdAt: 2, doc }, // missing name
-  { id: 'bad2', name: '坏文档', createdAt: 3, doc: { nope: true } }, // fails migrateProjectDoc
+  { id: 'bad2', name: 'Broken doc', createdAt: 3, doc: { nope: true } }, // fails migrateProjectDoc
   'not-even-an-object',
 ]);
 const p3 = await listVersions('p3');

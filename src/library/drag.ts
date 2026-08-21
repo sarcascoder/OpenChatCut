@@ -1,6 +1,5 @@
 // Shared drag payload between resource library cards and the timeline.
 // MIME is private so OS file drops still work on other surfaces.
-import { t } from '../i18n/locale';
 import { setEditorDrag } from '../editor/editorDrag';
 
 export const LIBRARY_DRAG_MIME = 'application/x-openchatcut-library';
@@ -74,12 +73,12 @@ export function isLibraryPayload(p: LibraryDragPayload | null): p is LibraryDrag
 /** Human label for drop-target highlight / toast title */
 export function libraryDragLabel(kind: LibraryDragKind): string {
   switch (kind) {
-    case 'transition': return t('转场');
-    case 'fx': return t('特效');
+    case 'transition': return 'Transitions';
+    case 'fx': return 'Effects';
     case 'lut': return 'LUT';
-    case 'zoom': return t('缩放');
-    case 'sound': return t('音效');
+    case 'zoom': return 'Zoom';
+    case 'sound': return 'Sound Effects';
     case 'template': return 'MG';
-    case 'audio-fx': return t('音频效果');
+    case 'audio-fx': return 'Audio FX';
   }
 }

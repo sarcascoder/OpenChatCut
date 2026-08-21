@@ -143,7 +143,7 @@ function automaticVersionEntries(value: unknown, before: ProjectDoc, now: number
   }
   const added = [{
     id: randomUUID(),
-    name: '离线编辑前自动版本',
+    name: 'Automatic version before offline edit',
     createdAt: now,
     automatic: true,
     doc: before,

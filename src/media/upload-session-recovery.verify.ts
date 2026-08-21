@@ -18,7 +18,7 @@ await assert.rejects(
     retryExpiredMultipartSession(async () => {
       throw new Error('upload session not found or expired');
     }),
-  /上传会话已失效，请重新导入/,
+  /Upload session expired; re-import/,
 );
 
 console.log('upload-session-recovery.verify: stale sessions retry once');

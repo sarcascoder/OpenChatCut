@@ -88,7 +88,7 @@ export function transitionCandidates(defs: CustomTransitionDef[], transitions: T
   for (const t of transitions) {
     if (t.type !== 'custom-shader' || !t.customFrag || seenFrag.has(t.customFrag)) continue;
     seenFrag.add(t.customFrag);
-    const name = t.customLabel ?? '自定义转场';
+    const name = t.customLabel ?? 'Custom Transition';
     // Only uniform values, infer the conservative range of adjustable properties
     const props: PluginNumberProp[] = Object.entries(t.customUniforms ?? {}).map(([k, v]) => ({
       key: k.replace(/^u_/, ''),
@@ -147,7 +147,7 @@ export function zoomCandidates(items: TimelineItem[]): ExportCandidate[] {
     const signature = JSON.stringify({ envelope, magnification, x: z.focalPointX, y: z.focalPointY });
     if (seen.has(signature)) continue;
     seen.add(signature);
-    const name = z.label ?? `${it.name} 缩放`;
+    const name = z.label ?? `${it.name} Zoom`;
     out.push({
       key: `zoom:${it.id}`,
       label: name,

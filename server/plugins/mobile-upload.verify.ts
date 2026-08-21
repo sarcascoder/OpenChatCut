@@ -13,9 +13,8 @@ let creates = 0;
 let reads = 0;
 let deletes = 0;
 const controls = {
-  async createSession(locale: 'zh' | 'en' = 'zh') {
+  async createSession() {
     creates += 1;
-    assert.equal(locale, 'en');
     return snapshot;
   },
   getSession(id: string) {

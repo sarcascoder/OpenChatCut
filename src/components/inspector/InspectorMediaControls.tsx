@@ -3,7 +3,6 @@ import { theme } from '../../theme';
 import type { TimelineItem, TransitionItem, TransitionType, ZoomEffect, ZoomShape } from '../../editor/types';
 import { AUDIO_TRANSITION_ORDER, TRANSITION_LABELS, TRANSITION_ORDER, ZOOM_SHAPE_LABELS, ZOOM_SHAPE_ORDER } from '../../editor/types';
 import type { SelectedPreviewStatus } from '../../gl/previewAdapter';
-import { useT } from '../../i18n/locale';
 import { showAppToast } from '../../ui/appToast';
 import { Icon } from '../icons';
 import { SliderRow } from './InspectorKeyframeControls';
@@ -21,7 +20,6 @@ export function IsolateVoiceControl({
   item: TimelineItem;
   onIsolate: (action: 'apply' | 'clear', strength?: number) => void | Promise<void>;
 }) {
-  const t = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [strength, setStrength] = useState(item.denoiseStrength ?? 70);
@@ -31,11 +29,11 @@ export function IsolateVoiceControl({
   const run = (action: 'apply' | 'clear', nextStrength?: number) => {
     setBusy(true);
     setErr(null);
-    if (action === 'apply') showAppToast(t('人声隔离处理中…'), { ms: 60_000 });
+    if (action === 'apply') showAppToast('Isolating voice…', { ms: 60_000 });
     void Promise.resolve(onIsolate(action, nextStrength))
       .then(() => {
-        if (action === 'clear') showAppToast(t('已清除人声隔离'));
-        else showAppToast(t('人声隔离已应用'));
+        if (action === 'clear') showAppToast('Voice isolation cleared');
+        else showAppToast('Voice isolation applied');
       })
       .catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : String(e);
@@ -48,7 +46,7 @@ export function IsolateVoiceControl({
   return (
     <div>
       <SliderRow
-        label={t('隔离强度')}
+        label="Isolation strength"
         val={strength}
         min={0}
         max={100}
@@ -63,11 +61,11 @@ export function IsolateVoiceControl({
           type="button"
           className="cc-insp-btn"
           disabled={busy || !canApply}
-          title={!canApply ? t('需先上传到媒体池（/media/uploads）') : t('用本机 ffmpeg 频谱降噪，保留原轨')}
+          title={!canApply ? 'Upload to the media pool first (/media/uploads)' : 'Local ffmpeg spectral denoise; original track kept'}
           style={{ flex: 1, fontSize: 11 }}
           onClick={() => run('apply', strength)}
         >
-          {busy ? t('处理中…') : active ? t('重新隔离') : t('应用人声隔离')}
+          {busy ? 'Processing…' : active ? 'Re-isolate' : 'Apply voice isolation'}
         </button>
         {active && (
           <button
@@ -77,14 +75,14 @@ export function IsolateVoiceControl({
             style={{ fontSize: 11 }}
             onClick={() => run('clear')}
           >
-            {t('清除')}
+            Clear
           </button>
         )}
       </div>
       <div className="cc-insp-muted" style={{ fontSize: 10, marginTop: 4 }}>
         {active
-          ? t('已应用 · 播放用隔离音轨 · master 不变')
-          : t('开箱 ffmpeg 降噪（非 DeepFilterNet3）')}
+          ? 'Applied · playback uses isolated audio · master unchanged'
+          : 'Open-box ffmpeg denoise (not DeepFilterNet3)'}
       </div>
       {err && (
         <div style={{ fontSize: 10, color: 'var(--cc-danger, #f66)', marginTop: 4 }}>{err}</div>
@@ -94,12 +92,11 @@ export function IsolateVoiceControl({
 }
 
 export function SpeedControl({ item, mixed, onChange }: { item: TimelineItem; mixed?: boolean; onChange: (rate: number) => void }) {
-  const t = useT();
   const rate = item.playbackRate ?? 1;
   return (
     <div>
       <SliderRow
-        label={t('变速')}
+        label="Speed"
         val={rate}
         mixed={mixed}
         min={0.25}
@@ -129,7 +126,7 @@ export function SpeedControl({ item, mixed, onChange }: { item: TimelineItem; mi
         ))}
       </div>
       <div className="cc-insp-muted" style={{ fontSize: 10, marginTop: 4 }}>
-        {t('保调变速（预览/导出）· 时长随速率伸缩并波纹合缝')}
+        Pitch-preserving speed (preview/export) · duration scales with rate, ripples later clips
       </div>
     </div>
   );
@@ -137,7 +134,6 @@ export function SpeedControl({ item, mixed, onChange }: { item: TimelineItem; mi
 
 // fade in/out (seconds) — opacity ramp for visual clips, volume ramp for audio.
 export function FadeControl({ item, mixed, fps, onChange }: { item: TimelineItem; mixed?: Partial<Record<keyof FadePatch, boolean>>; fps: number; onChange: (f: FadePatch) => void }) {
-  const t = useT();
   const maxSec = Math.max(0.1, item.durationInFrames / fps);
   const row = (label: string, frames: number | undefined, key: keyof FadePatch) => {
     const sec = (frames ?? 0) / fps;
@@ -159,26 +155,25 @@ export function FadeControl({ item, mixed, fps, onChange }: { item: TimelineItem
   };
   return (
     <div className="cc-insp-stack">
-      {row(t('淡入'), item.fadeInFrames, 'fadeInFrames')}
-      {row(t('淡出'), item.fadeOutFrames, 'fadeOutFrames')}
+      {row('Fade In', item.fadeInFrames, 'fadeInFrames')}
+      {row('Fade Out', item.fadeOutFrames, 'fadeOutFrames')}
     </div>
   );
 }
 
 // text clip content controls (text/fontSize/color/weight/align) — props-backed.
 export function TextControl({ item, mixed, onPropChange }: { item: TimelineItem; mixed?: (key: string) => boolean; onPropChange: (key: string, value: unknown) => void }) {
-  const t = useT();
   const p = item.props ?? {};
   const selStyle: CSSProperties = { background: theme.bg, color: theme.text, border: `0.5px solid ${theme.borderLight}`, borderRadius: 4, padding: '3px 5px' };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label style={{ fontSize: 11, color: theme.textDim }}>
-        <div style={{ marginBottom: 4 }}>{t('文字内容')}</div>
+        <div style={{ marginBottom: 4 }}>Text content</div>
         <textarea value={mixed?.('text') ? '' : String(p.text ?? '')} placeholder={mixed?.('text') ? '—' : undefined} onChange={(e) => onPropChange('text', e.target.value)} rows={2}
           style={{ width: '100%', padding: '6px 8px', background: theme.bg, color: theme.text, border: `0.5px solid ${theme.borderLight}`, borderRadius: 5, resize: 'vertical', fontFamily: 'inherit', fontSize: 12 }} />
       </label>
       <label style={{ fontSize: 11, color: theme.textDim }}>
-        <div style={{ marginBottom: 4 }}>{t('字号')} <span style={{ opacity: 0.7 }}>{mixed?.('fontSize') ? '—' : Number(p.fontSize ?? 96)}</span></div>
+        <div style={{ marginBottom: 4 }}>Font Size <span style={{ opacity: 0.7 }}>{mixed?.('fontSize') ? '—' : Number(p.fontSize ?? 96)}</span></div>
         {mixed?.('fontSize') ? <input type="number" min={24} max={300} step={2} placeholder="—" onBlur={(e) => {
           const value = Number(e.currentTarget.value);
           if (e.currentTarget.value && Number.isFinite(value)) onPropChange('fontSize', value);
@@ -186,20 +181,20 @@ export function TextControl({ item, mixed, onPropChange }: { item: TimelineItem;
       </label>
       <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         <label style={{ fontSize: 11, color: theme.textDim, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {t('颜色')} {mixed?.('color') && <span>—</span>} <input type="color" value={String(p.color ?? '#ffffff')} onChange={(e) => onPropChange('color', e.target.value)} />
+          Color {mixed?.('color') && <span>—</span>} <input type="color" value={String(p.color ?? '#ffffff')} onChange={(e) => onPropChange('color', e.target.value)} />
         </label>
         <label style={{ fontSize: 11, color: theme.textDim, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {t('对齐')}
+          Align
           <select value={mixed?.('align') ? '__mixed' : String(p.align ?? 'center')} onChange={(e) => onPropChange('align', e.target.value)} style={selStyle}>
             {mixed?.('align') && <option value="__mixed" disabled>—</option>}
-            <option value="left">{t('左')}</option><option value="center">{t('中')}</option><option value="right">{t('右')}</option>
+            <option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
           </select>
         </label>
         <label style={{ fontSize: 11, color: theme.textDim, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {t('粗细')}
+          Weight
           <select value={mixed?.('fontWeight') ? '__mixed' : String(p.fontWeight ?? 700)} onChange={(e) => onPropChange('fontWeight', Number(e.target.value))} style={selStyle}>
             {mixed?.('fontWeight') && <option value="__mixed" disabled>—</option>}
-            <option value="400">{t('常规')}</option><option value="700">{t('粗体')}</option><option value="900">{t('特粗')}</option>
+            <option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option>
           </select>
         </label>
       </div>
@@ -219,53 +214,52 @@ export function ZoomControl({ zoom, mixed, onChange, getLocalFrame, fps, onSetKe
   onSetKeyframe: (frame: number, fx: number, fy: number, mag: number) => void;
   onRemoveKeyframe: (frame: number) => void;
 }) {
-  const t = useT();
   const localFrame = getLocalFrame();
   const hasKeyframes = !!zoom?.reframeCurve?.keyframes.length;
   return (
     <div className="cc-insp-stack">
       <label className="cc-insp-row">
-        <span className="cc-insp-label">{t('曲线')}</span>
+        <span className="cc-insp-label">Curve</span>
         <select className="cc-insp-select" value={mixed?.shape ? '__mixed' : zoom?.shape ?? ''} onChange={(e) => {
           const v = e.target.value as ZoomShape | '';
           if (!v) onChange(null);
           else onChange({ shape: v });
         }}>
           {mixed?.shape && <option value="__mixed" disabled>—</option>}
-          <option value="">{t('无')}</option>
-          {ZOOM_SHAPE_ORDER.map((k) => <option key={k} value={k}>{t(ZOOM_SHAPE_LABELS[k])}</option>)}
+          <option value="">None</option>
+          {ZOOM_SHAPE_ORDER.map((k) => <option key={k} value={k}>{ZOOM_SHAPE_LABELS[k]}</option>)}
         </select>
       </label>
       {zoom && (
         <>
-          <SliderRow label={t('倍数')} val={zoom.magnification ?? 1.5} min={1} max={4} step={0.05} fmt={`${(zoom.magnification ?? 1.5).toFixed(2)}×`} mixed={mixed?.magnification}
+          <SliderRow label="Magnification" val={zoom.magnification ?? 1.5} min={1} max={4} step={0.05} fmt={`${(zoom.magnification ?? 1.5).toFixed(2)}×`} mixed={mixed?.magnification}
             onReset={() => onChange({ magnification: 1.5, reframeCurve: undefined })} resetDisabled={!mixed?.magnification && !hasKeyframes && Math.abs((zoom.magnification ?? 1.5) - 1.5) < 1e-6}
             onChange={(v) => onChange({ magnification: v })} />
-          <SliderRow label={t('焦点X')} val={zoom.focalPointX ?? 0.5} min={0} max={1} step={0.01} fmt={`${compactNumber((zoom.focalPointX ?? 0.5) * 100)}%`} inputScale={100} mixed={mixed?.focalPointX}
+          <SliderRow label="Focal X" val={zoom.focalPointX ?? 0.5} min={0} max={1} step={0.01} fmt={`${compactNumber((zoom.focalPointX ?? 0.5) * 100)}%`} inputScale={100} mixed={mixed?.focalPointX}
             onReset={() => onChange({ focalPointX: 0.5, reframeCurve: undefined })} resetDisabled={!mixed?.focalPointX && !hasKeyframes && Math.abs((zoom.focalPointX ?? 0.5) - 0.5) < 1e-6}
             onChange={(v) => onChange({ focalPointX: v })} />
-          <SliderRow label={t('焦点Y')} val={zoom.focalPointY ?? 0.5} min={0} max={1} step={0.01} fmt={`${compactNumber((zoom.focalPointY ?? 0.5) * 100)}%`} inputScale={100} mixed={mixed?.focalPointY}
+          <SliderRow label="Focal Y" val={zoom.focalPointY ?? 0.5} min={0} max={1} step={0.01} fmt={`${compactNumber((zoom.focalPointY ?? 0.5) * 100)}%`} inputScale={100} mixed={mixed?.focalPointY}
             onReset={() => onChange({ focalPointY: 0.5, reframeCurve: undefined })} resetDisabled={!mixed?.focalPointY && !hasKeyframes && Math.abs((zoom.focalPointY ?? 0.5) - 0.5) < 1e-6}
             onChange={(v) => onChange({ focalPointY: v })} />
           <div className="cc-insp-actions">
             <button
               type="button"
               onClick={() => onSetKeyframe(getLocalFrame(), zoom.focalPointX ?? 0.5, zoom.focalPointY ?? 0.5, zoom.magnification ?? 1.5)}
-              title={t('在播放头记录焦点+倍数为关键帧')}
+              title="Record focal point + magnification as a keyframe at the playhead"
               className="cc-insp-btn"
             >
-              <Icon name="diamond" size={12} />{t('关键帧')}
+              <Icon name="diamond" size={12} />Keyframes
             </button>
             <span className="cc-insp-muted">@ {(localFrame / fps).toFixed(2)}s</span>
           </div>
           {(zoom.reframeCurve?.keyframes.length ?? 0) > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontSize: 10.5, color: theme.textDim, opacity: 0.8 }}>{t('关键帧（覆盖曲线，逐帧插值）')}</div>
+              <div style={{ fontSize: 10.5, color: theme.textDim, opacity: 0.8 }}>Keyframes (override the curve; interpolated per frame)</div>
               {zoom.reframeCurve!.keyframes.map((k) => (
                 <div key={k.frame} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: theme.textDim }}>
                   <span style={{ fontVariantNumeric: 'tabular-nums', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="diamond" size={11} />{(k.frame / fps).toFixed(2)}s</span>
                   <span style={{ opacity: 0.8 }}>{k.magnification.toFixed(2)}× · ({Math.round(k.focalPointX * 100)},{Math.round(k.focalPointY * 100)})</span>
-                  <button onClick={() => onRemoveKeyframe(k.frame)} title={t('删除关键帧')} style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 12, marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}><Icon name="x" size={12} /></button>
+                  <button onClick={() => onRemoveKeyframe(k.frame)} title="Delete keyframe" style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 12, marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}><Icon name="x" size={12} /></button>
                 </div>
               ))}
             </div>
@@ -289,7 +283,6 @@ export function TransitionControl({ transition, fps, onAdd, onSet, onRemove, aud
   audioMode?: boolean;
   previewStatus?: SelectedPreviewStatus;
 }) {
-  const t = useT();
   const selStyle: CSSProperties = { background: theme.bg, color: theme.text, border: `0.5px solid ${theme.borderLight}`, borderRadius: 4, padding: '3px 5px' };
   const needsDir = transition && (transition.type === 'soft-wipe' || transition.type === 'whip-pan');
   const options = audioMode ? AUDIO_TRANSITION_ORDER : TRANSITION_ORDER;
@@ -303,33 +296,33 @@ export function TransitionControl({ transition, fps, onAdd, onSet, onRemove, aud
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ fontSize: 10.5, color: theme.textDim, opacity: 0.8 }}>
         {audioMode
-          ? t('与前一段相邻音频交叉淡化（出点渐弱 / 入点渐强）')
-          : t('从前一个相邻片段进入本片段')}
+          ? 'Cross-fades with the previous adjacent audio (fade out at the cut / fade in after)'
+          : 'Transitions into this clip from the previous adjacent clip'}
       </div>
       <label style={{ fontSize: 11, color: theme.textDim, display: 'flex', alignItems: 'center', gap: 8 }}>
-        {t('类型')}
+        Type
         <select value={shown?.type ?? ''} style={selStyle} onChange={(e) => {
           const v = e.target.value as TransitionType | '';
           if (!v) { if (shown) onRemove(); }
           else if (shown) onSet({ type: v });
           else onAdd(v);
         }}>
-          <option value="">{t('无')}</option>
-          {options.map((k) => <option key={k} value={k}>{t(TRANSITION_LABELS[k])}</option>)}
+          <option value="">None</option>
+          {options.map((k) => <option key={k} value={k}>{TRANSITION_LABELS[k]}</option>)}
         </select>
       </label>
       {shown && !audioMode && <PreviewFidelityStatus status={previewStatus} />}
       {shown && (
         <>
           <label style={{ fontSize: 11, color: theme.textDim }}>
-            <div style={{ marginBottom: 4 }}>{t('时长')} <span style={{ opacity: 0.7 }}>{(shown.durationInFrames / fps).toFixed(1)}s</span></div>
+            <div style={{ marginBottom: 4 }}>Duration <span style={{ opacity: 0.7 }}>{(shown.durationInFrames / fps).toFixed(1)}s</span></div>
             <input type="range" min={2} max={Math.max(4, fps * 2)} step={1} value={shown.durationInFrames} onChange={(e) => onSet({ durationInFrames: Number(e.target.value) })} style={{ width: '100%' }} />
           </label>
           {needsDir && !audioMode && (
             <label style={{ fontSize: 11, color: theme.textDim, display: 'flex', alignItems: 'center', gap: 8 }}>
-              {t('方向')}
+              Direction
               <select value={shown.direction ?? 'left'} style={selStyle} onChange={(e) => onSet({ direction: e.target.value as TransitionItem['direction'] })}>
-                <option value="left">{t('左')}</option><option value="right">{t('右')}</option><option value="up">{t('上')}</option><option value="down">{t('下')}</option>
+                <option value="left">Left</option><option value="right">Right</option><option value="up">Up</option><option value="down">Down</option>
               </select>
             </label>
           )}

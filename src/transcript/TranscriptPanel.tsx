@@ -9,7 +9,6 @@ import { analyzeSilences } from './segment';
 import { ScriptView } from './TranscriptViews';
 import { theme } from '../theme';
 import { Icon } from '../components/icons';
-import { useT } from '../i18n/locale';
 import { clipLabel, isLikelyNonSpeech, mediaOnTrack, pickDefaultTrack, trackTitle, type TranscriptTrackOption } from './trackOptions';
 
 export type { TranscriptTrackOption } from './trackOptions';
@@ -38,7 +37,6 @@ export function TranscriptPanel({
   onSetItemTranscript, onToggleWord, onCleanScript, onSetGapCap, onSetTranscriptPlayOrder, onReorderTrackItems, onClearEdits,
   onImportSrt, onOpenCaptionStyles,
 }: TranscriptPanelProps) {
-  const t = useT();
   const { status, error, progressNote, runMany, reset } = useTranscript();
   const localProvider = preferredTranscriptionProvider() === 'local';
   const defaultId = useMemo(() => pickDefaultTrack(trackOptions, items), [trackOptions, items]);
@@ -136,11 +134,11 @@ export function TranscriptPanel({
     if (!hasOperationalTranscript(focusItem)) return;
     const w = focusItem.transcript;
     const { count, savedMs } = analyzeSilences(w, compressSec * 1000);
-    const fillers = w.filter((x) => /^[\s]*([uU][hm]+|[eE]r+m?|嗯|呃|啊|唔|额)[\s.,]*$/.test(x.text)).length;
+    const fillers = w.filter((x) => /^[\s]*([uU][hm]+|[eE]r+m?|\u55ef|\u5443|\u554a|\u5514|\u989d)[\s.,]*$/.test(x.text)).length;
     onCleanScript(focusItem.id, { silenceFrames: Math.round(compressSec * fps), removeFillers });
     setPauseResult(
-      t('已压缩 {count} 处长停顿到 {sec}s（约省 {saved}s）', { count, sec: compressSec, saved: (savedMs / 1000).toFixed(1) })
-      + (removeFillers ? t(' · 去填充词 {n}', { n: fillers }) : ''),
+      `Compressed ${count} long pauses down to ${compressSec}s (saving about ${(savedMs / 1000).toFixed(1)}s)`
+      + (removeFillers ? ` · ${fillers} filler words removed` : ''),
     );
   };
 
@@ -150,20 +148,20 @@ export function TranscriptPanel({
     <div className="cc-transcript-panel">
       <div className="cc-transcript-toolbar">
         <button type="button" onClick={() => setPauseOpen((v) => !v)} className="cc-tx-btn" disabled={!editable}>
-          <Icon name="clock" size={13} />{t('停顿')}
+          <Icon name="clock" size={13} />Pauses
         </button>
         <select value={view} onChange={(e) => setView(e.target.value as 'paragraph' | 'segment')} className="cc-tx-select">
-          <option value="paragraph">{t('段落视图')}</option>
-          <option value="segment">{t('片段视图')}</option>
+          <option value="paragraph">Paragraph view</option>
+          <option value="segment">Segment view</option>
         </select>
         <button
           type="button"
           onClick={() => setEditMode((v) => !v)}
           disabled={!editable}
-          title={editable ? t('点词删除 = 剪掉那段音频') : t('先转写该轨音频')}
+          title={editable ? 'Click a word to delete it = cut that audio' : "Transcribe this track's audio first"}
           className={`cc-tx-btn${editMode ? ' active' : ''}`}
         >
-          <Icon name="pencil" size={13} />{t('编辑')}
+          <Icon name="pencil" size={13} />Edit
         </button>
         <input
           ref={srtInputRef}
@@ -176,22 +174,22 @@ export function TranscriptPanel({
             if (file) onImportSrt(file);
           }}
         />
-        <button type="button" className="cc-tx-btn" title={t('导入 SRT')} onClick={() => srtInputRef.current?.click()}>
-          <Icon name="upload" size={13} />{t('导入 SRT')}
+        <button type="button" className="cc-tx-btn" title="Import SRT" onClick={() => srtInputRef.current?.click()}>
+          <Icon name="upload" size={13} />Import SRT
         </button>
         <button
           type="button"
           className="cc-tx-btn"
           disabled={!onOpenCaptionStyles}
-          title={onOpenCaptionStyles ? t('字幕样式') : t('请先新建字幕轨道')}
+          title={onOpenCaptionStyles ? 'Caption styles' : 'Create a caption track first'}
           onClick={() => onOpenCaptionStyles?.(transcribed.map((item) => item.id))}
         >
-          <Icon name="captions" size={13} />{t('字幕样式')}
+          <Icon name="captions" size={13} />Caption styles
         </button>
         <span className="cc-tx-spacer" />
         {pauseOpen && (
           <div className="cc-tx-popover">
-            <div className="cc-tx-muted" style={{ marginBottom: 6 }}>{t('停顿时长')}</div>
+            <div className="cc-tx-muted" style={{ marginBottom: 6 }}>Pause length</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input type="range" min={0.1} max={2} step={0.05} value={compressSec}
                 onChange={(e) => setCompressSec(Number(e.target.value))} style={{ flex: 1, accentColor: theme.accentDeep }} />
@@ -199,18 +197,18 @@ export function TranscriptPanel({
             </div>
             <label className="cc-tx-check">
               <input type="checkbox" checked={removeFillers} onChange={(e) => setRemoveFillers(e.target.checked)} />
-              {t('去掉填充词（嗯 / 呃 / um…）')}
+              Remove filler words (um / uh…)
             </label>
             {pauseResult && <div style={{ fontSize: 11, marginBottom: 8 }}>{pauseResult}</div>}
-            <button type="button" onClick={applyPause} disabled={!editable} className="cc-tx-btn primary block">{t('应用')}</button>
+            <button type="button" onClick={applyPause} disabled={!editable} className="cc-tx-btn primary block">Apply</button>
           </div>
         )}
       </div>
 
       {/* Track chips — alias · name, never bare UUID */}
-      <div className="cc-tx-tracks" role="tablist" aria-label={t('转写轨道')}>
+      <div className="cc-tx-tracks" role="tablist" aria-label="Transcription tracks">
         {selectable.length === 0 ? (
-          <span className="cc-tx-muted">{t('时间线上还没有可转写的音视频轨')}</span>
+          <span className="cc-tx-muted">No audio or video track on the timeline can be transcribed yet</span>
         ) : (
           selectable.map((t) => {
             const n = mediaOnTrack(items, t.id).length;
@@ -236,38 +234,38 @@ export function TranscriptPanel({
 
       {editMode && editable && focusItem && (
         <div className="cc-tx-editbar">
-          <span>{t('点词删除/恢复（当前段）。已删')} <b>{focusDeleted.size}</b> {t('词')}</span>
+          <span>Click words to delete/restore (current clip). Deleted <b>{focusDeleted.size}</b> words</span>
           {focusDeleted.size > 0 && (
-            <button type="button" onClick={() => onClearEdits(focusItem.id)} className="cc-tx-btn sm">{t('还原全部')}</button>
+            <button type="button" onClick={() => onClearEdits(focusItem.id)} className="cc-tx-btn sm">Restore all</button>
           )}
         </div>
       )}
 
       {pickMode && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 12px', fontSize: 11, color: theme.accent, flexShrink: 0 }}>
-          {t('选择模式：拖选一段词句作为引用（松开即添加到聊天）')}
+          Selection mode: drag across words to quote them (release to add to chat)
         </div>
       )}
       <div className="cc-tx-body" ref={bodyRef} onMouseUp={pickFromDomSelection} style={pickMode ? { cursor: 'text' } : undefined}>
         {!track || selectable.length === 0 ? (
           <div className="cc-tx-empty-card blank">
             <div className="cc-tx-empty-icon" aria-hidden><Icon name="mic" size={14} /></div>
-            <div className="cc-tx-empty-title">{t('还没有可转写的轨道')}</div>
-            <p className="cc-tx-muted">{t('把口播 / 配音或带人声的视频加到时间线后，再打开文字稿。')}</p>
+            <div className="cc-tx-empty-title">No transcribable tracks yet</div>
+            <p className="cc-tx-muted">Add narration / voiceover or a video with speech to the timeline, then open the transcript.</p>
           </div>
         ) : !trackHasWords ? (
           <div className="cc-tx-empty-card">
             <div className="cc-tx-empty-kicker">{aliasLabel}</div>
-            <div className="cc-tx-empty-title">{t('转写词级文字稿')}</div>
+            <div className="cc-tx-empty-title">Transcribe word-level script</div>
             <p className="cc-tx-muted">
               {localProvider
-                ? t('中文词级转写 · 本地模型 · 该轨共 {n} 段会逐段转写（免费、离线、素材不出本机）。转写后可点词删减（删词=剪音频）。', { n: clips.length })
-                : t('中文词级转写 · 说话人分离 · 该轨共 {n} 段会逐段上传。转写后可点词删减（删词=剪音频）。', { n: clips.length })}
+                ? `Word-level Chinese transcription · on-device model · all ${clips.length} clips on this track transcribe one by one (free, offline, media stays on this machine). Then click words to cut them (delete a word = cut the audio).`
+                : `Word-level Chinese transcription · speaker diarization · all ${clips.length} clips on this track upload one by one. Then click words to cut them (delete a word = cut the audio).`}
             </p>
             {skippedMusic > 0 && (
               <label className="cc-tx-check music">
                 <input type="checkbox" checked={includeMusic} onChange={(e) => setIncludeMusic(e.target.checked)} />
-                {t('包含疑似背景音乐（已跳过 {n} 段）', { n: skippedMusic })}
+                {`Include likely background music (${skippedMusic} clips skipped)`}
               </label>
             )}
             <ul className="cc-tx-cliplist">
@@ -281,11 +279,11 @@ export function TranscriptPanel({
             </ul>
             {!clips.length ? (
               <p className="cc-tx-muted">
-                {t('该轨只有背景音乐类素材。打开「包含疑似背景音乐」或换到配音轨。')}
+                This track only has background-music clips. Turn on "Include likely background music" or switch to a voiceover track.
               </p>
             ) : (
               <button type="button" onClick={() => void transcribeTrack()} disabled={busy} className="cc-tx-btn primary lg">
-                {busy ? (progressNote ?? t('转写中…')) : t('转写 {alias}（{n} 段）', { alias: activeTrack?.alias ?? '', n: clips.length })}
+                {busy ? (progressNote ?? 'Transcribing…') : `Transcribe ${activeTrack?.alias ?? ''} (${clips.length} clips)`}
               </button>
             )}
             {status === 'error' && <div className="cc-tx-error">{error}</div>}
@@ -299,14 +297,14 @@ export function TranscriptPanel({
                     className="cc-tx-nav-select"
                     value={focusItem?.id ?? clips[0]?.id ?? ''}
                     onChange={(e) => jumpToClip(e.target.value)}
-                    title={t('跳转到片段')}
-                    aria-label={t('跳转到片段')}
+                    title="Jump to clip"
+                    aria-label="Jump to clip"
                   >
                     {clips.map((c, i) => {
                       const n = c.transcript?.length ?? 0;
                       return (
                         <option key={c.id} value={c.id}>
-                          {i + 1}/{clips.length} · {clipLabel(c, 40)}{n ? t(' · {n}词', { n }) : t(' · 未转写')}{c.transcriptStale ? t(' · 已失效') : ''}
+                          {i + 1}/{clips.length} · {clipLabel(c, 40)}{n ? ` · ${n} words` : ' · not transcribed'}{c.transcriptStale ? ' · expired' : ''}
                         </option>
                       );
                     })}
@@ -317,7 +315,7 @@ export function TranscriptPanel({
                       className="cc-tx-btn sm"
                       disabled={focusIndex <= 0}
                       onClick={() => focusIndex > 0 && jumpToClip(clips[focusIndex - 1]!.id)}
-                      title={t('上一段')}
+                      title="Previous clip"
                     >
                       ‹
                     </button>
@@ -329,13 +327,13 @@ export function TranscriptPanel({
                       className="cc-tx-btn sm"
                       disabled={focusIndex < 0 || focusIndex >= clips.length - 1}
                       onClick={() => focusIndex >= 0 && focusIndex < clips.length - 1 && jumpToClip(clips[focusIndex + 1]!.id)}
-                      title={t('下一段')}
+                      title="Next clip"
                     >
                       ›
                     </button>
                   </div>
                   <button type="button" className="cc-tx-btn sm" disabled={busy} onClick={() => void transcribeTrack()}>
-                    {busy ? '…' : t('重新转写')}
+                    {busy ? '…' : 'Re-transcribe'}
                   </button>
                 </div>
                 {clips.length > MANY_CLIPS && (
@@ -345,7 +343,7 @@ export function TranscriptPanel({
                       checked={showAllSections}
                       onChange={(e) => setShowAllSections(e.target.checked)}
                     />
-                    {t('列出全部 {n} 段正文（默认只看当前段，避免列表过长）', { n: clips.length })}
+                    {`Show all ${clips.length} clips in full (default shows only the current clip to keep the list short)`}
                   </label>
                 )}
               </div>
@@ -405,7 +403,7 @@ export function TranscriptPanel({
                     <header className="cc-tx-section-head">
                       <span
                         className={`cc-tx-section-grip${canDragClip ? ' active' : ''}`}
-                        title={canDragClip ? t('拖动卡片以重排时间线该轨片段顺序') : undefined}
+                        title={canDragClip ? "Drag the card to reorder this track's clips on the timeline" : undefined}
                       >
                         ⋮⋮
                       </span>
@@ -414,12 +412,12 @@ export function TranscriptPanel({
                       </span>
                       <span className="cc-tx-muted">
                         {(c.durationInFrames / fps).toFixed(1)}s
-                        {cWords.length ? t(' · {n} 词', { n: cWords.length }) : t(' · 未转写')}
-                        {c.transcriptStale ? t(' · 转写已失效，仅供查看') : c.transcriptPlayOrder?.length ? t(' · 已重排语段') : ''}
+                        {cWords.length ? ` · ${cWords.length} words` : ' · not transcribed'}
+                        {c.transcriptStale ? ' · transcription expired, view only' : c.transcriptPlayOrder?.length ? ' · speech reordered' : ''}
                       </span>
                     </header>
                     {!cWords.length ? (
-                      <div className="cc-tx-muted" style={{ padding: '4px 0 8px' }}>{t('尚未转写此段')}</div>
+                      <div className="cc-tx-muted" style={{ padding: '4px 0 8px' }}>This clip has not been transcribed yet</div>
                     ) : (
                       <ScriptView
                         words={cWords}
@@ -463,13 +461,13 @@ export function TranscriptPanel({
             {!busy && trackHasWords && (
               <>
                 <div className="cc-tx-muted" style={{ marginTop: 10 }}>
-                  {t('已转写 {done}/{total} 段', { done: transcribed.length, total: clips.length })}
-                  {transcribed.length < clips.length ? t(' · 可点「重新转写」补全失败段') : ''}
-                  {clips.length > MANY_CLIPS && !showAllSections ? t(' · 正文仅显示当前段') : ''}
+                  {`Transcribed ${transcribed.length}/${clips.length} clips`}
+                  {transcribed.length < clips.length ? ' · click "Re-transcribe" to fill in failed clips' : ''}
+                  {clips.length > MANY_CLIPS && !showAllSections ? ' · showing only the current clip' : ''}
                 </div>
                 {localProvider && (
                   <div className="cc-tx-muted" style={{ marginTop: 4 }}>
-                    {t('本地转写未做说话人分离，全部内容归为同一说话人。')}
+                    Local transcription does not separate speakers — everything is one speaker.
                   </div>
                 )}
               </>

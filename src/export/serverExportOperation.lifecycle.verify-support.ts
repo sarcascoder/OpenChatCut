@@ -186,7 +186,6 @@ function startBackgroundServerExport(
         setEngineReason: setters.setEngineReason,
         setProgress: setters.setProgress,
         setRenderEngine: setters.setRenderEngine,
-        t: (key) => key,
         verifyCompletedExport: testOptions.verifyCompletedExport ?? (async () => undefined),
       });
       const idle = async () => undefined;
@@ -206,7 +205,6 @@ function startBackgroundServerExport(
         progress: null,
         signal,
         targetPath: 'Exports/lifecycle.mp4',
-        t: (key) => key,
         ...setters,
       });
       try {
@@ -271,7 +269,7 @@ async function verifyCancellationAfterRenderDoesNotSave(): Promise<void> {
   await permissionStarted.promise;
   const saving = store.getSnapshot().jobs.find((job) => job.id === id);
   assert.equal(saving?.progress.phase, 'downloading');
-  assert.equal(saving?.busy, '正在保存…');
+  assert.equal(saving?.busy, 'Saving…');
   assert.equal(store.cancel(id), true);
   permissionGate.resolve();
   await done.promise;

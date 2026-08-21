@@ -35,9 +35,9 @@ interface BreakPoint {
   orphanRisk: boolean;
 }
 
-const CJK_START = /[㐀-鿿぀-ヿ가-힯]/u;
+const CJK_START = /[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/u;
 const PUNCT_ONLY = /^[\p{P}]+$/u;
-const CJK_PUNCT_CHARS = /[，。！？；：、“”‘’（）【】《》「」『』〈〉〔〕｛｝〖〗…—～·]|[｡､]/;
+const CJK_PUNCT_CHARS = /[\uff0c\u3002\uff01\uff1f\uff1b\uff1a\u3001\u201c\u201d\u2018\u2019\uff08\uff09\u3010\u3011\u300a\u300b\u300c\u300d\u300e\u300f\u3008\u3009\u3014\u3015\uff5b\uff5d\u3016\u3017\u2026\u2014\uff5e\u00b7]|[\uff61\uff64]/;
 const LATIN_PUNCT_CHARS = /[.,!?;:'"()[\]{}/\\@#$%^&*\-+=<>|~`]/;
 
 type WordScript = 'punctuation' | 'number' | 'cjk' | 'latin' | 'mixed';
@@ -176,7 +176,7 @@ function hasLatinOrphanRisk(left: string, right: string): boolean {
 /** When the conjunction has a comma, 150–400ms. Small pauses do not count as breakpoints.*/
 function isPauseSuppressedPair(left: string, right: string): boolean {
   if (!(PAUSE_SUPPRESSED_CONNECTORS as readonly string[]).includes(normalizeLatin(left))
-    || !/[,;:][\s"'”’）)\]}》」』】]*$/u.test(left.trim())) return false;
+    || !/[,;:][\s"'\u201d\u2019\uff09)\]}\u300b\u300d\u300f\u3011]*$/u.test(left.trim())) return false;
   return normalizeLatin(right).length > 0;
 }
 

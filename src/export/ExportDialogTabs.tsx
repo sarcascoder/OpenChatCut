@@ -1,6 +1,5 @@
 import type { TimelineState } from '../editor/types';
 import { trackAlias } from '../editor/types';
-import { useT } from '../i18n/locale';
 import {
   MAX_VIDEO_BITRATE_MBPS,
   MIN_VIDEO_BITRATE_MBPS,
@@ -30,14 +29,13 @@ interface VideoSettingsProps {
 }
 
 function VideoSettings({ video, busy, qualityMode, setQualityMode }: VideoSettingsProps) {
-  const t = useT();
   return (
     <>
-      <Row label={t('画质策略')}>
+      <Row label="Quality policy">
         <Segmented
           options={[
-            { value: 'balanced', label: t('均衡') },
-            { value: 'master', label: t('画质优先') },
+            { value: 'balanced', label: 'Balanced' },
+            { value: 'master', label: 'Master quality' },
           ]}
           value={qualityMode}
           onChange={setQualityMode}
@@ -45,10 +43,10 @@ function VideoSettings({ video, busy, qualityMode, setQualityMode }: VideoSettin
       </Row>
       <p className="cc-export-footnote">
         {qualityMode === 'master'
-          ? t('高清优先预览；导出默认高码率，不主动压缩导入素材。')
-          : t('平衡流畅与体积；预览可用轻量副本，导出默认自动码率。')}
+          ? 'High-quality preview first; export defaults to high bitrate and never optimizes imports for size.'
+          : 'Balance smoothness and size; preview may use lightweight copies and export uses automatic bitrate.'}
       </p>
-      <Row label={t('格式 / 编码')}>
+      <Row label="Format / codec">
         <select
           className="cc-export-select"
           value={video.codec}
@@ -57,22 +55,22 @@ function VideoSettings({ video, busy, qualityMode, setQualityMode }: VideoSettin
         >
           <option value="h264">MP4 (H.264)</option>
           <option value="vp8">WebM (VP8)</option>
-          <option value="prores">{t('ProRes 422 HQ 母带 (.mov)')}</option>
+          <option value="prores">ProRes 422 HQ mezzanine (.mov)</option>
         </select>
       </Row>
       {video.codec === 'prores' && (
         <p className="cc-export-footnote">
-          {t('ProRes 母带体积较大，仅本机渲染；适合调色或交给达芬奇继续剪。网发请用 H.264。')}
+          ProRes mezzanine files are large and server-rendered only. Use them for grading or Resolve handoff; use H.264 for web delivery.
         </p>
       )}
-      <Row label={t('分辨率')}>
+      <Row label="Resolution">
         <Segmented options={EXPORT_RESOLUTION_OPTIONS.map((value) => ({ value, label: resolutionLabel(value) }))} value={video.resolution} onChange={video.setResolution} />
       </Row>
-      <Row label={t('帧率')}>
+      <Row label="Frame rate">
         <Segmented options={EXPORT_FPS.map((value) => ({ value, label: `${value} fps` }))} value={video.fps} onChange={video.setFps} />
       </Row>
       {video.codec !== 'prores' && (
-        <Row label={t('码率')}>
+        <Row label="Bitrate">
           <ExportBitrateControl
             mode={video.bitrateMode}
             customMbps={video.customBitrateMbps}
@@ -95,13 +93,12 @@ interface QaSettingsProps {
 }
 
 function QaSettings({ enabled, busy, qa, onToggle }: QaSettingsProps) {
-  const t = useT();
   return (
     <>
       <label className="cc-export-toggle cc-export-qa-toggle">
         <span>
-          <strong>{t('导出后自动质量检查')}</strong>
-          <small>{t('检查画面、声音、剪辑点和字幕安全区；临时失败最多自动复检 3 轮。')}</small>
+          <strong>Automatically quality-check after export</strong>
+          <small>Checks video, audio, edit points, and caption safe areas; transient failures are retried up to three times.</small>
         </span>
         <input type="checkbox" checked={enabled} onChange={(event) => onToggle(event.target.checked)} disabled={busy} />
       </label>
@@ -122,39 +119,36 @@ function VideoTab({ video, busy, qualityMode, setQualityMode, enabled, qa, onTog
 }
 
 function AudioTab() {
-  const t = useT();
-  return <InfoCard icon="music" title={t('MP3 音轨')} text={t('提取时间线中的完整混音，视频画面不会写入文件。')} />;
+  return <InfoCard icon="music" title="MP3 audio mix" text="Extracts the complete timeline mix without writing video frames." />;
 }
 
 function MotionGraphicsTab({ count }: { count: number }) {
-  const t = useT();
   return (
     <InfoCard
       icon="sparkles"
-      title={count ? t('{n} 个动态图层', { n: count }) : t('没有可导出的动态图层')}
+      title={count ? `${count} motion layers` : 'No motion layers to export'}
       text={count
-        ? t('逐个生成带透明通道的 ProRes 4444 MOV，方便在其他工程中复用。')
-        : t('先在时间线上添加 MG 动画，再从这里生成透明素材。')}
+        ? 'Creates an alpha ProRes 4444 MOV for each layer so it can be reused in other projects.'
+        : 'Add motion graphics to the timeline before creating transparent assets.'}
     />
   );
 }
 
 function SubtitlesTab({ state, subtitles }: { state: TimelineState; subtitles: ExportSubtitleSettings }) {
-  const t = useT();
   return (
     <>
       {!subtitles.tracks.length && (
-        <InfoCard icon="captions" title={t('字幕轨尚未开启')} text={t('开启字幕并确认内容后，即可下载字幕稿。')} />
+        <InfoCard icon="captions" title="Caption track is off" text="Turn captions on and confirm the content before downloading the caption file." />
       )}
-      <Row label={t('字幕轨道')}>
+      <Row label="Caption track">
         <select className="cc-export-select" value={subtitles.trackId} disabled={!subtitles.tracks.length} onChange={(event) => subtitles.setTrackId(event.target.value)}>
           {!subtitles.tracks.length && <option value="">—</option>}
           {subtitles.tracks.map((entry) => <option key={entry.id} value={entry.id}>{trackAlias(state, entry.id)}</option>)}
         </select>
       </Row>
-      <Row label={t('格式')}>
+      <Row label="Format">
         <Segmented
-          options={[{ value: 'srt', label: 'SubRip (.srt)' }, { value: 'txt', label: '纯文本 (.txt)' }] as const}
+          options={[{ value: 'srt', label: 'SubRip (.srt)' }, { value: 'txt', label: 'Plain text (.txt)' }] as const}
           value={subtitles.format}
           onChange={subtitles.setFormat}
         />
@@ -173,32 +167,29 @@ interface XmlTabProps {
 }
 
 function XmlTab({ state, nleFormat, includeMg, mgCount, setNleFormat, setIncludeMg }: XmlTabProps) {
-  const t = useT();
   const backgroundFillCount = fcpxmlBackgroundFillCount(state);
   return (
     <>
-      <InfoCard icon="clipboard" title={t('可继续编辑的工程')} text={t('生成带轨道与素材引用的 FCPXML，交给 Premiere Pro 或达芬奇继续制作。')} />
+      <InfoCard icon="clipboard" title="Editable project" text="Creates FCPXML with tracks and media references for continued work in Premiere Pro or DaVinci Resolve." />
       {backgroundFillCount > 0 && (
         <InfoCard
           icon="film"
-          title={t('当前 FCPXML 会保留背景参数，但不生成图层')}
-          text={t('OpenChatCut 会把 {n} 个片段的背景填充开关与百分比写入 FCPXML 元数据，但目标剪辑软件不会据此还原模糊图层；如需完全一致，请同时导出成片。', {
-            n: backgroundFillCount,
-          })}
+          title="FCPXML preserves background parameters but does not generate the layer"
+          text={`OpenChatCut writes the background-fill toggle and percentage for ${backgroundFillCount} clip(s) into FCPXML metadata, but the destination editor will not reconstruct the blurred layer from it. Export a video master as well for an exact visual match.`}
         />
       )}
-      <Row label={t('目标软件')}>
+      <Row label="Target app">
         <Segmented
-          options={[{ value: 'fcp_xml', label: 'Premiere Pro' }, { value: 'fcp_xml_resolve', label: '达芬奇' }] as const}
+          options={[{ value: 'fcp_xml', label: 'Premiere Pro' }, { value: 'fcp_xml_resolve', label: 'DaVinci Resolve' }] as const}
           value={nleFormat}
           onChange={setNleFormat}
         />
       </Row>
       <label className="cc-export-toggle">
-        <span><strong>{t('同时打包动态图层')}</strong><small>{t('额外生成带透明通道的 ProRes 4444 MOV。')}</small></span>
+        <span><strong>Bundle motion layers</strong><small>Also creates alpha ProRes 4444 MOV files.</small></span>
         <input type="checkbox" checked={includeMg} onChange={(event) => setIncludeMg(event.target.checked)} disabled={mgCount === 0} />
       </label>
-      <p className="cc-export-footnote">{t('导入后，请在剪辑软件中指向原始素材所在文件夹，以重新链接离线片段。')}</p>
+      <p className="cc-export-footnote">After importing, point your NLE at the original media folder to relink offline clips.</p>
     </>
   );
 }

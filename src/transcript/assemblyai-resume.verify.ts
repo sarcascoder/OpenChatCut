@@ -63,8 +63,8 @@ try {
       if (pollCount === 1) throw new TypeError('refresh interrupted polling');
       return Response.json({
         status: 'completed',
-        text: '恢复成功',
-        words: [{ text: '恢复成功', start: 0, end: 500 }],
+        text: 'resume succeeded',
+        words: [{ text: 'resume succeeded', start: 0, end: 500 }],
         utterances: [],
       });
     }
@@ -112,7 +112,7 @@ try {
     undefined,
     { languageCode: 'zh' },
   );
-  assert.equal(resumed.words[0]?.text, '恢复成功');
+  assert.equal(resumed.words[0]?.text, 'resume succeeded');
   assert.equal(uploadCount, 1, 'refresh resume never uploads the same source twice');
   assert.equal(createCount, 1, 'refresh resume never creates a second provider job');
 

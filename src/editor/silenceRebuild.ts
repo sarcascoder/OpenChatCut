@@ -127,12 +127,12 @@ export function planSilenceRemoval(
 
 /** remove_silence clip that should not be touched: give a readable reason, and the tool layer reports it as it is. */
 export function silenceRemovalBlocker(item: TimelineItem): string | null {
-  if (item.kind !== 'video' && item.kind !== 'audio') return `kind=${item.kind} 无音频`;
-  if (!item.src) return '无媒体源';
-  if ((item.playbackRate ?? 1) !== 1) return '已变速(playbackRate≠1) — 先删静音再变速,或用 clean_script';
-  if (item.zoom) return '带动画缩放(zoom) — 分段会打断缩放曲线,先移除 zoom';
+  if (item.kind !== 'video' && item.kind !== 'audio') return `kind=${item.kind} has no audio`;
+  if (!item.src) return 'no media source';
+  if ((item.playbackRate ?? 1) !== 1) return 'already retimed (playbackRate≠1) — remove the silence before retiming, or use clean_script';
+  if (item.zoom) return 'has an animated zoom — splitting would break the zoom curve, remove the zoom first';
   if (hasOperationalTranscript(item) && (item.deletedWordIdx?.length || item.silenceFrames !== undefined || item.gapCapsMs)) {
-    return '已有词级编辑/静音压缩 — 转写 clip 请用 clean_script 的静音上限(它按词间隙精确处理)';
+    return 'already has word-level edits / silence compression — for transcript clips use clean_script\'s silence cap (it works precisely off word gaps)';
   }
   return null;
 }

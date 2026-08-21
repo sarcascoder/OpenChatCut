@@ -16,7 +16,6 @@ import {
   type CaptionPreviewNudgeDirection,
 } from './captionPreviewTarget';
 import { Icon } from '../components/icons';
-import { useT } from '../i18n/locale';
 import { captionTemplatePatch } from './captionTemplatePatch';
 import { captionPreviewOutsideClickAction } from './captionPreviewToolbar';
 
@@ -60,7 +59,6 @@ interface DragRef {
 }
 
 export function CaptionPreviewEditor({ trackId, state, captions, playerRef, onUpdateCaptions, onSelectCaption, activeSelection, onSeedChat, autoEditLaneId, onAutoEditHandled }: CaptionPreviewEditorProps) {
-  const t = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -275,7 +273,7 @@ export function CaptionPreviewEditor({ trackId, state, captions, playerRef, onUp
               className="cc-capedit-hit"
               role="button"
               tabIndex={0}
-              title={t('点击选中字幕；拖动移动位置；双击直接改文字')}
+              title="Click to select; drag to reposition; double-click to edit the text"
               onPointerDown={onHitPointerDown}
               onPointerMove={onHitPointerMove}
               onPointerUp={onHitPointerUp}
@@ -299,31 +297,31 @@ export function CaptionPreviewEditor({ trackId, state, captions, playerRef, onUp
             <div ref={toolbarRef} className="cc-capedit-bar" onPointerDown={(e) => e.stopPropagation()}>
               {onSeedChat && (
                 <>
-                  <button type="button" className="cc-capedit-btn ai" title={t('让 AI 改写这句')}
-                    onClick={() => onSeedChat(t('优化这句字幕（{time} 处，保持时间不变）：「{text}」', { time: fmtCueMs(cue.start), text: cue.text }))}>
-                    <Icon name="sparkles" size={12} />{t('AI 编辑')}
+                  <button type="button" className="cc-capedit-btn ai" title="Ask AI to rewrite this line"
+                    onClick={() => onSeedChat(`Improve this caption line (at ${fmtCueMs(cue.start)}, keep its timing): "${cue.text}"`)}>
+                    <Icon name="sparkles" size={12} />AI edit
                   </button>
                   <span className="cc-capedit-divider" aria-hidden />
                 </>
               )}
-              <button type="button" className="cc-capedit-btn" title={t('编辑文字')} onClick={() => {
+              <button type="button" className="cc-capedit-btn" title="Edit text" onClick={() => {
                 setPop(null);
                 if (!editing) {
                   setEditing(true);
                   setDraft(cue.text);
                 }
               }}>
-                <Icon name="pencil" size={12} />{t('文字')}
+                <Icon name="pencil" size={12} />Text
               </button>
-              <button type="button" className={`cc-capedit-btn${pop === 'styles' ? ' on' : ''}`} title={t('字幕样式')} onClick={() => setPop(pop === 'styles' ? null : 'styles')}>Aa</button>
-              <button type="button" className={`cc-capedit-btn${pop === 'color' ? ' on' : ''}`} title={t('文字颜色')} onClick={() => setPop(pop === 'color' ? null : 'color')}>
+              <button type="button" className={`cc-capedit-btn${pop === 'styles' ? ' on' : ''}`} title="Caption styles" onClick={() => setPop(pop === 'styles' ? null : 'styles')}>Aa</button>
+              <button type="button" className={`cc-capedit-btn${pop === 'color' ? ' on' : ''}`} title="Text color" onClick={() => setPop(pop === 'color' ? null : 'color')}>
                 <span className="cc-capedit-colordot" style={{ background: curColor }} />
               </button>
               <span className="cc-capedit-divider" aria-hidden />
-              <button type="button" className="cc-capedit-btn" title={t('缩小字号')} onClick={() => bumpFont(-1)}>A−</button>
-              <button type="button" className="cc-capedit-btn" title={t('放大字号')} onClick={() => bumpFont(1)}>A+</button>
+              <button type="button" className="cc-capedit-btn" title="Smaller text" onClick={() => bumpFont(-1)}>A−</button>
+              <button type="button" className="cc-capedit-btn" title="Bigger text" onClick={() => bumpFont(1)}>A+</button>
               <span className="cc-capedit-divider" aria-hidden />
-              <button type="button" className="cc-capedit-btn danger" title={t('删除这句')} onClick={() => saveText('')}>
+              <button type="button" className="cc-capedit-btn danger" title="Remove line" onClick={() => saveText('')}>
                 <Icon name="trash" size={12} />
               </button>
 
@@ -333,7 +331,7 @@ export function CaptionPreviewEditor({ trackId, state, captions, playerRef, onUp
                     <button key={st.id} type="button"
                       className={`cc-capedit-styleitem${st.id === captions.template ? ' on' : ''}`}
                       onClick={() => { onUpdateCaptions(captionTemplatePatch(captions, st.id)); setPop(null); }}>
-                      {t(st.labelZh)}
+                      {st.labelZh}
                     </button>
                   ))}
                 </div>
@@ -347,13 +345,13 @@ export function CaptionPreviewEditor({ trackId, state, captions, playerRef, onUp
                       title={hex}
                       onClick={() => { setColor(hex); setPop(null); }} />
                   ))}
-                  <label className="cc-capedit-custom" title={t('自定义颜色')}>
+                  <label className="cc-capedit-custom" title="Custom color">
                     <input
                       type="color"
                       defaultValue={/^#[0-9a-fA-F]{6}$/.test(curColor) ? curColor : '#ffffff'}
                       onBlur={(e) => { setColor(e.target.value); setPop(null); }}
                     />
-                    <span>{t('自定义')}</span>
+                    <span>Custom</span>
                   </label>
                 </div>
               )}

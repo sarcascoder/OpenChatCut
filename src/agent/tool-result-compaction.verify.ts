@@ -11,7 +11,7 @@ assert.equal(compactToolResultForModel(small), small);
 const large = {
   items: Array.from({ length: 200 }, (_, index) => ({
     id: `item-${index}`,
-    transcript: '字'.repeat(2_000),
+    transcript: 'C'.repeat(2_000),
   })),
 };
 const compacted = compactToolResultForModel(large);
@@ -42,7 +42,8 @@ const imageResult = compactToolResultForTransport({
   __images: [{ frame: 1, base64 }],
 }, true) as { __images: Array<{ base64: string }> };
 assert.equal(imageResult.__images[0]?.base64, base64, 'Codex image bytes must remain unchanged');
-const exactSkillPage = '中文🙂'.repeat(8_000);
+// "Chinese text" plus an emoji — multi-byte/surrogate content for the UTF-16 page budget.
+const exactSkillPage = '\u4e2d\u6587🙂'.repeat(8_000);
 const skillHistory = codexToolHistoryEntry(
   { name: 'load_skill', args: { name: 'fixture' } },
   { success: true, result: { contents: { 'SKILL.md': exactSkillPage }, nextOffset: 32_000 } },

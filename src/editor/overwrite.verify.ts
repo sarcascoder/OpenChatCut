@@ -70,17 +70,17 @@ function assertNoTrackOverlap(state: TimelineState): void {
     const previous = ordered[index - 1]!;
     const current = ordered[index]!;
     assert.ok(previous.startFrame + previous.durationInFrames <= current.startFrame,
-      `${previous.id} 与 ${current.id} 不应重叠`);
+      `${previous.id} and ${current.id} must not overlap`);
   }
 }
 
 function assertValidLinkGroups(state: TimelineState): void {
   const existingIds = new Set(state.items.map((item) => item.id));
   for (const group of state.linkGroups ?? []) {
-    assert.ok(group.itemIds.length >= 2, `${group.id} 不应保留单成员 group`);
-    assert.equal(new Set(group.itemIds).size, group.itemIds.length, `${group.id} 不应含重复成员`);
-    assert.ok(group.itemIds.includes(group.anchorItemId), `${group.id} anchor 必须仍是成员`);
-    assert.ok(group.itemIds.every((id) => existingIds.has(id)), `${group.id} 不应含 dangling id`);
+    assert.ok(group.itemIds.length >= 2, `${group.id} must not keep a single-member group`);
+    assert.equal(new Set(group.itemIds).size, group.itemIds.length, `${group.id} must not contain duplicate members`);
+    assert.ok(group.itemIds.includes(group.anchorItemId), `${group.id} anchor must still be a member`);
+    assert.ok(group.itemIds.every((id) => existingIds.has(id)), `${group.id} must not contain a dangling id`);
   }
 }
 
@@ -103,7 +103,7 @@ const nextId = () => `split-${sequence += 1}`;
   const plan = planOverwrite(source, inserted('new', 10), 10, nextId)!;
   const next = plan.actions.reduce(reduce, source);
   const right = next.items.find((item) => item.id === 'old')!;
-  assert.deepEqual([right.startFrame, right.durationInFrames, right.srcInFrame], [20, 5, 20], '5 个 timeline frame 应推进 10 个 source frame');
+  assert.deepEqual([right.startFrame, right.durationInFrames, right.srcInFrame], [20, 5, 20], '5 timeline frames must advance 10 source frames');
   assertNoTrackOverlap(next);
 }
 
@@ -118,7 +118,7 @@ const nextId = () => `split-${sequence += 1}`;
   const plan = planOverwrite(source, inserted('new', 10), 10, nextId)!;
   const next = plan.actions.reduce(reduce, source);
   assert.equal(next.items.find((item) => item.id === 'old')?.srcInFrame, 15,
-    'word-driven audio 的 5 个 timeline frame 仍推进 5 个词流 frame');
+    '5 timeline frames of word-driven audio still advance 5 word-stream frames');
 }
 
 // New range covers old's right edge → retain left fragment without moving it.
@@ -156,7 +156,7 @@ const nextId = () => `split-${sequence += 1}`;
     item.id !== 'new' && item.id !== 'next' && item.startFrame === 20
   ))!;
   assert.deepEqual(next.transitions, [{ ...transition, outgoingItemId: right.id }]);
-  assert.equal(right.startFrame + right.durationInFrames, 30, 'right fragment 应保持原末端 seam');
+  assert.equal(right.startFrame + right.durationInFrames, 30, 'the right fragment must keep the original end seam');
   assert.equal(next.transitions?.[0]?.durationInFrames, transition.durationInFrames);
   assert.ok(next.transitions?.every((entry) => (
     next.items.some((item) => item.id === entry.outgoingItemId)
@@ -167,7 +167,7 @@ const nextId = () => `split-${sequence += 1}`;
   const timeline = { ...source, id: 'tl1', name: 'main', order: 0 };
   const doc: ProjectDoc = { version: CURRENT_PROJECT_VERSION, assets: [], mediaFolders: [], timelines: [timeline], activeTimelineId: 'tl1' };
   const committed = historyReduce({ past: [], present: doc, future: [] }, { type: 'batch', label: 'Overwrite clip', actions: plan.actions });
-  assert.equal(committed.past.length, 1, 'overwrite 的所有 split/trim/remove/add 只占一个 undo step');
+  assert.equal(committed.past.length, 1, 'every split/trim/remove/add in an overwrite takes a single undo step');
   const undone = historyReduce(committed, { type: 'undo' });
   assert.deepEqual(undone.present, doc);
 }
@@ -239,7 +239,7 @@ const nextId = () => `split-${sequence += 1}`;
     )!;
     const next = plan.actions.reduce(reduce, source);
     assert.deepEqual(next.transitions, scenario.preserve ? [transition] : [],
-      `${scenario.name} overwrite 的 outgoing transition 应按原右边界是否保留决定`);
+      `${scenario.name} overwrite keeps the outgoing transition only when the original right edge survives`);
     assertNoTrackOverlap(next);
   }
 }
@@ -263,30 +263,30 @@ const nextId = () => `split-${sequence += 1}`;
     const source = linkedStateOf(target, companion);
     const newId = `new-${scenario.name}`;
     const plan = planOverwrite(source, inserted(newId, 10), 10, nextId);
-    assert.ok(plan, `${scenario.name} linked overwrite 应成功`);
+    assert.ok(plan, `${scenario.name} linked overwrite must succeed`);
     const next = plan.actions.reduce(reduce, source);
     const fragments = next.items
       .filter((item) => item.track === 'V1' && item.id !== newId)
       .toSorted((left, right) => left.startFrame - right.startFrame);
 
     assert.deepEqual(next.items.find((item) => item.id === companion.id), companion,
-      `${scenario.name} companion 几何和媒体属性必须不变`);
+      `${scenario.name} companion geometry and media properties must stay unchanged`);
     assert.deepEqual(
       fragments.map((item) => [item.startFrame, item.durationInFrames]),
       scenario.expectedFragments,
-      `${scenario.name} target fragments 应精确保留覆盖区两侧`,
+      `${scenario.name} target fragments must keep exactly the two sides of the overwrite range`,
     );
     assert.ok(fragments.every((item) => (
       item.startFrame + item.durationInFrames <= 10 || item.startFrame >= 20
-    )), `${scenario.name} 旧 target 不得残留在覆盖区`);
+    )), `${scenario.name} the old target must not linger inside the overwrite range`);
     assert.deepEqual(
       next.items
         .filter((item) => item.id === newId)
         .map((item) => [item.track, item.startFrame, item.durationInFrames]),
       [['V1', 10, 10]],
-      `${scenario.name} 应只插入一个精确覆盖的新片`,
+      `${scenario.name} must insert exactly one new clip covering the range`,
     );
-    assert.equal(next.linkGroups, undefined, `${scenario.name} 变形 target 应退出原 linked group`);
+    assert.equal(next.linkGroups, undefined, `${scenario.name} a reshaped target must leave its original linked group`);
     assertNoTrackOverlap(next);
     assertValidLinkGroups(next);
   }
@@ -308,7 +308,7 @@ const nextId = () => `split-${sequence += 1}`;
   const companion = audioCompanion('locked-companion', 5, 20);
   const source = linkedStateOf(target, companion, { companion: true });
   const plan = planOverwrite(source, inserted('companion-lock-new', 10), 10, nextId);
-  assert.ok(plan, '仅 companion 锁轨时 lane-only overwrite 仍应成功');
+  assert.ok(plan, 'a lane-only overwrite must still succeed when only the companion lane is locked');
   const next = plan.actions.reduce(reduce, source);
   assert.deepEqual(next.items.find((item) => item.id === companion.id), companion);
   assert.deepEqual(
@@ -336,4 +336,4 @@ const nextId = () => `split-${sequence += 1}`;
   assert.equal(source.items.some((item) => item.id === 'must-not-add'), false);
 }
 
-console.log('overwrite.verify: ok (四区域/lane-only linked A/V/split transition endpoint/锁轨原子拒绝/无重叠/linkGroups 合法/单次 undo)');
+console.log('overwrite.verify: ok (four geometries/lane-only linked A/V/split transition endpoint/atomic reject on locked track/no overlap/valid linkGroups/single undo)');

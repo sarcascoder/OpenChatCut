@@ -2,7 +2,6 @@
 // Save to local resource library or download submission JSON. The pure logic of the group package is in plugins/export.ts.
 import { useMemo, useState } from 'react';
 import { theme } from '../theme';
-import { useT } from '../i18n/locale';
 import type { TimelineItem, TransitionItem } from '../editor/types';
 import type { SerializableFxDef } from '../gl/fx/uniforms';
 import { CUSTOM_FX } from '../gl/fx/effects';
@@ -46,7 +45,6 @@ function Group({ title, list, checked, toggle }: { title: string; list: ExportCa
 }
 
 export function PluginExport({ items, transitions, fxDefs, defaultOpen = false }: PluginExportProps) {
-  const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   const [packId, setPackId] = useState('');
   const [packName, setPackName] = useState('');
@@ -84,8 +82,8 @@ export function PluginExport({ items, transitions, fxDefs, defaultOpen = false }
   const buildSelected = () => {
     setDone(null);
     const selected = allCandidates.filter((c) => checked.has(c.key)).map((c) => c.item);
-    if (!selected.length) { setErrors([t('先勾选要打包的内容')]); return null; }
-    if (!PACK_ID_RE.test(packId.trim())) { setErrors([t('包 id 需为小写字母/数字/连字符(2..40 位),如 my-pack')]); return null; }
+    if (!selected.length) { setErrors(['Select the content to pack first']); return null; }
+    if (!PACK_ID_RE.test(packId.trim())) { setErrors(['Pack id must be lowercase letters/digits/hyphens (2–40 chars), e.g. my-pack']); return null; }
     const res = buildExportPack({ id: packId, name: packName || packId, author }, selected);
     if (!res.ok) { setErrors(res.errors.slice(0, 4)); return null; }
     setErrors([]);
@@ -96,7 +94,7 @@ export function PluginExport({ items, transitions, fxDefs, defaultOpen = false }
     const res = buildSelected();
     if (!res) return;
     download(`${res.pack.id}.json`, res.json);
-    setDone(t('已导出 {file}({n} 条内容)——可直接上传资源网站', { file: `${res.pack.id}.json`, n: res.pack.items.length }));
+    setDone(`Exported ${`${res.pack.id}.json`} (${res.pack.items.length} items) — ready to upload to the resource website`);
   };
 
   const doSave = async () => {
@@ -106,9 +104,9 @@ export function PluginExport({ items, transitions, fxDefs, defaultOpen = false }
     try {
       const installed = await installFromText(res.json);
       if (!installed.ok) { setErrors(installed.errors.slice(0, 4)); return; }
-      setDone(t('已保存到资源库({n} 条内容)，可在对应分类直接使用', { n: res.pack.items.length }));
+      setDone(`Saved to the resource library (${res.pack.items.length} items). They are now available in their categories.`);
     } catch (error) {
-      setErrors([t('保存失败：{message}', { message: error instanceof Error ? error.message : String(error) })]);
+      setErrors([`Save failed: ${error instanceof Error ? error.message : String(error)}`]);
     } finally {
       setSaving(false);
     }
@@ -121,35 +119,35 @@ export function PluginExport({ items, transitions, fxDefs, defaultOpen = false }
       <button onClick={() => setOpen((o) => !o)}
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.text, fontSize: 12, fontWeight: 600, padding: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 150ms ease-out', fontSize: 10, color: theme.textDim }}>▶</span>
-        {t('创作扩展')}
-        <span style={{ fontWeight: 400, color: theme.textDim, fontSize: 11 }}>{t('把 Agent 生成和时间线创作保存到资源库，或导出投稿包')}</span>
+        Create extension
+        <span style={{ fontWeight: 400, color: theme.textDim, fontSize: 11 }}>Save Agent-generated and timeline creations to the library, or export a submission pack</span>
       </button>
       {open && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
           {total === 0 ? (
             <div style={{ fontSize: 11.5, color: theme.textDim, lineHeight: 1.6 }}>
-              {t('本工程暂无可保存的创作。让 Agent 生成内容，或在时间线制作 MG/缩放后再来。')}
+              This project has no creations to save yet. Ask the Agent to generate content, or create an MG/zoom on the timeline first.
             </div>
           ) : (
             <>
               <div style={{ display: 'flex', gap: 6 }}>
-                <input value={packId} onChange={(e) => setPackId(e.target.value)} placeholder={t('包 id(my-pack)')} style={{ ...inputStyle, flex: 1 }} />
-                <input value={packName} onChange={(e) => setPackName(e.target.value)} placeholder={t('包名(可中文)')} style={{ ...inputStyle, flex: 1 }} />
-                <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder={t('作者(可选)')} style={{ ...inputStyle, width: 90 }} />
+                <input value={packId} onChange={(e) => setPackId(e.target.value)} placeholder="Pack id (my-pack)" style={{ ...inputStyle, flex: 1 }} />
+                <input value={packName} onChange={(e) => setPackName(e.target.value)} placeholder="Pack name" style={{ ...inputStyle, flex: 1 }} />
+                <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author (optional)" style={{ ...inputStyle, width: 90 }} />
               </div>
-              <Group title={t('自定义特效 · {n}', { n: groups.fx.length })} list={groups.fx} checked={checked} toggle={toggle} />
-              <Group title={t('自定义 LUT · {n}', { n: groups.lut.length })} list={groups.lut} checked={checked} toggle={toggle} />
-              <Group title={t('自定义转场 · {n}', { n: groups.tr.length })} list={groups.tr} checked={checked} toggle={toggle} />
-              <Group title={t('时间线缩放 · {n}', { n: groups.zoom.length })} list={groups.zoom} checked={checked} toggle={toggle} />
-              <Group title={t('时间线 MG · {n}', { n: groups.mg.length })} list={groups.mg} checked={checked} toggle={toggle} />
+              <Group title={`Custom effects · ${groups.fx.length}`} list={groups.fx} checked={checked} toggle={toggle} />
+              <Group title={`Custom LUTs · ${groups.lut.length}`} list={groups.lut} checked={checked} toggle={toggle} />
+              <Group title={`Custom transitions · ${groups.tr.length}`} list={groups.tr} checked={checked} toggle={toggle} />
+              <Group title={`Timeline zooms · ${groups.zoom.length}`} list={groups.zoom} checked={checked} toggle={toggle} />
+              <Group title={`Timeline MGs · ${groups.mg.length}`} list={groups.mg} checked={checked} toggle={toggle} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => { void doSave(); }} disabled={saving}
                   style={{ background: theme.accent, color: theme.onAccent, border: 'none', borderRadius: 6, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.65 : 1 }}>
-                  {saving ? t('保存中…') : t('保存到资源库')}
+                  {saving ? 'Saving…' : 'Save to library'}
                 </button>
                 <button onClick={doExport} disabled={saving}
                   style={{ background: theme.accent, color: theme.onAccent, border: 'none', borderRadius: 6, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  {t('导出投稿包')}
+                  Export submission pack
                 </button>
               </div>
             </>

@@ -15,14 +15,14 @@ const clip = (id: string, startFrame: number, durationInFrames: number, track = 
   assert.deepEqual(trackGaps(items, 'V1'), [
     { fromFrame: 150, toFrame: 200 },
     { fromFrame: 250, toFrame: 400 },
-  ], '开头的 0..100 不算洞——那只是轨道还没开始');
+  ], 'the leading 0..100 is not a hole — the track simply has not started yet');
 }
 
 // ── end to end / empty track / single clip → no holes ──
 {
   assert.deepEqual(trackGaps([clip('a', 0, 60), clip('b', 60, 60)], 'V1'), []);
   assert.deepEqual(trackGaps([], 'V1'), []);
-  assert.deepEqual(trackGaps([clip('a', 300, 60)], 'V1'), [], '单个片段前面的留白不是洞');
+  assert.deepEqual(trackGaps([clip('a', 300, 60)], 'V1'), [], 'the blank before a single clip is not a hole');
 }
 
 // ── Overlaps are not holes; neither are intervals completely covered by long segments ──
@@ -31,7 +31,7 @@ const clip = (id: string, startFrame: number, durationInFrames: number, track = 
   assert.deepEqual(
     trackGaps([clip('long', 0, 500), clip('mid', 100, 50), clip('after', 600, 50)], 'V1'),
     [{ fromFrame: 500, toFrame: 600 }],
-    '嵌在长片段里的短片段不制造洞,链尾按最大右边缘算',
+    'a short clip nested inside a long one makes no hole; the chain ends at the largest right edge',
   );
 }
 
@@ -49,7 +49,7 @@ const clip = (id: string, startFrame: number, durationInFrames: number, track = 
   const items = [clip('a', 0, 50), clip('b', 200, 50), clip('other', 50, 150, 'V2')];
   assert.deepEqual(trackGaps(items, 'V1'), [{ fromFrame: 50, toFrame: 200 }]);
   assert.deepEqual(trackGaps(items, 'V2'), []);
-  assert.deepEqual(trackGaps(items, 'A1'), [], '不存在的轨没有洞');
+  assert.deepEqual(trackGaps(items, 'A1'), [], 'a track that does not exist has no holes');
 }
 
 // ── read_project exposes the local offline status to assets and timeline clips at the same time ──
@@ -78,4 +78,4 @@ const clip = (id: string, startFrame: number, durationInFrames: number, track = 
   assert.equal(result.mediaPool.offlineAssetCount, 1);
 }
 
-console.log('track-gaps.verify: ok (洞/首尾不算/重叠与包含/乱序/按轨隔离/离线状态)');
+console.log('track-gaps.verify: ok (holes/head and tail excluded/overlap and containment/out of order/per-track isolation/offline state)');

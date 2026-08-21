@@ -261,7 +261,7 @@ function state(items: TimelineItem[], tracks: TimelineState['tracks'] = {}): Tim
   assert.equal(askNames.includes('sync_images_to_music'), false, 'Q&A mode must not expose the mutating photo tool');
   const routed = new ToolActivation(
     TOOL_SCHEMAS,
-    [{ role: 'user', content: '请根据 BGM 卡点剪辑这些视频' }],
+    [{ role: 'user', content: 'cut these videos to the beat of the background music' }],
   ).names();
   assert.ok(routed.includes('analyze_music'));
   assert.ok(routed.includes('inspect_music'));
@@ -269,7 +269,7 @@ function state(items: TimelineItem[], tracks: TimelineState['tracks'] = {}): Tim
   assert.ok(routed.includes('sync_cuts_to_music'));
   const photoRouted = new ToolActivation(
     TOOL_SCHEMAS,
-    [{ role: 'user', content: '按音乐节拍把这些照片卡点排布' }],
+    [{ role: 'user', content: 'arrange these photos on the music beats' }],
   ).names();
   assert.ok(photoRouted.includes('analyze_music'));
   assert.ok(photoRouted.includes('music_image_plan'));
@@ -349,7 +349,7 @@ function state(items: TimelineItem[], tracks: TimelineState['tracks'] = {}): Tim
     'sync must not split the video clip used as BGM even when explicitly targeted',
   );
 }
-// ── missing model packs → bilingual install guidance in the error ──
+// ── missing model packs → install guidance in the error ──
 {
   const music = item('music', 'video', 'V1', 0, 120, {
     src: '/media/uploads/music.wav',
@@ -384,8 +384,7 @@ function state(items: TimelineItem[], tracks: TimelineState['tracks'] = {}): Tim
       analysisRef: musicAnalysisRef(analysis),
     }, ctx) as { error?: string; modelPacks?: Array<{ id: string }> };
     assert.ok(result.error, 'missing packs must reject');
-    assert.ok(result.error!.includes('设置 → 转写 → 本地模型'), 'error must carry the settings guidance (zh)');
-    assert.ok(result.error!.includes('Settings → Transcription → Local models'), 'error must carry the settings guidance (en)');
+    assert.ok(result.error!.includes('Settings → Transcription → Local models'), 'error must carry the settings guidance');
     assert.equal(result.modelPacks?.length, 2, 'the missing pack ids must be reported');
   } finally {
     globalThis.fetch = previousFetch;

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type CSSProperties, type Dispatch, type RefObject, type SetStateAction } from 'react';
-import { useT } from '../i18n/locale';
 import { theme } from '../theme';
 import { Icon } from './icons';
 
@@ -30,7 +29,6 @@ function useDismissablePopover<T extends HTMLElement>(
 }
 
 export function DashboardHeaderLinks() {
-  const t = useT();
   const [contactOpen, setContactOpen] = useState(false);
   const contactRef = useRef<HTMLSpanElement>(null);
   useDismissablePopover(contactOpen, contactRef, setContactOpen);
@@ -40,11 +38,11 @@ export function DashboardHeaderLinks() {
       <button
         type="button"
         onClick={() => setContactOpen((open) => !open)}
-        aria-label={t('联系作者')}
+        aria-label="Contact author"
         aria-expanded={contactOpen}
         aria-controls={CONTACT_POPOVER_ID}
         aria-haspopup="dialog"
-        data-tip={t('联系作者')}
+        data-tip="Contact author"
         className="cc-header-btn cc-tip cc-tip-r"
         style={iconButton}
       >
@@ -54,8 +52,8 @@ export function DashboardHeaderLinks() {
         href={PROJECT_REPOSITORY_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={t('GitHub 仓库')}
-        data-tip={t('GitHub 仓库')}
+        aria-label="GitHub repository"
+        data-tip="GitHub repository"
         data-cc-titlebar-control="true"
         className="cc-header-btn cc-tip cc-tip-r"
         style={githubLink}
@@ -63,8 +61,8 @@ export function DashboardHeaderLinks() {
         <Icon name="github" size={16} />
       </a>
       {contactOpen && (
-        <div id={CONTACT_POPOVER_ID} role="dialog" aria-label={t('联系作者')} style={contactPopover}>
-          <span style={contactLabel}>{t('联系作者')}</span>
+        <div id={CONTACT_POPOVER_ID} role="dialog" aria-label="Contact author" style={contactPopover}>
+          <span style={contactLabel}>Contact author</span>
           <a href={`mailto:${AUTHOR_EMAIL}`} data-cc-titlebar-control="true" style={contactEmail}>
             {AUTHOR_EMAIL}
           </a>

@@ -126,7 +126,7 @@ function applyToolActions(
     const observed = turn.state.ctxRef.current.getDoc();
     if (!turn.persistentBeforeDoc) {
       turn.persistentBeforeDoc = turn.baseDoc;
-      turn.persistentSnapshot = saveAutomaticVersion(projectId, 'Agent 修改前', turn.baseDoc).then(
+      turn.persistentSnapshot = saveAutomaticVersion(projectId, 'Before agent changes', turn.baseDoc).then(
         () => undefined,
         (error) => { turn.persistentSaveError = error; },
       );

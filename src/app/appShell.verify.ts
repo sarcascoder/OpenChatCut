@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { loadInitialProjects, type ProjectStartupSource } from './appShell';
 import type { ProjectMeta } from '../persist/projectStoreCoordinators';
 
-const demo = { id: 'demo', name: '示例工程', updatedAt: 1 };
+const demo = { id: 'demo', name: 'Sample project', updatedAt: 1 };
 
 function source(options: {
   projects?: ProjectMeta[];

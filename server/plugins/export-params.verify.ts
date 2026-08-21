@@ -11,7 +11,7 @@ assert.equal(exportScale({ width: 1080, height: 1920 }, '720p'), 720 / 1080);
 assert.equal(exportScale({ width: 1920, height: 1080 }, '1080p'), 1);
 assert.equal(exportScale({ width: 1920, height: 1080 }, '4k'), 2);
 assert.equal(exportScale({ width: 1080, height: 1920 }, '4k'), 2);
-assert.equal(exportScale({ width: 1920, height: 1080 }, undefined), 1, '省略=不缩放');
+assert.equal(exportScale({ width: 1920, height: 1080 }, undefined), 1, 'omitted = no scaling');
 // Presets target their exact short edge even for unusually small timelines.
 assert.equal(exportScale({ width: 1280, height: 720 }, '1080p'), 1.5);
 assert.equal(exportScale({ width: 100, height: 100 }, '1080p'), 10.8);

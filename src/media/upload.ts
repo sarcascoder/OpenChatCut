@@ -1,5 +1,4 @@
 import type { MediaAsset, MediaAssetKind } from '../editor/types';
-import { t } from '../i18n/locale';
 import { putMediaBlob } from '../persist/mediaBlobStore';
 import { extractAudioForAsr } from '../transcript/provider';
 import { extractAsrFromFile } from '../transcript/client-asr-extract';
@@ -207,7 +206,7 @@ export async function normalizeUploadedVideo(
     throw new Error('server returned no media path');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(t('视频兼容性处理失败：{error}', { error: message }));
+    throw new Error(`Video compatibility processing failed: ${message}`);
   }
 }
 
@@ -249,7 +248,7 @@ function originalPathOf(file: File): string | undefined {
 
 async function prepareMediaImport(file: File, fps: number): Promise<PreparedMediaImport> {
   const kind = kindOf(file);
-  if (!kind) throw new Error(t('不支持的文件类型（视频 / 图片 / 音频 / GIF / SVG）'));
+  if (!kind) throw new Error('Unsupported file type (video / image / audio / GIF / SVG)');
   return {
     file,
     fps,

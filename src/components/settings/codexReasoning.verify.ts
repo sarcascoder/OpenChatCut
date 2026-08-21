@@ -4,11 +4,11 @@ import { shouldRenderModelPicker, stageFieldValue } from './codexReasoning.ts';
 import type { KeyStatusResponse, SettingsField } from './settingsSchema.ts';
 
 const modelField: SettingsField = {
-  name: 'CODEX_MODEL', label: 'Codex 模型', kind: 'text',
-  defaultLabel: 'Codex 默认模型', discoverableModel: true,
+  name: 'CODEX_MODEL', label: 'Codex model', kind: 'text',
+  defaultLabel: 'Codex default model', discoverableModel: true,
 };
 const effortField: SettingsField = {
-  name: 'CODEX_REASONING_EFFORT', label: '推理强度', kind: 'select',
+  name: 'CODEX_REASONING_EFFORT', label: 'Reasoning effort', kind: 'select',
 };
 const status: KeyStatusResponse = {
   keys: {
@@ -74,7 +74,7 @@ assert.deepEqual(staged, {
 }, 'cancelling model clear restores the saved model and its compatible effort');
 
 const apiModelField: SettingsField = {
-  name: 'LLM_MODEL', label: 'Agent 模型', kind: 'text', discoverableModel: true,
+  name: 'LLM_MODEL', label: 'Agent Model', kind: 'text', discoverableModel: true,
 };
 assert.equal(
   shouldRenderModelPicker(modelField, 0),

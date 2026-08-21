@@ -24,7 +24,7 @@ for (const name of ['import_asset', 'import_folder']) {
 // ── Browser (window exists, no desktop bridge): clear desktop-only error ──
 (globalThis as unknown as { window?: unknown }).window = {};
 try {
-  const browserResult = await execAgentPathImportTool('import_asset', { path: '/Volumes/素材盘/A.mp4' }, {} as AgentContext);
+  const browserResult = await execAgentPathImportTool('import_asset', { path: '/Volumes/MediaDrive/A.mp4' }, {} as AgentContext);
   assert.match(String(browserResult.error), /desktop app only/, 'browser gets the desktop-only error');
   assert.equal('ok' in browserResult, false, 'browser path never reports success');
 } finally {
@@ -78,7 +78,7 @@ const projectCtx = {
   },
 };
 try {
-  const result = await execAgentPathImportTool('import_asset', { path: '/Volumes/素材盘/A001.mp4' }, projectCtx);
+  const result = await execAgentPathImportTool('import_asset', { path: '/Volumes/MediaDrive/A001.mp4' }, projectCtx);
   assert.equal(result.ok, true, 'desktop import reports ok');
   assert.equal(addedAssets.length, 1, 'the imported asset lands in the pool');
   assert.equal(addedAssets[0]!.name, 'A001.mp4', 'asset name preserved');
@@ -91,7 +91,7 @@ try {
 // ── Desktop without an open project ──
 (globalThis as unknown as { window?: unknown }).window = { openChatCutDesktop: desktopBridge };
 try {
-  const noProject = await execAgentPathImportTool('import_folder', { path: '/Volumes/素材盘' }, { getProjectId: () => undefined } as unknown as AgentContext);
+  const noProject = await execAgentPathImportTool('import_folder', { path: '/Volumes/MediaDrive' }, { getProjectId: () => undefined } as unknown as AgentContext);
   assert.match(String(noProject.error), /no open project/, 'missing project rejected');
 } finally {
   delete (globalThis as unknown as { window?: unknown }).window;
@@ -104,7 +104,7 @@ try {
   },
 };
 try {
-  const failed = await execAgentPathImportTool('import_asset', { path: '/Volumes/素材盘/A.mp4' }, projectCtx);
+  const failed = await execAgentPathImportTool('import_asset', { path: '/Volumes/MediaDrive/A.mp4' }, projectCtx);
   assert.match(String(failed.error), /scan failed/, 'bridge error message surfaced');
 } finally {
   delete (globalThis as unknown as { window?: unknown }).window;

@@ -12,7 +12,7 @@ import { CURRENT_PROJECT_VERSION } from '../../shared/project-version';
 const tl = (id: string, name: string, order: number): Timeline =>
   ({ fps: 30, width: 1920, height: 1080, items: [], selectedId: null, id, name, order });
 
-const base: ProjectDoc = { version: CURRENT_PROJECT_VERSION, assets: [], mediaFolders: [], timelines: [tl('tl_a', '序列 1', 0)], activeTimelineId: 'tl_a' };
+const base: ProjectDoc = { version: CURRENT_PROJECT_VERSION, assets: [], mediaFolders: [], timelines: [tl('tl_a', 'Sequence 1', 0)], activeTimelineId: 'tl_a' };
 
 // the draft records actions + applies to a scratch copy WITHOUT touching base
 const d = makeDraft(base);
@@ -102,12 +102,12 @@ assert.strictEqual(activeTimeline(transcriptUndone.present).items[0].transcript,
 // Snapshot history is intentionally bounded so long editing sessions do not
 // retain an unlimited number of whole ProjectDoc graphs.
 let boundedHistory = { past: [] as ProjectDoc[], present: base, future: [] as ProjectDoc[] };
-for (let i = 0; i < 110; i++) boundedHistory = historyReduce(boundedHistory, { type: 'tl.rename', id: 'tl_a', name: `序列 ${i}` });
+for (let i = 0; i < 110; i++) boundedHistory = historyReduce(boundedHistory, { type: 'tl.rename', id: 'tl_a', name: `Sequence ${i}` });
 assert.strictEqual(boundedHistory.past.length, 100, 'history retains only the newest 100 snapshots');
 
 // ── manage_timelines through the draft: create → switch routing → replay ──
 const d2 = makeDraft(applied);
-const newId = d2.commands.createTimeline({ name: '竖屏', width: 1080, height: 1920 }); // activates it
+const newId = d2.commands.createTimeline({ name: 'Vertical', width: 1080, height: 1920 }); // activates it
 d2.commands.addTextClip(); // must land in the NEW active timeline
 const acts2 = d2.takeActions();
 assert.strictEqual(d2.getDoc().timelines.length, 2, 'draft has 2 timelines');
@@ -127,7 +127,7 @@ d3.commands.switchTimeline('tl_a');
 d3.commands.addTextClip();
 const applied3 = replayActions(applied2, d3.takeActions());
 assert.strictEqual(applied3.activeTimelineId, 'tl_a', 'switch replays');
-assert.strictEqual(applied3.timelines[0].items.length, 3, 'clip followed the switch to 序列 1');
+assert.strictEqual(applied3.timelines[0].items.length, 3, 'clip followed the switch to Sequence 1');
 
 // tl.setDoc is the atomic one-step commit target
 assert.strictEqual(projectReduce(base, { type: 'tl.setDoc', doc: applied2 }), applied2, 'tl.setDoc commits the whole project');

@@ -2,7 +2,7 @@
 name: music-intelligence
 description: |
   Run or inspect local music analysis and plan or apply beat-, downbeat-, or section-synced video cuts or photo placements.
-  Use for BGM beat edits, rhythm cuts, 卡点剪辑, musical structure, BPM, mood, genre, or instrument questions.
+  Use for BGM beat edits, rhythm cuts, beat-matched cuts, musical structure, BPM, mood, genre, or instrument questions.
 user-invocable: false
 ---
 

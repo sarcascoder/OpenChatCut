@@ -18,7 +18,6 @@ import {
 } from './chatAttachmentLifecycle';
 import type { RefItem } from './ChatComposer';
 
-type Translate = (key: string) => string;
 type UpdateInput = (update: (value: string) => string) => void;
 
 export type ChatMediaImporter = (
@@ -32,7 +31,6 @@ export type ChatMediaImporter = (
 ) => Promise<MediaAsset>;
 
 interface AttachmentImportBinding {
-  readonly t: Translate;
   readonly onImportMedia: ChatMediaImporter;
   readonly lifecycle: () => ChatAttachmentLifecycleState;
   readonly references: () => RefItem[];
@@ -65,10 +63,10 @@ async function importDocument(binding: AttachmentImportBinding, file: File): Pro
     else if (kind === 'pdf') text = await parsePdfText(await file.arrayBuffer());
     else text = validatedChatDocumentText(await file.text());
   } catch (error) {
-    binding.setError(error instanceof Error ? binding.t(error.message) : binding.t('文档解析失败'));
+    binding.setError(error instanceof Error ? error.message : 'Document parsing failed');
     return;
   }
-  const block = `[文档: ${file.name}]\n${text.trim()}\n`;
+  const block = `[Document: ${file.name}]\n${text.trim()}\n`;
   binding.updateInput((value) => (value.trim() ? `${value}\n${block}` : block));
 }
 
@@ -116,7 +114,7 @@ function acceptFailure(binding: AttachmentImportBinding, token: ChatAttachmentIm
       .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     binding.updateInput((value) => value.replace(new RegExp(`${escaped}\\s?`, 'g'), '').trimStart());
   }
-  binding.setError(reason instanceof Error ? reason.message : binding.t('导入失败'));
+  binding.setError(reason instanceof Error ? reason.message : 'Import failed');
 }
 
 async function importOne(binding: AttachmentImportBinding, file: File): Promise<void> {
@@ -141,7 +139,7 @@ export function createChatAttachmentImporter(binding: AttachmentImportBinding): 
     const media = files.filter((file) => chatDocumentKind(file) === null && kindOf(file) !== null);
     const unsupported = files.length - documents.length - media.length;
     binding.setError(unsupported > 0
-      ? binding.t('已忽略不支持的文件（仅支持 视频 / 图片 / 音频 / GIF / SVG / md / txt / srt / csv / docx / pdf）')
+      ? 'Unsupported files ignored (only video / image / audio / GIF / SVG / md / txt / srt / csv / docx / pdf)'
       : null);
     for (const file of documents) await importDocument(binding, file);
     await Promise.all(media.map((file) => importOne(binding, file)));

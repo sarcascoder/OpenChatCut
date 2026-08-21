@@ -48,19 +48,19 @@ export function stripCodeFences(text: string): string {
     .trim();
 }
 
-/** Return null for valid generated GLSL, otherwise a Chinese error message for the agent. */
+/** Return null for valid generated GLSL, otherwise an error message for the agent. */
 export function validateShaderSource(glsl: string): string | null {
   const src = glsl.trim();
-  if (!src) return '生成的着色器为空';
-  if (src.length > MAX_GLSL_LEN) return `着色器过长（${src.length} > ${MAX_GLSL_LEN}）`;
-  for (const tok of FORBIDDEN) if (src.includes(tok)) return `禁止的指令：${tok}`;
-  if (!src.includes('u_input')) return '着色器必须采样输入贴图 u_input';
-  if (!/\bmain\b/.test(src)) return '着色器缺少 main() 入口';
-  if (!/fragColor|gl_FragColor/.test(src)) return '着色器必须写出颜色（fragColor / gl_FragColor）';
+  if (!src) return 'the generated shader is empty';
+  if (src.length > MAX_GLSL_LEN) return `shader is too long (${src.length} > ${MAX_GLSL_LEN})`;
+  for (const tok of FORBIDDEN) if (src.includes(tok)) return `forbidden directive: ${tok}`;
+  if (!src.includes('u_input')) return 'the shader must sample the input texture u_input';
+  if (!/\bmain\b/.test(src)) return 'the shader has no main() entry point';
+  if (!/fragColor|gl_FragColor/.test(src)) return 'the shader must write a color (fragColor / gl_FragColor)';
   // Single-input renderFx binds only u_input; reject extra sampler2D declarations that would read unbound units.
   const samplers = [...src.matchAll(/\buniform\s+sampler2D\s+(\w+)/g)].map((m) => m[1]);
   const unknown = samplers.filter((n) => n !== 'u_input');
-  if (unknown.length) return `未知的采样器（运行时只提供 u_input）：${unknown.join(', ')}`;
+  if (unknown.length) return `unknown sampler(s) (the runtime only provides u_input): ${unknown.join(', ')}`;
   return null;
 }
 
@@ -107,11 +107,11 @@ function slugify(name: string): string {
 
 /** Assemble a custom FxDef (unique id, inline frag, attribute schema). Pure function, measurable.*/
 export function buildCustomFxDef(name: string, frag: string, rawProps?: RawProp[]): FxDef {
-  const display = name.trim() || '自定义着色器';
+  const display = name.trim() || 'Custom shader';
   return {
     id: `custom:fx-${slugify(display)}-${shortId()}`,
     name: display,
-    desc: `submit_shader 自定义效果：${display}`,
+    desc: `submit_shader custom effect: ${display}`,
     frag,
     props: buildProps(rawProps),
   };
@@ -120,27 +120,27 @@ export function buildCustomFxDef(name: string, frag: string, rawProps?: RawProp[
 // ── type=transition: double input transition variant (submit_shader type=transition)──────
 // The transition shader contract is different from per-clip fx: two inputs u_outgoing / u_incoming + progress u_progress.
 
-/** Static verification transition shader (double input contract). By returning null, otherwise return the Chinese reason.*/
+/** Static verification transition shader (double input contract). Returns null when valid, otherwise the reason.*/
 export function validateTransitionShaderSource(glsl: string): string | null {
   const src = glsl.trim();
-  if (!src) return '生成的着色器为空';
-  if (src.length > MAX_GLSL_LEN) return `着色器过长（${src.length} > ${MAX_GLSL_LEN}）`;
-  for (const tok of FORBIDDEN) if (src.includes(tok)) return `禁止的指令：${tok}`;
-  if (!src.includes('u_outgoing')) return '转场着色器必须采样前一段 u_outgoing';
-  if (!src.includes('u_incoming')) return '转场着色器必须采样后一段 u_incoming';
-  if (!src.includes('u_progress')) return '转场着色器必须用进度 u_progress（0→1）驱动混合';
-  if (!/\bmain\b/.test(src)) return '着色器缺少 main() 入口';
-  if (!/fragColor|gl_FragColor/.test(src)) return '着色器必须写出颜色（fragColor / gl_FragColor）';
+  if (!src) return 'the generated shader is empty';
+  if (src.length > MAX_GLSL_LEN) return `shader is too long (${src.length} > ${MAX_GLSL_LEN})`;
+  for (const tok of FORBIDDEN) if (src.includes(tok)) return `forbidden directive: ${tok}`;
+  if (!src.includes('u_outgoing')) return 'a transition shader must sample the outgoing clip u_outgoing';
+  if (!src.includes('u_incoming')) return 'a transition shader must sample the incoming clip u_incoming';
+  if (!src.includes('u_progress')) return 'a transition shader must drive the blend with the progress u_progress (0→1)';
+  if (!/\bmain\b/.test(src)) return 'the shader has no main() entry point';
+  if (!/fragColor|gl_FragColor/.test(src)) return 'the shader must write a color (fragColor / gl_FragColor)';
   // Only two samplers u_outgoing / u_incoming are bound at runtime; other sampler2D will sample unbound units → reject
   const samplers = [...src.matchAll(/\buniform\s+sampler2D\s+(\w+)/g)].map((m) => m[1]);
   const unknown = samplers.filter((n) => n !== 'u_outgoing' && n !== 'u_incoming');
-  if (unknown.length) return `未知的采样器（运行时只提供 u_outgoing / u_incoming）：${unknown.join(', ')}`;
+  if (unknown.length) return `unknown sampler(s) (the runtime only provides u_outgoing / u_incoming): ${unknown.join(', ')}`;
   return null;
 }
 
 /** Assemble a custom transition def (unique custom:tr-* id, inline frag, attribute schema). Pure function, measurable.*/
 export function buildCustomTransitionDef(name: string, frag: string, rawProps?: RawProp[]): CustomTransitionDef {
-  const display = name.trim() || '自定义转场';
+  const display = name.trim() || 'Custom transition';
   return {
     id: `custom:tr-${slugify(display)}-${shortId()}`,
     label: display,
@@ -164,7 +164,7 @@ export function compileCheck(frag: string): string | null {
     gl.shaderSource(sh, frag);
     gl.compileShader(sh);
     const ok = gl.getShaderParameter(sh, gl.COMPILE_STATUS);
-    const log = ok ? null : (gl.getShaderInfoLog(sh) || '着色器编译失败');
+    const log = ok ? null : (gl.getShaderInfoLog(sh) || 'shader compilation failed');
     gl.deleteShader(sh);
     return log;
   } catch (e) {
@@ -175,7 +175,7 @@ export function compileCheck(frag: string): string | null {
 /** System tip for models: Make clear the exact uniform / varying contracts provided by the runtime, only GLSL.*/
 function shaderSystemPrompt(props: NumberProp[]): string {
   const propLines = props.length
-    ? props.map((p) => `  uniform float u_${p.key}; // ${p.label}（默认 ${p.default}，范围 ${p.min}..${p.max}）`).join('\n')
+    ? props.map((p) => `  uniform float u_${p.key}; // ${p.label} (default ${p.default}, range ${p.min}..${p.max})`).join('\n')
     : '  (no extra adjustable uniforms)';
   return `You write ONE WebGL2 GLSL ES 3.00 fragment shader for a per-clip video effect. Output ONLY the GLSL source — no markdown fences, no prose.
 
@@ -203,7 +203,7 @@ Rules (MUST follow exactly):
 /** System prompt for models (transition variant): double input u_outgoing/u_incoming + u_progress contract.*/
 function transitionShaderSystemPrompt(props: NumberProp[]): string {
   const propLines = props.length
-    ? props.map((p) => `  uniform float u_${p.key}; // ${p.label}（默认 ${p.default}，范围 ${p.min}..${p.max}）`).join('\n')
+    ? props.map((p) => `  uniform float u_${p.key}; // ${p.label} (default ${p.default}, range ${p.min}..${p.max})`).join('\n')
     : '  (no extra adjustable uniforms)';
   return `You write ONE WebGL2 GLSL ES 3.00 fragment shader for a clip-to-clip video TRANSITION. Output ONLY the GLSL source — no markdown fences, no prose.
 
@@ -235,7 +235,7 @@ Rules (MUST follow exactly):
 /** When name is omitted, a short display name is derived from prompt ("Defaults to a name derived from the prompt").*/
 export function deriveShaderName(prompt: string): string {
   const flat = prompt.replace(/\s+/g, ' ').trim();
-  return (flat.length > 48 ? flat.slice(0, 48).trimEnd() : flat) || '自定义着色器';
+  return (flat.length > 48 ? flat.slice(0, 48).trimEnd() : flat) || 'Custom shader';
 }
 
 /** Verify and normalize the core parameters of submit_shader. Pure functions, testable; error messages are agent-oriented.*/

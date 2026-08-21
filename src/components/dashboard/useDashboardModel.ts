@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ChangeEvent, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { getAgentModelSnapshot, subscribeAgentModels, type AgentModelSnapshot } from '../../agent/model-selection';
-import { useT } from '../../i18n/locale';
 import { loadProject, loadProjectThumb, saveProjectThumb } from '../../persist/projectStore';
 import type { ProjectMeta } from '../../persist/projectStoreCoordinators';
 
@@ -49,18 +48,17 @@ export interface DashboardModel {
   thumbs: Readonly<Record<string, string>>;
 }
 
-type Translate = (key: string, params?: Record<string, string | number>) => string;
 
 const THUMB_RENDER_CONCURRENCY = 2;
 const THUMB_RENDER_VERSION = 1;
 const thumbKey = (project: ProjectMeta) => project.updatedAt + THUMB_RENDER_VERSION;
 
-export function relativeProjectTime(ms: number, translate: Translate): string {
+export function relativeProjectTime(ms: number): string {
   const seconds = Math.max(0, Math.floor((Date.now() - ms) / 1000));
-  if (seconds < 60) return translate('刚刚');
-  if (seconds < 3600) return translate('{n} 分钟前', { n: Math.floor(seconds / 60) });
-  if (seconds < 86400) return translate('{n} 小时前', { n: Math.floor(seconds / 3600) });
-  return translate('{n} 天前', { n: Math.floor(seconds / 86400) });
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hr ago`;
+  return `${Math.floor(seconds / 86400)} d ago`;
 }
 
 async function renderProjectPoster(project: ProjectMeta): Promise<string | null> {
@@ -144,15 +142,14 @@ function useProjectRename(onRename: DashboardProps['onRename']): RenameModel {
 }
 
 function useProjectTransfer(onImport: DashboardProps['onImport']): TransferModel {
-  const translate = useT();
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const run = async (work: Promise<string>) => {
     setBusy(true);
-    setNote(translate('处理中…'));
+    setNote('Processing…');
     try { setNote(await work); }
-    catch (error) { setNote(translate('失败:{error}', { error: error instanceof Error ? error.message : String(error) })); }
+    catch (error) { setNote(`Failed: ${error instanceof Error ? error.message : String(error)}`); }
     finally { setBusy(false); }
   };
   const pickImport = (event: ChangeEvent<HTMLInputElement>) => {

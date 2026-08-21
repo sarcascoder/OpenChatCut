@@ -27,21 +27,21 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
 {
   let h = start();
   for (const v of [1.1, 1.2, 1.3]) h = setVolume(h, v);
-  assert.equal(h.past.length, 3, '没有手势边界时逐步记录');
+  assert.equal(h.past.length, 3, 'without gesture boundaries every step is recorded');
 }
 
 // ── Gestures enabled: Only one of the 40 steps is left, and the undo returns to before dragging ──
 {
   let h = start();
   h = historyReduce(h, { type: 'history.beginGesture' });
-  assert.equal(h.past.length, 0, '开始手势本身不动历史');
+  assert.equal(h.past.length, 0, 'beginning a gesture on its own does not touch history');
   for (let i = 1; i <= 40; i += 1) h = setVolume(h, Math.round((1 + i * 0.025) * 1000) / 1000);
   h = historyReduce(h, { type: 'history.endGesture' });
 
-  assert.equal(h.past.length, 1, `40 步只该留 1 条历史,实得 ${h.past.length}`);
-  assert.equal(volumeOf(h), 2, '当前值是拖到的最终值');
+  assert.equal(h.past.length, 1, `40 steps should leave only 1 history entry, got ${h.past.length}`);
+  assert.equal(volumeOf(h), 2, 'the current value is where the drag ended');
   const undone = historyReduce(h, { type: 'undo' });
-  assert.equal(volumeOf(undone), 1, '撤销回到拖之前,而不是上一个刻度');
+  assert.equal(volumeOf(undone), 1, 'undo returns to before the drag, not to the previous step');
   assert.equal(undone.past.length, 0);
 }
 
@@ -54,9 +54,9 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
     h = setVolume(h, b);
     h = historyReduce(h, { type: 'history.endGesture' });
   }
-  assert.equal(h.past.length, 2, '每次手势各留一条');
+  assert.equal(h.past.length, 2, 'each gesture leaves one entry');
   assert.equal(volumeOf(h), 0.2);
-  assert.equal(volumeOf(historyReduce(h, { type: 'undo' })), 1.8, '撤销回到第二次手势之前');
+  assert.equal(volumeOf(historyReduce(h, { type: 'undo' })), 1.8, 'undo returns to before the second gesture');
 }
 
 // ── The gesture did not change during the process: an extra piece of history should not be created out of thin air──
@@ -65,7 +65,7 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
   h = historyReduce(h, { type: 'history.beginGesture' });
   h = historyReduce(h, { type: 'history.endGesture' });
   assert.equal(h.past.length, 0);
-  assert.equal(h.gesture, undefined, '结束后手势状态清干净');
+  assert.equal(h.gesture, undefined, 'gesture state is cleared once it ends');
 }
 
 // ── The redo branch will still be cleared during the gesture (the same as normal editing) ──
@@ -73,11 +73,11 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
   let h = start();
   h = setVolume(h, 1.5);
   h = historyReduce(h, { type: 'undo' });
-  assert.equal(h.future.length, 1, '有可重做的分支');
+  assert.equal(h.future.length, 1, 'there is a redoable branch');
   h = historyReduce(h, { type: 'history.beginGesture' });
   h = setVolume(h, 0.8);
   h = setVolume(h, 0.6);
-  assert.equal(h.future.length, 0, '新编辑清空重做分支');
+  assert.equal(h.future.length, 0, 'a new edit clears the redo branch');
   assert.equal(h.past.length, 1);
 }
 
@@ -88,9 +88,9 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
   h = setVolume(h, 1.4);
   assert.equal(h.gesture, 'pushed');
   h = historyReduce(h, { type: 'undo' });
-  assert.equal(h.gesture, undefined, '撤销后手势状态清掉');
+  assert.equal(h.gesture, undefined, 'gesture state is cleared after undo');
   h = setVolume(h, 1.9);
-  assert.equal(h.past.length, 1, '之后的编辑照常记录');
+  assert.equal(h.past.length, 1, 'later edits are recorded as usual');
 }
 
 // ── Repeating begin will not repeat the open gesture──
@@ -100,7 +100,7 @@ const setVolume = (h: History, volume: number) => historyReduce(h, { type: 'setV
   h = setVolume(h, 1.2);
   h = historyReduce(h, { type: 'history.beginGesture' });
   h = setVolume(h, 1.4);
-  assert.equal(h.past.length, 1, '仍然只有一条');
+  assert.equal(h.past.length, 1, 'still just one entry');
 }
 
-console.log('historyGesture.verify: ok (逐步/40 步合一/跨手势不合并/空手势/清 redo/undo 收尾/重复 begin)');
+console.log('historyGesture.verify: ok (step-by-step/40 steps into one/no merging across gestures/empty gesture/redo cleared/undo cleanup/repeated begin)');

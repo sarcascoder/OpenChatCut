@@ -23,7 +23,7 @@ class MemoryStorage implements TimelineViewStorage {
 }
 
 const storage = new MemoryStorage();
-assert.equal(loadTimelineViewState(storage, 'project-a', 'timeline-a'), null, '无记录的 timeline 必须走 fit/default，而不是继承别的 timeline');
+assert.equal(loadTimelineViewState(storage, 'project-a', 'timeline-a'), null, 'a timeline with no stored record must fall back to fit/default instead of inheriting another timeline');
 
 saveTimelineViewState(storage, 'project-a', 'timeline-a', {
   playhead: 120,
@@ -74,4 +74,4 @@ clearTimelineViewStates(storage, 'project-a');
 assert.equal(loadTimelineViewState(storage, 'project-a', 'timeline-a'), null);
 assert.equal(loadTimelineViewState(storage, 'project-a', 'timeline-b'), null);
 
-console.log('timelineViewState.verify: ok (timelineId 隔离/切换恢复/partial merge/项目清理)');
+console.log('timelineViewState.verify: ok (timelineId isolation/restore on switch/partial merge/project cleanup)');

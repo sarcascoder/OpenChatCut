@@ -293,7 +293,7 @@ export async function execTranscriptTool(name: string, args: Args, ctx: AgentCon
       } catch (e) {
         const base = e instanceof Error ? e.message : String(e);
         const guidance = provider === 'local'
-          ? ' 请到 设置 → 转写 → 本地模型 检查 whisper 模型是否已下载（Settings → Transcription → Local models）。'
+          ? ' Check whether the whisper model has been downloaded under Settings -> Transcription -> Local models.'
           : '';
         return { error: `transcription failed: ${base}${guidance}`, partial: results };
       }

@@ -9,44 +9,44 @@ import {
   type SettingsVendorPage,
 } from './settingsFields';
 
-const MINIMAX_NOTE = 'MiniMax 同一个 Key，配置一次全能力（生图 / 配音 / 视频 / 音乐）通用。';
+const MINIMAX_NOTE = 'One MiniMax key covers every capability (image / voice / video / music) — configure once.';
 
 const COMMON_TRANSCRIPTION_FIELDS: readonly SettingsField[] = [
   {
     name: 'TRANSCRIPTION_LANGUAGE',
-    label: '转写语言',
+    label: 'Transcription language',
     kind: 'select',
-    defaultLabel: '中文（zh）',
+    defaultLabel: 'Chinese (zh)',
     options: [
-      { value: 'zh', label: '中文（zh）' },
-      { value: 'en', label: '英语（en）' },
-      { value: 'ja', label: '日语（ja）' },
-      { value: 'ko', label: '韩语（ko）' },
-      { value: 'es', label: '西班牙语（es）' },
-      { value: 'fr', label: '法语（fr）' },
-      { value: 'de', label: '德语（de）' },
+      { value: 'zh', label: 'Chinese (zh)' },
+      { value: 'en', label: 'English (en)' },
+      { value: 'ja', label: 'Japanese (ja)' },
+      { value: 'ko', label: 'Korean (ko)' },
+      { value: 'es', label: 'Spanish (es)' },
+      { value: 'fr', label: 'French (fr)' },
+      { value: 'de', label: 'German (de)' },
     ],
   },
   {
     name: 'TRANSCRIPTION_DIARIZATION',
-    label: '说话人分离',
+    label: 'Speaker diarization',
     kind: 'select',
-    defaultLabel: '启用',
+    defaultLabel: 'On',
     options: [
-      { value: '1', label: '启用' },
-      { value: '0', label: '停用' },
+      { value: '1', label: 'On' },
+      { value: '0', label: 'Off' },
     ],
   },
   {
     name: 'AUTO_TRANSCRIBE_INGEST',
-    label: '导入后自动转写',
+    label: 'Auto-transcribe on import',
     kind: 'select',
-    defaultLabel: '仅本地引擎（免费）',
-    note: '素材进入媒体池后是否立即转写。本地 Whisper 免费且在本机运行；云端付费供应商建议保持关闭或手动转写。',
+    defaultLabel: 'Local engine only (free)',
+    note: 'Whether media is transcribed as soon as it lands in the media pool. Local Whisper is free and runs on this machine; for paid cloud providers, keep this off or transcribe manually.',
     options: [
-      { value: 'off', label: '关闭（手动转写）' },
-      { value: 'local', label: '仅本地引擎（免费）' },
-      { value: 'all', label: '全部引擎（含云端付费）' },
+      { value: 'off', label: 'Off (transcribe manually)' },
+      { value: 'local', label: 'Local engine only (free)' },
+      { value: 'all', label: 'All engines (including paid cloud)' },
     ],
   },
 ];
@@ -65,29 +65,29 @@ const transcriptionPage = (
   fields: [...fields, ...COMMON_TRANSCRIPTION_FIELDS],
 });
 
-export const localAsrPage = transcriptionPage('local', 'localasr', '本地模型（whisper）', [
+export const localAsrPage = transcriptionPage('local', 'localasr', 'Local model (Whisper)', [
   {
     name: 'LOCAL_ASR_MODEL',
-    label: '默认模型',
+    label: 'Default model',
     kind: 'select',
-    defaultLabel: '自动（按设备内存选择）',
-    note: '选中的模型需已下载；未选择时按设备内存自动挑选（内存 ≥6GB 用 Small，否则 Base）。',
+    defaultLabel: 'Auto (by device memory)',
+    note: 'The selected model must be downloaded first; when unset, the device memory picks automatically (≥6GB → Small, otherwise Base).',
     options: [
-      { value: 'tiny', label: 'Whisper Tiny（约 100MB · 最快）' },
-      { value: 'base', label: 'Whisper Base（约 80MB · 均衡）' },
-      { value: 'small', label: 'Whisper Small（约 250MB · 推荐）' },
-      { value: 'medium', label: 'Whisper Medium（约 1.1GB · 精度最高）' },
+      { value: 'tiny', label: 'Whisper Tiny (~100MB · fastest)' },
+      { value: 'base', label: 'Whisper Base (~80MB · balanced)' },
+      { value: 'small', label: 'Whisper Small (~250MB · recommended)' },
+      { value: 'medium', label: 'Whisper Medium (~1.1GB · highest accuracy)' },
     ],
   },
-], '转写在本机完成：免费、离线、素材不出本机。模型按需下载（见下方列表），自动选择设备优势后端：WebGPU 不可用时回退 CPU。本地转写不含说话人分离（全部归为同一位说话人）。');
+], 'Transcription runs on this machine: free, offline, and private. Download models on demand below. OpenChatCut selects the best available backend and falls back to CPU when WebGPU is unavailable. Local transcription does not support speaker diarization.');
 
 export const VOICE_SETTINGS_GROUP: SettingsGroup = {
   key: 'voice',
-  title: '配音 / TTS',
-  hint: 'submit_voice · 文字转配音，任一厂商即可。',
+  title: 'Voice / TTS',
+  hint: 'submit_voice · Text to voiceover; any one vendor works.',
   route: routeSelect('PREFERRED_VOICE_VENDOR', [
     { value: 'elevenlabs', label: 'ElevenLabs' },
-    { value: 'doubao', label: '豆包' },
+    { value: 'doubao', label: 'Doubao' },
     { value: 'minimax', label: 'MiniMax' },
     { value: 'inworld', label: 'Inworld' },
     { value: 'fishaudio', label: 'Fish Audio' },
@@ -100,78 +100,78 @@ export const VOICE_SETTINGS_GROUP: SettingsGroup = {
   vendors: [
     {
       key: 'voice/elevenlabs', vendor: 'elevenlabs', title: 'ElevenLabs',
-      note: 'Key 同时用于音效生成（submit_sound）。',
+      note: 'The key is also used for sound-effect generation (submit_sound).',
       fields: [
         secret('ELEVENLABS_API_KEY', 'API Key'),
-        text('ELEVENLABS_BASE_URL', 'Base URL', '默认 https://api.elevenlabs.io'),
-        modelSelect('ELEVENLABS_TTS_MODEL', '配音模型', 'eleven_multilingual_v2',
+        text('ELEVENLABS_BASE_URL', 'Base URL', 'Default https://api.elevenlabs.io'),
+        modelSelect('ELEVENLABS_TTS_MODEL', 'Voice model', 'eleven_multilingual_v2',
           ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_flash_v2_5']),
-        modelText('ELEVENLABS_SOUND_MODEL', '音效模型', 'eleven_text_to_sound_v2'),
+        modelText('ELEVENLABS_SOUND_MODEL', 'Sound model', 'eleven_text_to_sound_v2'),
       ],
     },
     {
-      key: 'voice/doubao', vendor: 'doubao', title: '豆包 TTS · 火山', fields: [
+      key: 'voice/doubao', vendor: 'doubao', title: 'Doubao TTS · Volcano', fields: [
         secret('DOUBAO_TTS_APP_ID', 'App ID'),
         secret('DOUBAO_TTS_ACCESS_KEY', 'Access Key'),
-        text('DOUBAO_TTS_BASE_URL', 'Base URL', '默认 https://openspeech.bytedance.com'),
-        modelText('DOUBAO_TTS_RESOURCE_ID', '音色资源 ID', 'seed-tts-2.0'),
+        text('DOUBAO_TTS_BASE_URL', 'Base URL', 'Default https://openspeech.bytedance.com'),
+        modelText('DOUBAO_TTS_RESOURCE_ID', 'Voice resource ID', 'seed-tts-2.0'),
       ],
     },
     {
       key: 'voice/minimax', vendor: 'minimax', title: 'MiniMax', note: MINIMAX_NOTE, fields: [
         secret('MINIMAX_API_KEY', 'API Key'),
-        text('MINIMAX_BASE_URL', 'Base URL', '默认 https://api.minimaxi.com'),
-        modelSelect('MINIMAX_TTS_MODEL', '配音模型', 'speech-2.6-hd',
+        text('MINIMAX_BASE_URL', 'Base URL', 'Default https://api.minimaxi.com'),
+        modelSelect('MINIMAX_TTS_MODEL', 'Voice model', 'speech-2.6-hd',
           ['speech-2.6-hd', 'speech-2.8-hd', 'speech-2.8-turbo', 'speech-2.6-turbo', 'speech-02-hd', 'speech-02-turbo']),
       ],
     },
     {
       key: 'voice/inworld', vendor: 'inworld', title: 'Inworld', fields: [
         secret('INWORLD_TTS_API_KEY', 'API Key'),
-        text('INWORLD_TTS_BASE_URL', 'Base URL', '默认 https://api.inworld.ai'),
-        modelText('INWORLD_TTS_MODEL', '配音模型', 'inworld-tts-2'),
+        text('INWORLD_TTS_BASE_URL', 'Base URL', 'Default https://api.inworld.ai'),
+        modelText('INWORLD_TTS_MODEL', 'Voice model', 'inworld-tts-2'),
       ],
     },
     {
       key: 'voice/fishaudio', vendor: 'fishaudio', title: 'Fish Audio', fields: [
         secret('FISHAUDIO_TTS_API_KEY', 'API Key'),
-        text('FISHAUDIO_TTS_BASE_URL', 'Base URL', '默认 https://api.fish.audio'),
-        modelText('FISHAUDIO_TTS_MODEL', '配音模型', 's2.1-pro'),
+        text('FISHAUDIO_TTS_BASE_URL', 'Base URL', 'Default https://api.fish.audio'),
+        modelText('FISHAUDIO_TTS_MODEL', 'Voice model', 's2.1-pro'),
       ],
     },
     {
       key: 'voice/speechify', vendor: 'speechify', title: 'Speechify', fields: [
         secret('SPEECHIFY_TTS_API_KEY', 'API Key'),
-        text('SPEECHIFY_TTS_BASE_URL', 'Base URL', '默认 https://api.sws.speechify.com'),
-        modelSelect('SPEECHIFY_TTS_MODEL', '配音模型', 'simba-multilingual',
+        text('SPEECHIFY_TTS_BASE_URL', 'Base URL', 'Default https://api.sws.speechify.com'),
+        modelSelect('SPEECHIFY_TTS_MODEL', 'Voice model', 'simba-multilingual',
           ['simba-multilingual', 'simba-english', 'simba-3.2']),
       ],
     },
     {
       key: 'voice/openai', vendor: 'openai', title: 'OpenAI', fields: [
         secret('OPENAI_API_KEY', 'API Key'),
-        text('IMAGE_BASE_URL', 'Base URL', '默认 https://api.openai.com'),
-        modelText('OPENAI_TTS_MODEL', '配音模型', 'gpt-4o-mini-tts'),
+        text('IMAGE_BASE_URL', 'Base URL', 'Default https://api.openai.com'),
+        modelText('OPENAI_TTS_MODEL', 'Voice model', 'gpt-4o-mini-tts'),
       ],
     },
     {
       key: 'voice/gemini', vendor: 'gemini', title: 'Google Gemini', fields: [
         secret('GEMINI_API_KEY', 'API Key'),
-        text('GEMINI_BASE_URL', 'Base URL', '默认 https://generativelanguage.googleapis.com'),
-        modelText('GEMINI_TTS_MODEL', '配音模型', 'gemini-2.5-flash-preview-tts'),
+        text('GEMINI_BASE_URL', 'Base URL', 'Default https://generativelanguage.googleapis.com'),
+        modelText('GEMINI_TTS_MODEL', 'Voice model', 'gemini-2.5-flash-preview-tts'),
       ],
     },
     {
       key: 'voice/mistral', vendor: 'mistral', title: 'Mistral Voxtral', fields: [
         secret('LLM_MISTRAL_API_KEY', 'API Key'),
-        text('LLM_MISTRAL_BASE_URL', 'Base URL', '默认 https://api.mistral.ai/v1'),
-        modelText('MISTRAL_TTS_MODEL', '配音模型', 'voxtral-mini-tts-2603'),
+        text('LLM_MISTRAL_BASE_URL', 'Base URL', 'Default https://api.mistral.ai/v1'),
+        modelText('MISTRAL_TTS_MODEL', 'Voice model', 'voxtral-mini-tts-2603'),
       ],
     },
     {
       key: 'voice/cartesia', vendor: 'cartesia', title: 'Cartesia', fields: [
         secret('CARTESIA_API_KEY', 'API Key'),
-        modelText('CARTESIA_TTS_MODEL', '配音模型', 'sonic-3'),
+        modelText('CARTESIA_TTS_MODEL', 'Voice model', 'sonic-3'),
       ],
     },
   ],
@@ -179,47 +179,47 @@ export const VOICE_SETTINGS_GROUP: SettingsGroup = {
 
 export const TRANSCRIPTION_SETTINGS_GROUP: SettingsGroup = {
   key: 'transcription',
-  title: '转写 / 口播剪辑',
-  hint: 'transcribe_track · 词级字幕、清口水、删词。',
+  title: 'Transcription / Script Editing',
+  hint: 'transcribe_track · Word-level captions, filler cleanup, word deletion.',
   route: routeSelect('PREFERRED_TRANSCRIPTION_PROVIDER', [
-    { value: 'assemblyai', label: 'AssemblyAI（云端）' },
-    { value: 'local', label: '本地模型（免费 · 离线）' },
-    { value: 'openai', label: 'OpenAI（云端）' },
-    { value: 'mistral', label: 'Mistral Voxtral（云端）' },
-    { value: 'deepgram', label: 'Deepgram（云端）' },
-    { value: 'groq', label: 'Groq（云端）' },
-    { value: 'elevenlabs', label: 'ElevenLabs Scribe（云端）' },
-    { value: 'cartesia', label: 'Cartesia（云端）' },
-  ], 'AssemblyAI（默认）'),
+    { value: 'assemblyai', label: 'AssemblyAI (cloud)' },
+    { value: 'local', label: 'Local model (free · offline)' },
+    { value: 'openai', label: 'OpenAI (cloud)' },
+    { value: 'mistral', label: 'Mistral Voxtral (cloud)' },
+    { value: 'deepgram', label: 'Deepgram (cloud)' },
+    { value: 'groq', label: 'Groq (cloud)' },
+    { value: 'elevenlabs', label: 'ElevenLabs Scribe (cloud)' },
+    { value: 'cartesia', label: 'Cartesia (cloud)' },
+  ], 'AssemblyAI (default)'),
   vendors: [
     transcriptionPage('assemblyai', 'assemblyai', 'AssemblyAI', [secret('ASSEMBLYAI_API_KEY', 'API Key')]),
     localAsrPage,
     transcriptionPage('openai', 'openai', 'OpenAI', [
       secret('OPENAI_API_KEY', 'API Key'),
-      text('IMAGE_BASE_URL', 'Base URL', '默认 https://api.openai.com'),
-      modelText('OPENAI_TRANSCRIPTION_MODEL', '转写模型', 'gpt-4o-mini-transcribe'),
+      text('IMAGE_BASE_URL', 'Base URL', 'Default https://api.openai.com'),
+      modelText('OPENAI_TRANSCRIPTION_MODEL', 'Transcription model', 'gpt-4o-mini-transcribe'),
     ]),
     transcriptionPage('mistral', 'mistral', 'Mistral Voxtral', [
       secret('LLM_MISTRAL_API_KEY', 'API Key'),
-      text('LLM_MISTRAL_BASE_URL', 'Base URL', '默认 https://api.mistral.ai/v1'),
-      modelText('MISTRAL_TRANSCRIPTION_MODEL', '转写模型', 'voxtral-mini-latest'),
+      text('LLM_MISTRAL_BASE_URL', 'Base URL', 'Default https://api.mistral.ai/v1'),
+      modelText('MISTRAL_TRANSCRIPTION_MODEL', 'Transcription model', 'voxtral-mini-latest'),
     ]),
     transcriptionPage('deepgram', 'deepgram', 'Deepgram', [
       secret('DEEPGRAM_API_KEY', 'API Key'),
-      modelText('DEEPGRAM_TRANSCRIPTION_MODEL', '转写模型', 'nova-3'),
+      modelText('DEEPGRAM_TRANSCRIPTION_MODEL', 'Transcription model', 'nova-3'),
     ]),
     transcriptionPage('groq', 'groq', 'Groq', [
       secret('GROQ_API_KEY', 'API Key'),
-      text('GROQ_BASE_URL', 'Base URL', '默认 https://api.groq.com/openai/v1'),
-      modelText('GROQ_TRANSCRIPTION_MODEL', '转写模型', 'whisper-large-v3-turbo'),
+      text('GROQ_BASE_URL', 'Base URL', 'Default https://api.groq.com/openai/v1'),
+      modelText('GROQ_TRANSCRIPTION_MODEL', 'Transcription model', 'whisper-large-v3-turbo'),
     ]),
     transcriptionPage('elevenlabs', 'elevenlabs', 'ElevenLabs Scribe', [
       secret('ELEVENLABS_API_KEY', 'API Key'),
-      modelText('ELEVENLABS_TRANSCRIPTION_MODEL', '转写模型', 'scribe_v2'),
+      modelText('ELEVENLABS_TRANSCRIPTION_MODEL', 'Transcription model', 'scribe_v2'),
     ]),
     transcriptionPage('cartesia', 'cartesia', 'Cartesia', [
       secret('CARTESIA_API_KEY', 'API Key'),
-      modelText('CARTESIA_TRANSCRIPTION_MODEL', '转写模型', 'ink-whisper'),
+      modelText('CARTESIA_TRANSCRIPTION_MODEL', 'Transcription model', 'ink-whisper'),
     ]),
   ],
 };

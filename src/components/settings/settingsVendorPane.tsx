@@ -1,7 +1,6 @@
 // Provider configuration page, field rendering, and connection tests.
 import { useState } from 'react';
 import { theme, themeAlpha } from '../../theme';
-import { t, useT } from '../../i18n/locale';
 import { VendorIcon } from './vendorIcons';
 import { Icon } from '../icons';
 import { CodexAccountCard } from './CodexAccountCard';
@@ -37,7 +36,7 @@ export interface FieldCtx {
 }
 
 const CAPABILITY_OVERRIDE_FIELD: SettingsField = {
-  name: MODEL_CAPABILITY_OVERRIDES_KEY, label: '模型能力', kind: 'text', defaultLabel: '',
+  name: MODEL_CAPABILITY_OVERRIDES_KEY, label: 'Model capabilities', kind: 'text', defaultLabel: '',
 };
 
 function capabilityOverridesValue(ctx: FieldCtx): string {
@@ -56,7 +55,6 @@ function apiModelId(page: SettingsVendorPage, ctx: FieldCtx): string {
 export function VendorPane({ page, hint, ctx }: {
   page: SettingsVendorPage; hint: string; ctx: FieldCtx;
 }) {
-  const t = useT();
   if (page.connection === 'codex') return <CodexVendorPane page={page} hint={hint} ctx={ctx} />;
   if (page.key === 'llm/vision') return <VisionModelPane />;
   if (page.kind === 'local-models') return <LocalModelsPane page={page} fields={page.fields} ctx={ctx} />;
@@ -66,13 +64,13 @@ export function VendorPane({ page, hint, ctx }: {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <VendorIcon vendor={page.vendor} size={18} />
-          <b style={{ fontSize: 13 }}>{t(page.title)}</b>
-          <span style={{ fontSize: 11, color: on ? ON : theme.textDim }}>{on ? t('已配置') : t('未配置')}</span>
+          <b style={{ fontSize: 13 }}>{page.title}</b>
+          <span style={{ fontSize: 11, color: on ? ON : theme.textDim }}>{on ? 'Configured' : 'Not configured'}</span>
         </div>
-        <div style={{ fontSize: 11.5, color: theme.textDim, marginTop: 3, paddingLeft: 26 }}>{t(hint)}</div>
+        <div style={{ fontSize: 11.5, color: theme.textDim, marginTop: 3, paddingLeft: 26 }}>{hint}</div>
       </div>
       <section style={fieldCardBox}>
-        {page.note && <div style={pageNote}>{t(page.note)}</div>}
+        {page.note && <div style={pageNote}>{page.note}</div>}
         {page.noteAction && <SettingsNoteAction config={page.noteAction} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: page.note ? 9 : 0 }}>
           {page.fields.map((f) => <FieldRow key={f.name} field={f} ctx={ctx} />)}
@@ -91,14 +89,13 @@ export function VendorPane({ page, hint, ctx }: {
 function CodexVendorPane({ page, hint, ctx }: {
   page: SettingsVendorPage; hint: string; ctx: FieldCtx;
 }) {
-  const t = useT();
   const status = ctx.codex.status;
-  const statusLabel = !status ? t('状态未知')
-    : !status.installed ? t('CLI 未安装')
-      : status.loginPending || ctx.codex.login ? t('登录中')
-        : status.account?.type === 'chatgpt' ? t('已登录')
-          : status.account ? t('API Key 模式')
-            : status.error || ctx.codex.error ? t('连接异常') : t('未登录');
+  const statusLabel = !status ? 'Status unknown'
+    : !status.installed ? 'CLI not installed'
+      : status.loginPending || ctx.codex.login ? 'Signing in'
+        : status.account?.type === 'chatgpt' ? 'Signed in'
+          : status.account ? 'API key mode'
+            : status.error || ctx.codex.error ? 'Connection error' : 'Signed out';
   const on = vendorConfigured(ctx.status, page, status);
   const capabilityModelId = (ctx.values.CODEX_MODEL ?? modelValue(ctx.status, 'CODEX_MODEL'))
     || ctx.codex.models.find((model) => model.isDefault)?.id
@@ -108,14 +105,14 @@ function CodexVendorPane({ page, hint, ctx }: {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <VendorIcon vendor={page.vendor} size={18} />
-          <b style={{ fontSize: 13 }}>{t(page.title)}</b>
+          <b style={{ fontSize: 13 }}>{page.title}</b>
           <span style={{ fontSize: 11, color: on ? ON : theme.textDim }}>{statusLabel}</span>
         </div>
-        <div style={{ fontSize: 11.5, color: theme.textDim, marginTop: 3, paddingLeft: 26 }}>{t(hint)}</div>
+        <div style={{ fontSize: 11.5, color: theme.textDim, marginTop: 3, paddingLeft: 26 }}>{hint}</div>
       </div>
       <CodexAccountCard controller={ctx.codex} />
       <section style={fieldCardBox}>
-        {page.note && <div style={pageNote}>{t(page.note)}</div>}
+        {page.note && <div style={pageNote}>{page.note}</div>}
         {page.noteAction && <SettingsNoteAction config={page.noteAction} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: page.note ? 9 : 0 }}>
           {page.fields.map((field) => <FieldRow key={field.name} field={field} ctx={ctx} />)}
@@ -134,24 +131,23 @@ function CodexVendorPane({ page, hint, ctx }: {
 function LocalModelsPane({ page, fields, ctx }: {
   page: SettingsVendorPage; fields: readonly SettingsField[]; ctx: FieldCtx;
 }) {
-  const t = useT();
-  const title = page.key === 'local/asr' ? '本地转写' : page.key === 'local/music/packs' ? '节拍与音乐分析' : '画面语义搜索';
+  const title = page.key === 'local/asr' ? 'Local transcription' : page.key === 'local/music/packs' ? 'Beat and music analysis' : 'Visual semantic search';
   return (
     <div style={pane}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {page.icon ? <Icon name={page.icon} size={18} /> : <VendorIcon vendor={page.vendor} size={18} />}
-          <b style={{ fontSize: 13 }}>{t(title)}</b>
+          <b style={{ fontSize: 13 }}>{title}</b>
         </div>
         <div style={{ fontSize: 11.5, color: theme.textDim, marginTop: 3, paddingLeft: 26 }}>
-          {t('本地模型按需安装，索引、转写和分析都在本机完成。')}
+          Local models install on demand. Indexing, transcription, and analysis all run on this device.
         </div>
       </div>
       {page.key === 'local/asr' && <LocalAsrPane fields={fields} ctx={ctx} />}
       {page.key === 'local/music/packs' && <LocalModelPackPane
         packIds={['rhythm-lite', 'music-semantics-lite']}
-        title="节拍与音乐分析模型"
-        description="模型不会自动安装。安装后，节拍与音乐语义分析只在本机运行。" />}
+        title='Beat and music analysis models'
+        description='Models are never installed automatically. Once installed, beat and music-semantic analysis runs locally.' />}
       {page.key === 'local/semantic/setup' && <SemanticModelPackPane />}
     </div>
   );
@@ -174,7 +170,7 @@ function stagedOverrides(page: SettingsVendorPage, values: Values): Record<strin
   return overrides;
 }
 
-async function requestProbe(page: SettingsVendorPage, ctx: FieldCtx, translate: typeof t): Promise<ProbeRequestResult> {
+async function requestProbe(page: SettingsVendorPage, ctx: FieldCtx): Promise<ProbeRequestResult> {
   const overrides = stagedOverrides(page, ctx.values);
   if (page.kind === 'settings' && page.fields[0]) {
     const field = page.fields[0];
@@ -188,12 +184,11 @@ async function requestProbe(page: SettingsVendorPage, ctx: FieldCtx, translate: 
     body: JSON.stringify({ page: page.key, overrides }),
   });
   const body = await res.json().catch(() => null) as ProbeResponse | null;
-  if (!body || typeof body.message !== 'string') throw new Error(translate('测试请求失败 ({n})', { n: res.status }));
+  if (!body || typeof body.message !== 'string') throw new Error(`Test request failed (${res.status})`);
   return { body, staged };
 }
 
 function TestConnectionRow({ page, ctx }: { page: SettingsVendorPage; ctx: FieldCtx }) {
-  const t = useT();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ProbeShown | null>(null);
   const shown = result && result.page === page.key ? result : null;
@@ -201,8 +196,8 @@ function TestConnectionRow({ page, ctx }: { page: SettingsVendorPage; ctx: Field
   const test = async (): Promise<void> => {
     setBusy(true); setResult(null);
     try {
-      const { body, staged } = await requestProbe(page, ctx, t);
-      const suffix = staged && body.ok ? t('（按当前输入测试，记得保存）') : '';
+      const { body, staged } = await requestProbe(page, ctx);
+      const suffix = staged && body.ok ? ' (tested with current input — remember to save)' : '';
       setResult({ page: page.key, ok: body.ok, message: body.message + suffix });
       const modelField = page.fields.find((field) => field.discoverableModel);
       if (body.ok && modelField && Array.isArray(body.models)) {
@@ -221,7 +216,7 @@ function TestConnectionRow({ page, ctx }: { page: SettingsVendorPage; ctx: Field
     <div style={testRow}>
       <button type="button" onClick={() => { void test(); }} disabled={busy}
         style={{ ...testBtn, opacity: busy ? 0.6 : 1, cursor: busy ? 'default' : 'pointer' }}>
-        {busy ? t('测试中…') : discoversModels ? t('测试并读取模型') : isProxy ? t('测试代理连接') : t('测试连接')}
+        {busy ? 'Testing…' : discoversModels ? 'Test & load models' : isProxy ? 'Test proxy connection' : 'Test connection'}
       </button>
       {shown && (
         <span style={{ ...testMsg, color: shown.ok ? ON : WARN }} title={shown.message}>
@@ -231,8 +226,8 @@ function TestConnectionRow({ page, ctx }: { page: SettingsVendorPage; ctx: Field
       {!shown && !busy && (
         <span style={{ ...testMsg, color: theme.textDim }}>
           {discoversModels
-            ? t('验证地址与密钥，并读取该接口可用的模型')
-            : isProxy ? t('使用当前代理地址访问外网探测端点') : t('发一条最小请求验证 Key 与地址可用')}
+            ? 'Verifies the endpoint and key, then loads the models available from that API'
+            : isProxy ? 'Uses the current proxy address to reach an external connectivity endpoint' : 'Sends one minimal request to verify the key and endpoint'}
         </span>
       )}
     </div>
@@ -263,7 +258,6 @@ function codexReasoningOptions(
 
 
 export function FieldRow({ field, ctx }: { field: SettingsField; ctx: FieldCtx }) {
-  const t = useT();
   const { status, reveal, onStage, onToggleClear } = ctx;
   // value: undefined = no temporary changes; '' = temporary cache clear / return to default; the rest = temporary new values.
   const value = ctx.values[field.name];
@@ -279,20 +273,20 @@ export function FieldRow({ field, ctx }: { field: SettingsField; ctx: FieldCtx }
     : field.discoverableModel ? ctx.modelOptions[field.name] ?? [] : [];
   const options = field.name === 'CODEX_REASONING_EFFORT'
     ? codexReasoningOptions(ctx, (effort) => effort
-      ? t('模型默认（{name}）', { name: effort })
-      : t('模型默认'))
+      ? `Model default (${effort})`
+      : 'Model default')
     : undefined;
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <span style={fieldHead}>
         <span style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0 }}>
-          {t(field.label)}
-          {configured && <span style={sourceTag}>{st?.source === 'env' ? '.env.local' : t('本次设置')}</span>}
+          {field.label}
+          {configured && <span style={sourceTag}>{st?.source === 'env' ? '.env.local' : 'This session'}</span>}
         </span>
         {clearable && (
           <button type="button" onClick={(e) => { e.preventDefault(); onToggleClear(field); }}
             style={{ ...clearBtn, color: stagedClear ? WARN : theme.textDim }}>
-            {stagedClear ? t('取消清除') : t('清除')}
+            {stagedClear ? 'Undo clear' : 'Clear'}
           </button>
         )}
       </span>
@@ -308,7 +302,7 @@ export function FieldRow({ field, ctx }: { field: SettingsField; ctx: FieldCtx }
             ? <DirectoryInput field={field} shown={shown} stagedClear={stagedClear} onStage={onStage} />
             : <TextInput field={field} shown={shown} reveal={reveal} configured={configured}
                 stagedClear={stagedClear} onStage={onStage} />}
-      {field.note && <span style={{ fontSize: 10.5, color: theme.textDim }}>{t(field.note)}</span>}
+      {field.note && <span style={{ fontSize: 10.5, color: theme.textDim }}>{field.note}</span>}
     </label>
   );
 }
@@ -323,7 +317,6 @@ function ModelInput({ field, shown, models, reveal, loading, configured, stagedC
   stagedClear: boolean;
   onStage: (field: SettingsField, raw: string) => void;
 }) {
-  const t = useT();
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', gap: 7 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -332,8 +325,8 @@ function ModelInput({ field, shown, models, reveal, loading, configured, stagedC
       </div>
       <select
         value=""
-        aria-label={t('选择模型')}
-        title={t('选择模型')}
+        aria-label="Choose model"
+        title="Choose model"
         disabled={models.length === 0}
         aria-busy={loading === true}
         onChange={(event) => {
@@ -341,7 +334,7 @@ function ModelInput({ field, shown, models, reveal, loading, configured, stagedC
         }}
         style={{ ...select, width: 118, flex: '0 0 118px' }}
       >
-        <option value="">{loading ? t('读取中…') : t('选择模型')}</option>
+        <option value="">{loading ? 'Loading…' : 'Choose model'}</option>
         {[...new Set(models)].map((model) => <option key={model} value={model}>{model}</option>)}
       </select>
     </div>
@@ -354,7 +347,6 @@ function ToggleSwitch({ field, shown, onStage }: {
   field: SettingsField; shown: string;
   onStage: (field: SettingsField, raw: string) => void;
 }) {
-  const t = useT();
   const on = shown !== '0';
   return (
     <button
@@ -376,7 +368,7 @@ function ToggleSwitch({ field, shown, onStage }: {
           boxShadow: `0 1px 3px ${themeAlpha.shadow(0.4)}`,
         }} />
       </span>
-      {on ? t('已启用') : t('已停用')}
+      {on ? 'Enabled' : 'Disabled'}
     </button>
   );
 }
@@ -412,7 +404,6 @@ function DirectoryInput({ field, shown, stagedClear, onStage }: {
   field: SettingsField; shown: string; stagedClear: boolean;
   onStage: (field: SettingsField, raw: string) => void;
 }) {
-  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const picker = window.openChatCutDesktop?.selectDirectory;
@@ -423,7 +414,7 @@ function DirectoryInput({ field, shown, stagedClear, onStage }: {
       const selected = await picker(shown || undefined);
       if (selected) onStage(field, selected);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('无法打开目录选择器'));
+      setError(reason instanceof Error ? reason.message : 'Could not open the folder picker');
     } finally {
       setBusy(false);
     }
@@ -436,12 +427,12 @@ function DirectoryInput({ field, shown, stagedClear, onStage }: {
           placeholder={fieldPlaceholder(field, false, stagedClear)}
           style={{ ...(stagedClear ? { ...input, border: `0.5px solid ${WARN}` } : input), minWidth: 0 }} />
         <button type="button" onClick={(e) => { e.preventDefault(); void pick(); }}
-          disabled={!picker || busy} title={!picker ? t('目录选择器仅桌面端可用') : t('选择素材保存目录')}
+          disabled={!picker || busy} title={!picker ? 'Folder picker is available in the desktop app only' : 'Choose media storage directory'}
           style={{ ...browseBtn, opacity: !picker || busy ? 0.55 : 1 }}>
-          {busy ? t('选择中…') : t('选择目录')}
+          {busy ? 'Choosing…' : 'Choose Folder'}
         </button>
       </div>
-      {!picker && <span style={fieldHint}>{t('目录选择器仅桌面端可用，浏览器中请手动输入绝对路径。')}</span>}
+      {!picker && <span style={fieldHint}>The folder picker is available in the desktop app only. Enter an absolute path manually in the browser.</span>}
       {error && <span style={{ ...fieldHint, color: WARN }}>{error}</span>}
     </>
   );

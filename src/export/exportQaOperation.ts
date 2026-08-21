@@ -11,7 +11,6 @@ import type {
   StateSetter,
   ExportProgress,
   ExportQaUiState,
-  Translate,
 } from './exportWorkflowTypes';
 
 interface ExportQaContext {
@@ -20,7 +19,6 @@ interface ExportQaContext {
   setProgress: StateSetter<ExportProgress | null>;
   setQa: StateSetter<ExportQaUiState | null>;
   state: TimelineState;
-  t: Translate;
 }
 
 function qaRequest(state: TimelineState, completed: ExportJobResult, fps: number): ExportQaRequest {
@@ -41,13 +39,13 @@ function qaRequest(state: TimelineState, completed: ExportJobResult, fps: number
 }
 
 function beginQa(context: ExportQaContext): void {
-  context.setBusy(context.t('正在检查导出质量…'));
+  context.setBusy('Checking export quality…');
   context.setQa({ status: 'running', attempts: 0 });
   context.setProgress((current) => current ? {
     ...current,
     phase: 'verifying',
     percent: 99,
-    detail: context.t('检查画面、声音、剪辑点和字幕安全区，失败时最多自动复检 3 轮'),
+    detail: 'Checking video, audio, edit points, and caption safe areas; transient failures retry up to three times',
   } : current);
 }
 

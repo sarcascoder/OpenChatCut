@@ -19,9 +19,9 @@ assert.strictEqual(slugs.length, 10, 'expected 10 creative skills');
 for (const slug of slugs) {
   const raw = readFileSync(join(SKILLS_DIR, slug, 'SKILL.md'), 'utf8');
   const { name, description, body } = parseSkillFrontmatter(raw);
-  assert.strictEqual(name, slug, `${slug}: frontmatter name 应等于 slug`);
-  assert.ok(description.length > 20, `${slug}: description 解析非空`);
-  assert.ok(body.trim().length > 500, `${slug}: 创作技能正文有实质内容`);
+  assert.strictEqual(name, slug, `${slug}: the frontmatter name should equal the slug`);
+  assert.ok(description.length > 20, `${slug}: description parses to something non-empty`);
+  assert.ok(body.trim().length > 500, `${slug}: the creative skill body has real content`);
 }
 for (const s of CREATIVE_SKILL_METADATA) {
   assert.ok(s.id && s.name && s.nameZh, `skill ${s.name} is well-formed`);
@@ -31,7 +31,7 @@ for (const s of CREATIVE_SKILL_METADATA) {
 // a known real skill is present with its zh name
 const shorts = CREATIVE_SKILL_METADATA.find((s) => s.name === 'Long Video to Shorts');
 assert.ok(shorts, 'Long Video to Shorts present');
-assert.strictEqual(shorts!.nameZh, '长视频转短视频');
+assert.strictEqual(shorts!.nameZh, shorts!.name);
 
 // findSkill: null/undefined/unknown → undefined (id-hit lookups are covered in
 // skill-loading.verify.ts where the Vite glob is available).

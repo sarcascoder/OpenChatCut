@@ -60,8 +60,8 @@ const encoderCache = new Map<string, Promise<H264Encoder>>();
 const compiledEncoderCache = new Map<string, Promise<boolean>>();
 const hwAccelsCache = new Map<string, Promise<Set<string>>>();
 
-/** 平台感知的解码硬加速参数。软件编码必须使用系统内存帧；
- * 硬件编码器已知时使用匹配 API，否则按平台选择通用解码器。 */
+/** Platform-aware hardware decode-acceleration args. Software encoding must use system-memory frames;
+ * when the hardware encoder is known use the matching API, otherwise pick a generic decoder per platform. */
 export function hwDecodeArgs(encoder?: H264Encoder): string[] {
   if (encoder === 'libx264') return [];
   if (encoder === 'h264_videotoolbox') return ['-hwaccel', 'videotoolbox'];
@@ -139,7 +139,7 @@ export async function probeEncoderQualityMode(
   return promise;
 }
 
-/** 探测 ffmpeg 编译支持后返回解码硬加速参数；不支持时为空数组（软解）。 */
+/** Returns hardware decode args after probing what this ffmpeg build supports; empty array when unsupported (software decode). */
 export async function resolveHwDecodeArgs(ffmpeg: string, encoder?: H264Encoder): Promise<string[]> {
   const candidate = hwDecodeArgs(encoder);
   if (!candidate.length) return [];

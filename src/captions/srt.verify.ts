@@ -19,12 +19,12 @@ assert.deepEqual(parseSrt([
 
 assert.throws(
   () => parseSrt('1\n00:00:60,000 --> 00:00:61,000\ninvalid time'),
-  /没有有效字幕/,
+  /No valid captions/,
 );
 assert.throws(
   () => parseSrt('1\n00:00:03,000 --> 00:00:02,000\nbackwards'),
-  /没有有效字幕/,
+  /No valid captions/,
 );
-assert.throws(() => parseSrt('not an srt file'), /没有有效字幕/);
+assert.throws(() => parseSrt('not an srt file'), /No valid captions/);
 
 console.log('srt.verify: ok');

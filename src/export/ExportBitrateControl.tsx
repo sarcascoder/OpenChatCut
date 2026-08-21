@@ -1,4 +1,3 @@
-import { useT } from '../i18n/locale';
 import {
   MAX_VIDEO_BITRATE_MBPS,
   MIN_VIDEO_BITRATE_MBPS,
@@ -15,11 +14,11 @@ interface ExportBitrateControlProps {
 }
 
 const MODES: Array<{ value: VideoBitrateMode; label: string }> = [
-  { value: 'auto', label: '自动' },
-  { value: 'compact', label: '小文件' },
-  { value: 'recommended', label: '推荐' },
-  { value: 'high', label: '高质量' },
-  { value: 'custom', label: '自定义' },
+  { value: 'auto', label: 'Auto' },
+  { value: 'compact', label: 'Smaller file' },
+  { value: 'recommended', label: 'Recommended' },
+  { value: 'high', label: 'High quality' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 export function ExportBitrateControl({
@@ -30,17 +29,16 @@ export function ExportBitrateControl({
   onModeChange,
   onCustomMbpsChange,
 }: ExportBitrateControlProps) {
-  const t = useT();
   return (
     <div className="cc-export-bitrate">
       <select
         className="cc-export-select"
-        aria-label={t('码率模式')}
+        aria-label="Bitrate mode"
         value={mode}
         disabled={disabled}
         onChange={(event) => onModeChange(event.target.value as VideoBitrateMode)}
       >
-        {MODES.map((entry) => <option key={entry.value} value={entry.value}>{t(entry.label)}</option>)}
+        {MODES.map((entry) => <option key={entry.value} value={entry.value}>{entry.label}</option>)}
       </select>
       {mode === 'custom' && (
         <label className="cc-export-bitrate-custom">
@@ -51,13 +49,13 @@ export function ExportBitrateControl({
             step={0.5}
             value={customMbps}
             disabled={disabled}
-            aria-label={t('自定义码率')}
+            aria-label="Custom bitrate"
             onChange={(event) => onCustomMbpsChange(Number(event.target.value))}
           />
           <span>Mbps</span>
         </label>
       )}
-      <small>{t('预计视频码率：{value} Mbps', { value: (resolvedBps / 1_000_000).toFixed(1) })}</small>
+      <small>{`Estimated video bitrate: ${(resolvedBps / 1_000_000).toFixed(1)} Mbps`}</small>
     </div>
   );
 }

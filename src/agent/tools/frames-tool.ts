@@ -241,7 +241,7 @@ async function renderStills(
     };
     return packImages(data.frames, data.gridBase64, note, { renderedBy: data.renderedBy ?? 'remotion' });
   } catch (e) {
-    return { error: `render-still 请求失败: ${e instanceof Error ? e.message : String(e)}` };
+    return { error: `render-still request failed: ${e instanceof Error ? e.message : String(e)}` };
   } finally {
     await prepared?.cleanup();
   }
@@ -300,10 +300,10 @@ async function extractAssetContactSheet(
       frames: sourceTimesMs.length ? sourceTimesMs.map((ms) => Math.round((ms / 1000) * fps)) : [0],
       layout: (data.sampleCount ?? 1) > 1 ? 'contact_sheet' : 'individual',
       note: [
-        `源资产「${asset.name}」contact sheet`,
+        `source asset "${asset.name}" contact sheet`,
         data.sampleCount ? `${data.sampleCount} samples` : '',
         labelLine,
-        '（未进时间线合成；每格≈对应源时间区间中点）',
+        '(not composited onto the timeline; each cell ≈ the midpoint of the matching source time range)',
       ].filter(Boolean).join(' · '),
       renderedBy: data.renderedBy ?? 'ffmpeg',
       sampleCount: data.sampleCount,
@@ -365,7 +365,7 @@ async function viewTimelineFrames(args: Args, ctx: AgentContext): Promise<unknow
     return { error: 'timeline is empty — nothing to render' };
   }
   const frames = pickFrames(args, total, state.fps, DEFAULT_TIMELINE_SCAN);
-  const note = `时间线「${state.name}」${frames.length} 帧（绝对时间线坐标 f${frames.join(', f')}，共 ${total} @${state.fps}fps）——目标时间线草稿合成画面（含未提交编辑）`;
+  const note = `timeline "${state.name}" ${frames.length} frames (absolute timeline coordinates f${frames.join(', f')}, ${total} total @${state.fps}fps) — draft composite of the target timeline (includes uncommitted edits)`;
   const rendered = await renderStills(state, frames, note, project, state.id);
   return 'error' in rendered
     ? rendered
@@ -389,8 +389,8 @@ async function viewAssetFrames(args: Args, ctx: AgentContext): Promise<unknown> 
     sourceWindow,
   };
   const windowNote = item
-    ? `item ${item.id} 可见源窗口 [${sourceWindow.startFrame}, ${sourceWindow.endFrame})`
-    : `完整源窗口 [${sourceWindow.startFrame}, ${sourceWindow.endFrame})`;
+    ? `item ${item.id} visible source window [${sourceWindow.startFrame}, ${sourceWindow.endFrame})`
+    : `full source window [${sourceWindow.startFrame}, ${sourceWindow.endFrame})`;
 
   // Upload-in-progress placeholder: sample from blob: in the browser (no server path yet).
   if (isBlobishSrc(asset.src)) {
@@ -401,7 +401,7 @@ async function viewAssetFrames(args: Args, ctx: AgentContext): Promise<unknown> 
           __images: [{ frame: 0, base64 }],
           frames: [0],
           layout: 'individual',
-          note: `源资产「${asset.name}」blob 预览 · ${windowNote}`,
+          note: `source asset "${asset.name}" blob preview · ${windowNote}`,
           renderedBy: 'browser-blob',
           ...metadata,
         };
@@ -435,7 +435,7 @@ async function viewAssetFrames(args: Args, ctx: AgentContext): Promise<unknown> 
           __images: [{ frame: 0, base64: sheet.base64 }],
           frames: sheet.sourceTimesMs.map((ms) => Math.round((ms / 1000) * fps)),
           layout: sheet.sampleCount > 1 ? 'contact_sheet' : 'individual',
-          note: `源资产「${asset.name}」blob contact sheet · ${sheet.sampleCount} samples · cells L→R T→B: ${labelLine} · ${windowNote}`,
+          note: `source asset "${asset.name}" blob contact sheet · ${sheet.sampleCount} samples · cells L→R T→B: ${labelLine} · ${windowNote}`,
           renderedBy: 'browser-blob',
           sampleCount: sheet.sampleCount,
           sourceTimesMs: sheet.sourceTimesMs,
@@ -469,7 +469,7 @@ async function viewAssetFrames(args: Args, ctx: AgentContext): Promise<unknown> 
     asset.kind === 'video' || asset.kind === 'gif' ? DEFAULT_ASSET_SCAN : 1,
   );
   const state = assetPreviewState(base, asset, track);
-  const note = `源资产「${asset.name}」${frames.length} 帧（源坐标 f${frames.join(', f')}，共 ${total}）——单独预览，未合成到时间线 · ${windowNote}`;
+  const note = `source asset "${asset.name}" ${frames.length} frames (source coordinates f${frames.join(', f')}, ${total} total) — standalone preview, not composited onto the timeline · ${windowNote}`;
   const rendered = await renderStills(state, frames, note);
   return 'error' in rendered ? rendered : { ...rendered, ...metadata };
 }

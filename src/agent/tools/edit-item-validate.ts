@@ -185,7 +185,7 @@ function resolveTransition(assetId: string): ResolvedTransition | TransitionErro
     };
   }
   return assetId.startsWith('plugin:')
-    ? { error: `unknown plugin transition ${assetId}`, hint: '该插件未安装或该 id 不是转场条目;用 browse_library category=transitions 查可用清单' }
+    ? { error: `unknown plugin transition ${assetId}`, hint: 'that plugin is not installed, or the id is not a transition entry; run browse_library category=transitions for the available list' }
     : { error: `unknown custom transition ${assetId}`, hint: 'submit_shader type=transition returns a fresh custom:tr-* id; generate it first, then add it this session' };
 }
 

@@ -35,14 +35,14 @@ function clickTrack(bpm: number, seconds: number, accentEvery = 0, noiseAmp = 0.
 {
   const r = analyzeBeats(clickTrack(120, 15), SR);
   assert.ok(Math.abs(r.bpm - 120) < 1.5, `bpm≈120(${r.bpm})`);
-  assert.ok(r.confidence >= 2, `可信度足够(${r.confidence})`);
-  assert.ok(r.beats.length >= 24, `拍数合理(${r.beats.length})`);
+  assert.ok(r.confidence >= 2, `confidence high enough (${r.confidence})`);
+  assert.ok(r.beats.length >= 24, `plausible beat count (${r.beats.length})`);
   const period = 60 / 120;
   const misses = r.beats.slice(2, 22).filter((t) => {
     const nearest = Math.round(t / period) * period;
     return Math.abs(t - nearest) > 0.045;
   });
-  assert.equal(misses.length, 0, `拍点对齐真拍(offenders=${misses.length})`);
+  assert.equal(misses.length, 0, `beats line up with the real ones (offenders=${misses.length})`);
 }
 
 // ── 90 BPM: Octave preference will not be locked wrongly 180/45 ──
@@ -54,13 +54,13 @@ function clickTrack(bpm: number, seconds: number, accentEvery = 0, noiseAmp = 0.
 // ── 4-beat accent: The strong beat is locked in the accent phase (difference from the accent beat ≤ 60ms), and one every 4 beats ──
 {
   const r = analyzeBeats(clickTrack(120, 16, 4), SR);
-  assert.ok(r.downbeats.length >= 5, `强拍数量(${r.downbeats.length})`);
+  assert.ok(r.downbeats.length >= 5, `downbeat count (${r.downbeats.length})`);
   const bar = (60 / 120) * 4;
   const offenders = r.downbeats.slice(1, 6).filter((t) => {
     const nearest = Math.round(t / bar) * bar;
     return Math.abs(t - nearest) > 0.06;
   });
-  assert.equal(offenders.length, 0, '强拍落在重音小节起点');
+  assert.equal(offenders.length, 0, 'downbeats land on the start of the accented bar');
 }
 
 // ── Pure noise: credibility gatekeeping, no beats produced ──
@@ -69,11 +69,11 @@ function clickTrack(bpm: number, seconds: number, accentEvery = 0, noiseAmp = 0.
   const rand = makeRand(7);
   for (let i = 0; i < noise.length; i++) noise[i] = 0.3 * rand();
   const r = analyzeBeats(noise, SR);
-  assert.equal(r.beats.length, 0, `噪声不出拍(bpm=${r.bpm}, conf=${r.confidence})`);
+  assert.equal(r.beats.length, 0, `noise produces no beats (bpm=${r.bpm}, conf=${r.confidence})`);
 }
 
 // ── Too short/empty input ──
-assert.equal(analyzeBeats(new Float32Array(SR), SR).bpm, 0, '1s 素材太短');
-assert.equal(analyzeBeats(new Float32Array(0), SR).bpm, 0, '空输入');
+assert.equal(analyzeBeats(new Float32Array(SR), SR).bpm, 0, '1s of material is too short');
+assert.equal(analyzeBeats(new Float32Array(0), SR).bpm, 0, 'empty input');
 
-console.log('beats.verify: ok (120/90 BPM/重音强拍/噪声守门/短输入)');
+console.log('beats.verify: ok (120/90 BPM/accented downbeats/noise gatekeeping/short input)');

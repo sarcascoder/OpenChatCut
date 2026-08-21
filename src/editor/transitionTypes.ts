@@ -57,26 +57,26 @@ export function isVisualTransition(type: TransitionType): type is GlslTransition
 // en labels for the transition library cards (Resource Library·Transition·Screen Transition).
 // Shared by the inspector select + the resource-library grid.
 export const TRANSITION_LABELS: Record<TransitionType, string> = {
-  'anticipation-zoom': '推进转场',
-  'clean-line-wipe': '白色划线转场',
-  'cross-dissolve': '叠化转场',
-  'dip-to-black': '闪黑转场',
-  flash: '闪白转场',
-  'impact-shake': '冲击抖动转场',
-  'luma-blend': '叠加转场',
-  'organic-dissolve': '光溶转场',
-  'page-curl': '翻页转场',
-  'rack-focus': '焦点转场',
-  'soft-wipe': '柔化擦除转场',
-  'whip-pan': '甩镜转场',
-  'circle-wipe': '圆形擦除转场',
-  'radial-blur': '径向模糊转场',
-  'glitch-cut': '故障切换转场',
-  'dip-to-color': '闪色转场',
+  'anticipation-zoom': 'Anticipation Zoom',
+  'clean-line-wipe': 'Clean Line Wipe',
+  'cross-dissolve': 'Cross Dissolve',
+  'dip-to-black': 'Dip to Black',
+  flash: 'Flash',
+  'impact-shake': 'Impact Shake',
+  'luma-blend': 'Luma Blend',
+  'organic-dissolve': 'Organic Dissolve',
+  'page-curl': 'Page Curl',
+  'rack-focus': 'Rack Focus',
+  'soft-wipe': 'Soft Wipe',
+  'whip-pan': 'Whip Pan',
+  'circle-wipe': 'Circle Wipe',
+  'radial-blur': 'Radial Blur',
+  'glitch-cut': 'Glitch Cut',
+  'dip-to-color': 'Dip to Color',
   /** preset.name.trAudioCrossFade */
-  'audio-cross-fade': '音频交叉淡化',
+  'audio-cross-fade': 'Audio Cross-Fade',
   /** submit_shader-generated custom transition (per-item label in customLabel) */
-  'custom-shader': '自定义着色器转场',
+  'custom-shader': 'Custom Shader',
 };
 
 /** catalog display order + extended visual transitions. */

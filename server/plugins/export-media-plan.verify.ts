@@ -88,7 +88,7 @@ try {
   // macOS/Linux (where node's path.isAbsolute returns false for it), and a
   // POSIX absolute path on Windows. The error is actionable (unsupported_source).
   for (const src of [
-    'D:\\Fun\\Music\\小城夏天.mp3',   // Windows drive path, backslashes
+    'D:\\Fun\\Music\\\u5c0f\u57ce\u590f\u5929.mp3',   // Windows drive path, backslashes, non-ASCII ("Small Town Summer") filename
     'D:/Fun/Music/another.mp3',        // Windows drive path, forward slashes
     '/Users/editor/Masters/clip.mov',  // POSIX absolute path
     'file:///Users/editor/Masters/clip.mov', // file: URL

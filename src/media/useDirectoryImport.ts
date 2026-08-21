@@ -7,7 +7,6 @@ import type {
 } from '../../shared/directory-import';
 import { normalizeSha256Hash } from '../../shared/content-hash';
 import type { MediaAsset } from '../editor/types';
-import type { t as translate } from '../i18n/locale';
 import { directoryFileToAsset } from './directoryImportAsset';
 
 export interface DirectoryImportDesktopApi {
@@ -308,7 +307,6 @@ interface UseDirectoryImportOptions {
   assets: readonly MediaAsset[];
   ingest: (asset: MediaAsset) => void;
   onError: (message: string | null) => void;
-  t: typeof translate;
 }
 
 export interface UseDirectoryImportState {
@@ -351,9 +349,7 @@ export function useDirectoryImport(options: UseDirectoryImportOptions): UseDirec
       onBusyChange: (next) => { if (live) setBusy(next); },
       onError: (reason) => {
         if (!live) return;
-        optionsRef.current.onError(optionsRef.current.t('监听文件夹导入失败：{error}', {
-          error: reason instanceof Error ? reason.message : String(reason),
-        }));
+        optionsRef.current.onError(`Watch folder import failed: ${reason instanceof Error ? reason.message : String(reason)}`);
       },
     });
     runtimeRef.current = runtime;

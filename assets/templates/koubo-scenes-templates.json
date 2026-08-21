@@ -1,8 +1,8 @@
 [
   {
     "id": "kb-beige-grid",
-    "name": "口播·米色格纹（横）",
-    "description": "米色方格纸手账底+贴纸感小圆窗(默认右下,可换四角),荧光笔标题+胶带+手绘星星。人物视频放本模板下方轨道,脸对准圆窗;圆窗半径/荧光笔色/底色可调。",
+    "name": "Talking Head · Beige Grid Paper (16:9)",
+    "description": "Beige grid-paper journal background + sticker-style round window (bottom-right by default, any of the four corners), highlighter title + tape + hand-drawn stars. Put the person video on the track below this template and line the face up with the round window; window radius / highlighter color / background color are adjustable.",
     "category": "koubo-scenes",
     "width": 1920,
     "height": 1080,
@@ -10,9 +10,9 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-beige-grid.jpg",
     "props": {
-      "title": "一起把这事聊明白",
-      "subtitle": "每周三晚 8 点更新",
-      "handle": "@纸上谈",
+      "title": "Let's Talk It Through",
+      "subtitle": "New every Wednesday, 8 PM",
+      "handle": "@PaperTalk",
       "position": "bottom-right",
       "size": 160,
       "accentColor": "#ffd66e",
@@ -22,41 +22,41 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "一起把这事聊明白",
-        "label": "标题"
+        "defaultValue": "Let's Talk It Through",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "每周三晚 8 点更新",
-        "label": "副标题"
+        "defaultValue": "New every Wednesday, 8 PM",
+        "label": "Subtitle"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@纸上谈",
-        "label": "名牌"
+        "defaultValue": "@PaperTalk",
+        "label": "Name tag"
       },
       {
         "key": "position",
         "type": "select",
         "defaultValue": "bottom-right",
-        "label": "人物位置",
+        "label": "Person position",
         "options": [
           {
-            "label": "右下",
+            "label": "Bottom right",
             "value": "bottom-right"
           },
           {
-            "label": "左下",
+            "label": "Bottom left",
             "value": "bottom-left"
           },
           {
-            "label": "右上",
+            "label": "Top right",
             "value": "top-right"
           },
           {
-            "label": "左上",
+            "label": "Top left",
             "value": "top-left"
           }
         ]
@@ -65,7 +65,7 @@
         "key": "size",
         "type": "number",
         "defaultValue": 160,
-        "label": "圆窗半径",
+        "label": "Window radius",
         "min": 110,
         "max": 300
       },
@@ -73,21 +73,21 @@
         "key": "accentColor",
         "type": "color",
         "defaultValue": "#ffd66e",
-        "label": "荧光笔色"
+        "label": "Highlighter color"
       },
       {
         "key": "bgColor",
         "type": "color",
         "defaultValue": "#f6f1e6",
-        "label": "纸底色"
+        "label": "Paper color"
       }
     ],
     "code": "const KbBeigeGrid = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1920, H = 1080, M = 96;\n  const ink = '#292421';\n  const accent = p.accentColor || '#ffd66e';\n  const paper = p.bgColor || '#f6f1e6';\n  const pos = String(p.position || 'bottom-right');\n  const R = Math.min(300, Math.max(110, Number(p.size) || 160));\n  const left = pos.indexOf('left') >= 0;\n  const top = pos.indexOf('top') >= 0;\n  const cx = left ? M + R : W - M - R;\n  const cy = top ? M + R : H - M - R;\n  const title = p.title == null ? '' : String(p.title);\n  const subtitle = p.subtitle == null ? '' : String(p.subtitle);\n  const handle = p.handle == null ? '' : String(p.handle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 130 } });\n  const popIn = spring({ frame: frame - 5, fps, config: { damping: 11, stiffness: 150 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 130) * Math.PI * 2);\n  const hole = 'radial-gradient(circle ' + R + 'px at ' + cx + 'px ' + cy + 'px, transparent ' + (R - 1) + 'px, #000 ' + R + 'px)';\n  const titleX = left ? cx + R + 110 : 120;\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: paper, WebkitMaskImage: hole, maskImage: hole, opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(90deg, #d3c5a3a6 2px, transparent 2px), linear-gradient(180deg, #d3c5a3a6 2px, transparent 2px)', backgroundSize: '76px 76px', backgroundPosition: '38px 26px' }} />\n        <div style={{ position: 'absolute', inset: 34, border: '2.5px solid ' + ink + 'd9', borderRadius: 26 }} />\n      </AbsoluteFill>\n      {title ? (\n        <div style={{ position: 'absolute', left: titleX, top: 128 + (1 - enter) * 30, opacity: enter, maxWidth: 1040, transform: 'rotate(' + (-0.6 + (1 - enter) * -2) + 'deg)' }}>\n          <span style={{ display: 'inline-block', fontSize: 86, fontWeight: 800, color: ink, lineHeight: 1.3, letterSpacing: 2, background: 'linear-gradient(0deg, ' + accent + ' 0 46%, transparent 46%)', padding: '0 18px 6px' }}>{title}</span>\n          {subtitle ? (\n            <div style={{ marginTop: 26, marginLeft: 20, display: 'inline-block', fontSize: 33, fontWeight: 700, color: ink + 'cc', letterSpacing: 3, borderBottom: '3.5px dashed #e8582e', paddingBottom: 12 }}>{subtitle}</div>\n          ) : null}\n        </div>\n      ) : null}\n      <div style={{ position: 'absolute', left: (left ? cx + R + 76 : titleX) - 6, top: 96, width: 168, height: 46, background: accent + '8c', transform: 'rotate(-7deg)', boxShadow: '0 3px 10px #29242118', opacity: enter }} />\n      <svg viewBox=\"0 0 100 100\" style={{ position: 'absolute', width: 96, height: 96, left: left ? W - 300 : Math.round(0.62 * W), top: 210 + sway * 5, transform: 'rotate(' + (12 + sway * 6) + 'deg)', opacity: popIn }}>\n        <path d=\"M50 6 L60 38 L94 38 L66 57 L76 90 L50 70 L24 90 L34 57 L6 38 L40 38 Z\" fill={accent} stroke={ink} strokeWidth=\"4\" strokeLinejoin=\"round\" />\n      </svg>\n      <svg viewBox=\"0 0 120 60\" style={{ position: 'absolute', width: 150, height: 75, left: cx + (left ? R + 26 : -R - 176), top: cy - R - 66 + sway * 4, transform: left ? 'scaleX(-1) rotate(8deg)' : 'rotate(8deg)', opacity: popIn }}>\n        <path d=\"M8 12 C 40 2, 78 6, 102 34\" fill=\"none\" stroke={ink} strokeWidth=\"5\" strokeLinecap=\"round\" strokeDasharray=\"3 9\" />\n        <path d=\"M92 26 L104 36 L88 40 Z\" fill={ink} />\n      </svg>\n      <div style={{ position: 'absolute', left: cx - R, top: cy - R, width: R * 2, height: R * 2, transform: 'scale(' + (0.72 + popIn * 0.28) + ')' }}>\n        <div style={{ position: 'absolute', inset: -12, borderRadius: '50%', border: '11px solid #fffdf8', boxShadow: '0 0 0 3px ' + ink + ', 10px 12px 0 ' + ink + '21' }} />\n      </div>\n      {handle ? (\n        <div style={{ position: 'absolute', left: cx, top: cy + R - 4, transform: 'translateX(-50%) rotate(3deg)', opacity: popIn, background: '#fffdf8', border: '2.5px solid ' + ink, borderRadius: 999, padding: '8px 24px', fontSize: 27, fontWeight: 800, color: ink, whiteSpace: 'nowrap', boxShadow: '4px 5px 0 ' + ink + '2b' }}>{handle}</div>\n      ) : null}\n    </AbsoluteFill>\n  );\n};"
   },
   {
     "id": "kb-latte-lines",
-    "name": "口播·奶咖横线（横）",
-    "description": "奶咖色横线笔记纸(带红色页边线+装订孔)+贴纸感小圆窗,划重点标题+回形针涂鸦。人物视频放本模板下方轨道,脸对准圆窗;四角/半径/划重点色可调。",
+    "name": "Talking Head · Latte Ruled Paper (16:9)",
+    "description": "Latte-colored ruled notepaper (red margin line + binder holes) + sticker-style round window, highlighted title + paperclip doodle. Put the person video on the track below this template and line the face up with the round window; corner / radius / highlight color are adjustable.",
     "category": "koubo-scenes",
     "width": 1920,
     "height": 1080,
@@ -95,9 +95,9 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-latte-lines.jpg",
     "props": {
-      "title": "把复杂的讲简单",
-      "subtitle": "第 12 期 · 通勤路上听",
-      "handle": "@奶咖笔记",
+      "title": "Complex Made Simple",
+      "subtitle": "Ep. 12 · Listen on your commute",
+      "handle": "@LatteNotes",
       "position": "bottom-right",
       "size": 155,
       "accentColor": "#f4b268"
@@ -106,41 +106,41 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "把复杂的讲简单",
-        "label": "标题"
+        "defaultValue": "Complex Made Simple",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "第 12 期 · 通勤路上听",
-        "label": "副标题"
+        "defaultValue": "Ep. 12 · Listen on your commute",
+        "label": "Subtitle"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@奶咖笔记",
-        "label": "名牌"
+        "defaultValue": "@LatteNotes",
+        "label": "Name tag"
       },
       {
         "key": "position",
         "type": "select",
         "defaultValue": "bottom-right",
-        "label": "人物位置",
+        "label": "Person position",
         "options": [
           {
-            "label": "右下",
+            "label": "Bottom right",
             "value": "bottom-right"
           },
           {
-            "label": "左下",
+            "label": "Bottom left",
             "value": "bottom-left"
           },
           {
-            "label": "右上",
+            "label": "Top right",
             "value": "top-right"
           },
           {
-            "label": "左上",
+            "label": "Top left",
             "value": "top-left"
           }
         ]
@@ -149,7 +149,7 @@
         "key": "size",
         "type": "number",
         "defaultValue": 155,
-        "label": "圆窗半径",
+        "label": "Window radius",
         "min": 110,
         "max": 300
       },
@@ -157,15 +157,15 @@
         "key": "accentColor",
         "type": "color",
         "defaultValue": "#f4b268",
-        "label": "划重点色"
+        "label": "Highlight color"
       }
     ],
     "code": "const KbLatteLines = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1920, H = 1080, M = 96;\n  const ink = '#33291f';\n  const red = '#d9553f';\n  const accent = p.accentColor || '#f4b268';\n  const pos = String(p.position || 'bottom-right');\n  const R = Math.min(300, Math.max(110, Number(p.size) || 155));\n  const left = pos.indexOf('left') >= 0;\n  const top = pos.indexOf('top') >= 0;\n  const cx = left ? M + R : W - M - R;\n  const cy = top ? M + R : H - M - R;\n  const title = p.title == null ? '' : String(p.title);\n  const subtitle = p.subtitle == null ? '' : String(p.subtitle);\n  const handle = p.handle == null ? '' : String(p.handle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 130 } });\n  const popIn = spring({ frame: frame - 5, fps, config: { damping: 11, stiffness: 150 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 140) * Math.PI * 2);\n  const hole = 'radial-gradient(circle ' + R + 'px at ' + cx + 'px ' + cy + 'px, transparent ' + (R - 1) + 'px, #000 ' + R + 'px)';\n  const titleX = left ? cx + R + 110 : 250;\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: '#efe5d3', WebkitMaskImage: hole, maskImage: hole, opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(180deg, transparent 0 86px, #c9b795b3 86px 88.5px)', backgroundPosition: '0 30px' }} />\n        <div style={{ position: 'absolute', left: 196, top: 0, width: 3, height: H, background: red + '73' }} />\n        <div style={{ position: 'absolute', left: 210, top: 0, width: 1.5, height: H, background: red + '40' }} />\n        <div style={{ position: 'absolute', left: 74, top: 150, width: 20, height: 20, borderRadius: '50%', border: '3px solid #b8a684' }} />\n        <div style={{ position: 'absolute', left: 74, top: 520, width: 20, height: 20, borderRadius: '50%', border: '3px solid #b8a684' }} />\n        <div style={{ position: 'absolute', left: 74, top: 890, width: 20, height: 20, borderRadius: '50%', border: '3px solid #b8a684' }} />\n      </AbsoluteFill>\n      {title ? (\n        <div style={{ position: 'absolute', left: titleX, top: 118 + (1 - enter) * 30, opacity: enter, maxWidth: 1000 }}>\n          <span style={{ display: 'inline-block', fontSize: 88, fontWeight: 800, color: ink, lineHeight: 1.3, letterSpacing: 2, background: 'linear-gradient(0deg, ' + accent + 'b3 0 42%, transparent 42%)', padding: '0 16px 4px', transform: 'rotate(-0.5deg)' }}>{title}</span>\n          {subtitle ? (\n            <div style={{ marginTop: 24, marginLeft: 18, display: 'inline-block', fontSize: 32, fontWeight: 700, color: ink + 'b8', letterSpacing: 3 }}>{subtitle}\n              <svg viewBox=\"0 0 300 16\" style={{ display: 'block', width: 300, height: 16, marginTop: 8 }}>\n                <path d=\"M4 10 Q 30 2, 56 9 T 108 9 T 160 9 T 212 9 T 264 9\" fill=\"none\" stroke={red} strokeWidth=\"4\" strokeLinecap=\"round\" />\n              </svg>\n            </div>\n          ) : null}\n        </div>\n      ) : null}\n      <svg viewBox=\"0 0 60 120\" style={{ position: 'absolute', width: 62, height: 124, left: left ? W - 250 : Math.round(0.60 * W), top: 84 + sway * 4, transform: 'rotate(' + (24 + sway * 3) + 'deg)', opacity: popIn }}>\n        <path d=\"M30 8 C 44 8, 50 18, 50 32 L 50 88 C 50 102, 40 110, 30 110 C 20 110, 12 102, 12 90 L 12 40 C 12 30, 18 24, 26 24 C 34 24, 40 30, 40 40 L 40 84\" fill=\"none\" stroke={ink} strokeWidth=\"5\" strokeLinecap=\"round\" />\n      </svg>\n      <div style={{ position: 'absolute', left: cx - R, top: cy - R, width: R * 2, height: R * 2, transform: 'scale(' + (0.72 + popIn * 0.28) + ')' }}>\n        <div style={{ position: 'absolute', inset: -12, borderRadius: '50%', border: '11px solid #fbf6ec', boxShadow: '0 0 0 3px ' + ink + ', 10px 12px 0 ' + ink + '1f' }} />\n      </div>\n      {handle ? (\n        <div style={{ position: 'absolute', left: cx, top: cy + R - 4, transform: 'translateX(-50%) rotate(-2.5deg)', opacity: popIn, background: '#fbf6ec', border: '2.5px solid ' + ink, borderRadius: 999, padding: '8px 24px', fontSize: 27, fontWeight: 800, color: ink, whiteSpace: 'nowrap', boxShadow: '4px 5px 0 ' + ink + '29' }}>{handle}</div>\n      ) : null}\n    </AbsoluteFill>\n  );\n};"
   },
   {
     "id": "kb-chalkboard",
-    "name": "口播·黑板报（横）",
-    "description": "墨绿黑板+粉笔手写感:粉笔虚线边框、黄粉双色粉笔涂鸦、粉笔圈出的人物圆窗、下沿粉笔槽。人物视频放本模板下方轨道,脸对准圆窗;四角/半径可调。",
+    "name": "Talking Head · Chalkboard (16:9)",
+    "description": "Dark green chalkboard with a handwritten chalk feel: dashed chalk border, yellow-and-pink chalk doodles, a chalk-circled person window, chalk tray along the bottom. Put the person video on the track below this template and line the face up with the round window; corner / radius are adjustable.",
     "category": "koubo-scenes",
     "width": 1920,
     "height": 1080,
@@ -173,9 +173,9 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-chalkboard.jpg",
     "props": {
-      "title": "今晚的三道思考题",
-      "subtitle": "慢慢想 · 不着急",
-      "handle": "@晚自习",
+      "title": "Tonight's Three Questions",
+      "subtitle": "Take your time · No rush",
+      "handle": "@NightStudy",
       "position": "bottom-right",
       "size": 160
     },
@@ -183,41 +183,41 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "今晚的三道思考题",
-        "label": "标题"
+        "defaultValue": "Tonight's Three Questions",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "慢慢想 · 不着急",
-        "label": "副标题"
+        "defaultValue": "Take your time · No rush",
+        "label": "Subtitle"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@晚自习",
-        "label": "名牌"
+        "defaultValue": "@NightStudy",
+        "label": "Name tag"
       },
       {
         "key": "position",
         "type": "select",
         "defaultValue": "bottom-right",
-        "label": "人物位置",
+        "label": "Person position",
         "options": [
           {
-            "label": "右下",
+            "label": "Bottom right",
             "value": "bottom-right"
           },
           {
-            "label": "左下",
+            "label": "Bottom left",
             "value": "bottom-left"
           },
           {
-            "label": "右上",
+            "label": "Top right",
             "value": "top-right"
           },
           {
-            "label": "左上",
+            "label": "Top left",
             "value": "top-left"
           }
         ]
@@ -226,7 +226,7 @@
         "key": "size",
         "type": "number",
         "defaultValue": 160,
-        "label": "圆窗半径",
+        "label": "Window radius",
         "min": 110,
         "max": 300
       }
@@ -235,8 +235,8 @@
   },
   {
     "id": "kb-collage-split",
-    "name": "口播·侧栏拼贴（横）",
-    "description": "奶白点阵纸+撕纸边侧栏分屏:左内容右人物(可换边),锯齿撕边+色块贴纸+划重点标题。人物视频放本模板下方轨道对准人物侧;占比/换边/贴纸色可调。",
+    "name": "Talking Head · Collage Split (16:9)",
+    "description": "Off-white dot-grid paper + torn-edge sidebar split: content on the left, person on the right (sides can swap), jagged torn edge + color-block stickers + highlighted title. Put the person video on the track below this template aligned to the person's side; ratio / side / sticker color are adjustable.",
     "category": "koubo-scenes",
     "width": 1920,
     "height": 1080,
@@ -244,8 +244,8 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-collage-split.jpg",
     "props": {
-      "title": "这周的\n灵感清单",
-      "subtitle": "剪贴板 · 每周五见",
+      "title": "This Week's\nIdea List",
+      "subtitle": "Clipboard · Every Friday",
       "personSide": "right",
       "contentRatio": 0.6,
       "accentColor": "#f7a8b8"
@@ -254,27 +254,27 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "这周的\n灵感清单",
-        "label": "标题(\\n 换行)"
+        "defaultValue": "This Week's\nIdea List",
+        "label": "Title (\\n = line break)"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "剪贴板 · 每周五见",
-        "label": "副标题"
+        "defaultValue": "Clipboard · Every Friday",
+        "label": "Subtitle"
       },
       {
         "key": "personSide",
         "type": "select",
         "defaultValue": "right",
-        "label": "人物在哪边",
+        "label": "Person side",
         "options": [
           {
-            "label": "右",
+            "label": "Right",
             "value": "right"
           },
           {
-            "label": "左",
+            "label": "Left",
             "value": "left"
           }
         ]
@@ -283,7 +283,7 @@
         "key": "contentRatio",
         "type": "number",
         "defaultValue": 0.6,
-        "label": "内容占比",
+        "label": "Content ratio",
         "min": 0.45,
         "max": 0.72
       },
@@ -291,15 +291,15 @@
         "key": "accentColor",
         "type": "color",
         "defaultValue": "#f7a8b8",
-        "label": "贴纸色"
+        "label": "Sticker color"
       }
     ],
-    "code": "const KbCollageSplit = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1920, H = 1080;\n  const ink = '#2c2620';\n  const accent = p.accentColor || '#f7a8b8';\n  const butter = '#ffd66e';\n  const personRight = String(p.personSide || 'right') !== 'left';\n  const ratio = Math.min(0.72, Math.max(0.45, Number(p.contentRatio) || 0.6));\n  const splitX = Math.round(W * ratio);\n  const edgeX = personRight ? splitX : W - splitX;\n  const title = String(p.title == null ? '' : p.title);\n  const subtitle = p.subtitle == null ? '' : String(p.subtitle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 125 } });\n  const popIn = spring({ frame: frame - 5, fps, config: { damping: 11, stiffness: 150 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 140) * Math.PI * 2);\n  const mask = personRight\n    ? 'linear-gradient(90deg, #000 0 ' + splitX + 'px, transparent ' + splitX + 'px)'\n    : 'linear-gradient(90deg, transparent 0 ' + (W - splitX) + 'px, #000 ' + (W - splitX) + 'px)';\n  const teeth = 30;\n  const seg = H / teeth;\n  let zig = '';\n  for (let i = 0; i < teeth; i += 1) {\n    zig += (personRight ? '100% ' : '0 ') + ((i + 0.5) * seg) + 'px, ' + (personRight ? '30% ' : '70% ') + ((i + 1) * seg) + 'px, ';\n  }\n  const clip = personRight\n    ? 'polygon(0 0, 30% 0, ' + zig + '0 100%)'\n    : 'polygon(100% 0, 70% 0, ' + zig + '100% 100%)';\n  const contentX = personRight ? 130 : (W - splitX) + 130;\n  const lines = title.split('\\n');\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: '#faf5eb', WebkitMaskImage: mask, maskImage: mask, opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle 2.5px, #ddd2bd 2.5px, transparent 3px)', backgroundSize: '64px 64px', backgroundPosition: '32px 32px' }} />\n        <div style={{ position: 'absolute', left: personRight ? splitX - 300 : W - splitX - 40, top: -60, width: 340, height: 220, background: accent + '80', transform: 'rotate(-9deg)', borderRadius: 8 }} />\n        <div style={{ position: 'absolute', left: personRight ? splitX - 180 : W - splitX - 160, bottom: -70, width: 280, height: 200, background: butter + '8c', transform: 'rotate(7deg)', borderRadius: 8 }} />\n      </AbsoluteFill>\n      <div style={{ position: 'absolute', left: personRight ? edgeX - 40 : edgeX - 60, top: 0, width: 100, height: H, background: '#faf5eb', clipPath: clip, WebkitClipPath: clip, filter: 'drop-shadow(' + (personRight ? '5px' : '-5px') + ' 0 0 #2c262024)' }} />\n      <div style={{ position: 'absolute', left: contentX, top: 190 + (1 - enter) * 30, opacity: enter, maxWidth: splitX - 280 }}>\n        <div style={{ display: 'inline-block', background: '#fffdf6', border: '2.5px solid ' + ink, borderRadius: 999, padding: '9px 26px', fontSize: 26, fontWeight: 800, color: ink, letterSpacing: 3, marginBottom: 40, transform: 'rotate(-2deg)', boxShadow: '4px 5px 0 ' + ink + '26' }}>口播拼贴</div>\n        {lines.map((ln, i) => (\n          <div key={i} style={{ fontSize: 100, fontWeight: 800, color: ink, lineHeight: 1.22, letterSpacing: 2 }}>\n            <span style={{ background: i === lines.length - 1 ? 'linear-gradient(0deg, ' + accent + '99 0 40%, transparent 40%)' : 'none', padding: '0 8px 4px' }}>{ln}</span>\n          </div>\n        ))}\n        {subtitle ? (\n          <div style={{ marginTop: 30, fontSize: 33, fontWeight: 700, color: ink + 'ba', letterSpacing: 4, borderBottom: '3.5px dashed ' + ink + '66', display: 'inline-block', paddingBottom: 12 }}>{subtitle}</div>\n        ) : null}\n      </div>\n      <svg viewBox=\"0 0 100 100\" style={{ position: 'absolute', width: 88, height: 88, left: personRight ? splitX - 240 : W - splitX + 150, top: 150 + sway * 5, transform: 'rotate(' + (14 + sway * 5) + 'deg)', opacity: popIn }}>\n        <path d=\"M50 6 L60 38 L94 38 L66 57 L76 90 L50 70 L24 90 L34 57 L6 38 L40 38 Z\" fill={butter} stroke={ink} strokeWidth=\"4\" strokeLinejoin=\"round\" />\n      </svg>\n      <div style={{ position: 'absolute', left: personRight ? splitX + 60 : 60, top: 54, width: 170, height: 46, background: accent + 'a6', transform: 'rotate(-6deg)', boxShadow: '0 3px 10px #2c262018', opacity: popIn }} />\n      <div style={{ position: 'absolute', right: personRight ? 60 : undefined, left: personRight ? undefined : W - splitX + 40, bottom: 52, width: 150, height: 42, background: butter + 'a6', transform: 'rotate(5deg)', boxShadow: '0 3px 10px #2c262018', opacity: popIn }} />\n    </AbsoluteFill>\n  );\n};"
+    "code": "const KbCollageSplit = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1920, H = 1080;\n  const ink = '#2c2620';\n  const accent = p.accentColor || '#f7a8b8';\n  const butter = '#ffd66e';\n  const personRight = String(p.personSide || 'right') !== 'left';\n  const ratio = Math.min(0.72, Math.max(0.45, Number(p.contentRatio) || 0.6));\n  const splitX = Math.round(W * ratio);\n  const edgeX = personRight ? splitX : W - splitX;\n  const title = String(p.title == null ? '' : p.title);\n  const subtitle = p.subtitle == null ? '' : String(p.subtitle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 125 } });\n  const popIn = spring({ frame: frame - 5, fps, config: { damping: 11, stiffness: 150 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 140) * Math.PI * 2);\n  const mask = personRight\n    ? 'linear-gradient(90deg, #000 0 ' + splitX + 'px, transparent ' + splitX + 'px)'\n    : 'linear-gradient(90deg, transparent 0 ' + (W - splitX) + 'px, #000 ' + (W - splitX) + 'px)';\n  const teeth = 30;\n  const seg = H / teeth;\n  let zig = '';\n  for (let i = 0; i < teeth; i += 1) {\n    zig += (personRight ? '100% ' : '0 ') + ((i + 0.5) * seg) + 'px, ' + (personRight ? '30% ' : '70% ') + ((i + 1) * seg) + 'px, ';\n  }\n  const clip = personRight\n    ? 'polygon(0 0, 30% 0, ' + zig + '0 100%)'\n    : 'polygon(100% 0, 70% 0, ' + zig + '100% 100%)';\n  const contentX = personRight ? 130 : (W - splitX) + 130;\n  const lines = title.split('\\n');\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: '#faf5eb', WebkitMaskImage: mask, maskImage: mask, opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle 2.5px, #ddd2bd 2.5px, transparent 3px)', backgroundSize: '64px 64px', backgroundPosition: '32px 32px' }} />\n        <div style={{ position: 'absolute', left: personRight ? splitX - 300 : W - splitX - 40, top: -60, width: 340, height: 220, background: accent + '80', transform: 'rotate(-9deg)', borderRadius: 8 }} />\n        <div style={{ position: 'absolute', left: personRight ? splitX - 180 : W - splitX - 160, bottom: -70, width: 280, height: 200, background: butter + '8c', transform: 'rotate(7deg)', borderRadius: 8 }} />\n      </AbsoluteFill>\n      <div style={{ position: 'absolute', left: personRight ? edgeX - 40 : edgeX - 60, top: 0, width: 100, height: H, background: '#faf5eb', clipPath: clip, WebkitClipPath: clip, filter: 'drop-shadow(' + (personRight ? '5px' : '-5px') + ' 0 0 #2c262024)' }} />\n      <div style={{ position: 'absolute', left: contentX, top: 190 + (1 - enter) * 30, opacity: enter, maxWidth: splitX - 280 }}>\n        <div style={{ display: 'inline-block', background: '#fffdf6', border: '2.5px solid ' + ink, borderRadius: 999, padding: '9px 26px', fontSize: 26, fontWeight: 800, color: ink, letterSpacing: 3, marginBottom: 40, transform: 'rotate(-2deg)', boxShadow: '4px 5px 0 ' + ink + '26' }}>TALKING HEAD</div>\n        {lines.map((ln, i) => (\n          <div key={i} style={{ fontSize: 100, fontWeight: 800, color: ink, lineHeight: 1.22, letterSpacing: 2 }}>\n            <span style={{ background: i === lines.length - 1 ? 'linear-gradient(0deg, ' + accent + '99 0 40%, transparent 40%)' : 'none', padding: '0 8px 4px' }}>{ln}</span>\n          </div>\n        ))}\n        {subtitle ? (\n          <div style={{ marginTop: 30, fontSize: 33, fontWeight: 700, color: ink + 'ba', letterSpacing: 4, borderBottom: '3.5px dashed ' + ink + '66', display: 'inline-block', paddingBottom: 12 }}>{subtitle}</div>\n        ) : null}\n      </div>\n      <svg viewBox=\"0 0 100 100\" style={{ position: 'absolute', width: 88, height: 88, left: personRight ? splitX - 240 : W - splitX + 150, top: 150 + sway * 5, transform: 'rotate(' + (14 + sway * 5) + 'deg)', opacity: popIn }}>\n        <path d=\"M50 6 L60 38 L94 38 L66 57 L76 90 L50 70 L24 90 L34 57 L6 38 L40 38 Z\" fill={butter} stroke={ink} strokeWidth=\"4\" strokeLinejoin=\"round\" />\n      </svg>\n      <div style={{ position: 'absolute', left: personRight ? splitX + 60 : 60, top: 54, width: 170, height: 46, background: accent + 'a6', transform: 'rotate(-6deg)', boxShadow: '0 3px 10px #2c262018', opacity: popIn }} />\n      <div style={{ position: 'absolute', right: personRight ? 60 : undefined, left: personRight ? undefined : W - splitX + 40, bottom: 52, width: 150, height: 42, background: butter + 'a6', transform: 'rotate(5deg)', boxShadow: '0 3px 10px #2c262018', opacity: popIn }} />\n    </AbsoluteFill>\n  );\n};"
   },
   {
     "id": "kb-parchment",
-    "name": "口播·羊皮纸（横）",
-    "description": "横屏羊皮纸卷:真实羊皮纸质感(斑驳陈化+烘边)+宋体书卷标题+双线框+红印章,文化/读书/说书感。人物视频放本模板下方轨道,脸对准圆窗;四角/半径/印章字可调。",
+    "name": "Talking Head · Parchment (16:9)",
+    "description": "Landscape parchment scroll: realistic parchment texture (mottled aging + scorched edges) + serif scroll title + double-line frame + red seal, for a cultural / reading / storytelling feel. Put the person video on the track below this template and line the face up with the round window; corner / radius / seal text are adjustable.",
     "category": "koubo-scenes",
     "width": 1920,
     "height": 1080,
@@ -307,9 +307,9 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-parchment.jpg",
     "props": {
-      "title": "今天讲一段旧闻",
-      "subtitle": "卷二 · 市井篇",
-      "sealText": "说书",
+      "title": "An Old Tale Today",
+      "subtitle": "Volume Two · Street Life",
+      "sealText": "TALE",
       "position": "bottom-right",
       "size": 165
     },
@@ -317,41 +317,41 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "今天讲一段旧闻",
-        "label": "标题"
+        "defaultValue": "An Old Tale Today",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "卷二 · 市井篇",
-        "label": "副标题"
+        "defaultValue": "Volume Two · Street Life",
+        "label": "Subtitle"
       },
       {
         "key": "sealText",
         "type": "text",
-        "defaultValue": "说书",
-        "label": "印章字(2-4字)"
+        "defaultValue": "TALE",
+        "label": "Seal text (2-4 chars)"
       },
       {
         "key": "position",
         "type": "select",
         "defaultValue": "bottom-right",
-        "label": "人物位置",
+        "label": "Person position",
         "options": [
           {
-            "label": "右下",
+            "label": "Bottom right",
             "value": "bottom-right"
           },
           {
-            "label": "左下",
+            "label": "Bottom left",
             "value": "bottom-left"
           },
           {
-            "label": "右上",
+            "label": "Top right",
             "value": "top-right"
           },
           {
-            "label": "左上",
+            "label": "Top left",
             "value": "top-left"
           }
         ]
@@ -360,7 +360,7 @@
         "key": "size",
         "type": "number",
         "defaultValue": 165,
-        "label": "圆窗半径",
+        "label": "Window radius",
         "min": 110,
         "max": 300
       }
@@ -369,8 +369,8 @@
   },
   {
     "id": "kb-split-note",
-    "name": "口播·便签五五分（竖）",
-    "description": "竖屏上下分屏:上半淡黄便利贴(横线+顶部胶带),下半人物,撕纸分界+名牌贴纸。人物视频放本模板下方轨道对准下半区;占比可调,上半区留给 agent 叠内容。",
+    "name": "Talking Head · Sticky Note Split (9:16)",
+    "description": "Vertical top/bottom split: pale yellow sticky note on top (ruled lines + tape across the top), person on the bottom, torn-paper divider + name-tag sticker. Put the person video on the track below this template aligned to the lower half; the ratio is adjustable and the top half is left for the agent to layer content on.",
     "category": "koubo-scenes",
     "width": 1080,
     "height": 1920,
@@ -378,35 +378,35 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-split-note.jpg",
     "props": {
-      "title": "记住这一页",
-      "subtitle": "10 分钟讲完 · 建议收藏",
-      "handle": "@便签君",
+      "title": "Remember This Page",
+      "subtitle": "Done in 10 min · Save this one",
+      "handle": "@StickyNote",
       "splitRatio": 0.5
     },
     "propSchema": [
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "记住这一页",
-        "label": "标题"
+        "defaultValue": "Remember This Page",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "10 分钟讲完 · 建议收藏",
-        "label": "副标题"
+        "defaultValue": "Done in 10 min · Save this one",
+        "label": "Subtitle"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@便签君",
-        "label": "名牌"
+        "defaultValue": "@StickyNote",
+        "label": "Name tag"
       },
       {
         "key": "splitRatio",
         "type": "number",
         "defaultValue": 0.5,
-        "label": "内容区占比",
+        "label": "Content area ratio",
         "min": 0.32,
         "max": 0.62
       }
@@ -415,8 +415,8 @@
   },
   {
     "id": "kb-split-dots",
-    "name": "口播·点阵五五分（竖）",
-    "description": "竖屏上下分屏:上半奶白点阵纸(子弹笔记风)+橙红圈重点标题,下半人物,墨色分界+名牌。人物视频放本模板下方轨道对准下半区;占比/圈重点色可调。",
+    "name": "Talking Head · Dot Grid Split (9:16)",
+    "description": "Vertical top/bottom split: off-white dot-grid paper on top (bullet-journal style) + orange-red circled title, person on the bottom, ink divider + name tag. Put the person video on the track below this template aligned to the lower half; ratio / circle color are adjustable.",
     "category": "koubo-scenes",
     "width": 1080,
     "height": 1920,
@@ -424,9 +424,9 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-split-dots.jpg",
     "props": {
-      "title": "把目标拆成点",
-      "subtitle": "第 03 期 · 拆解合集",
-      "handle": "@点阵手帐",
+      "title": "Break Goals Into Dots",
+      "subtitle": "Ep. 03 · Breakdown series",
+      "handle": "@DotGridJournal",
       "splitRatio": 0.5,
       "accentColor": "#e8582e"
     },
@@ -434,26 +434,26 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "把目标拆成点",
-        "label": "标题"
+        "defaultValue": "Break Goals Into Dots",
+        "label": "Title"
       },
       {
         "key": "subtitle",
         "type": "text",
-        "defaultValue": "第 03 期 · 拆解合集",
-        "label": "副标题"
+        "defaultValue": "Ep. 03 · Breakdown series",
+        "label": "Subtitle"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@点阵手帐",
-        "label": "名牌"
+        "defaultValue": "@DotGridJournal",
+        "label": "Name tag"
       },
       {
         "key": "splitRatio",
         "type": "number",
         "defaultValue": 0.5,
-        "label": "内容区占比",
+        "label": "Content area ratio",
         "min": 0.32,
         "max": 0.62
       },
@@ -461,15 +461,15 @@
         "key": "accentColor",
         "type": "color",
         "defaultValue": "#e8582e",
-        "label": "圈重点色"
+        "label": "Circle color"
       }
     ],
     "code": "const KbSplitDots = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1080, H = 1920;\n  const ink = '#2c2620';\n  const accent = p.accentColor || '#e8582e';\n  const ratio = Math.min(0.62, Math.max(0.32, Number(p.splitRatio) || 0.5));\n  const splitY = Math.round(H * ratio);\n  const title = p.title == null ? '' : String(p.title);\n  const subtitle = p.subtitle == null ? '' : String(p.subtitle);\n  const handle = p.handle == null ? '' : String(p.handle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 125 } });\n  const popIn = spring({ frame: frame - 5, fps, config: { damping: 11, stiffness: 150 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const drawLen = interpolate(frame, [8, 40], [860, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 150) * Math.PI * 2);\n  const mask = 'linear-gradient(180deg, #000 0 ' + splitY + 'px, transparent ' + splitY + 'px)';\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: '#faf6ee', WebkitMaskImage: mask, maskImage: mask, opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle 2.5px, #d5c8ae 2.5px, transparent 3px)', backgroundSize: '58px 58px', backgroundPosition: '29px 29px' }} />\n        <div style={{ position: 'absolute', left: 30, right: 30, top: 30, height: splitY - 80, border: '2.5px solid ' + ink + 'cc', borderRadius: 22 }} />\n      </AbsoluteFill>\n      <div style={{ position: 'absolute', left: 0, right: 0, top: Math.round(splitY * 0.40) + (1 - enter) * 30, opacity: enter, textAlign: 'center', padding: '0 80px', transform: 'translateY(-50%)' }}>\n        <div style={{ position: 'relative', display: 'inline-block', padding: '14px 34px' }}>\n          <div style={{ fontSize: 94, fontWeight: 800, color: ink, lineHeight: 1.24, letterSpacing: 3 }}>{title}</div>\n          <svg viewBox=\"0 0 400 160\" preserveAspectRatio=\"none\" style={{ position: 'absolute', inset: -12, width: 'calc(100% + 24px)', height: 'calc(100% + 24px)' }}>\n            <path d=\"M 30 24 C 130 2, 330 6, 372 52 C 396 92, 330 142, 196 148 C 80 152, 10 128, 16 84 C 20 52, 60 30, 120 24\" fill=\"none\" stroke={accent} strokeWidth=\"7\" strokeLinecap=\"round\" strokeDasharray=\"860\" strokeDashoffset={drawLen} />\n          </svg>\n        </div>\n        {subtitle ? (\n          <div style={{ marginTop: 34, display: 'inline-block', fontSize: 34, fontWeight: 700, color: ink + 'bf', letterSpacing: 4, background: 'linear-gradient(0deg, #ffd66e99 0 38%, transparent 38%)', padding: '0 14px 4px' }}>{subtitle}</div>\n        ) : null}\n      </div>\n      <svg viewBox=\"0 0 100 100\" style={{ position: 'absolute', width: 78, height: 78, right: 90, top: Math.round(splitY * 0.14) + sway * 5, transform: 'rotate(' + (16 + sway * 5) + 'deg)', opacity: popIn }}>\n        <path d=\"M50 6 L60 38 L94 38 L66 57 L76 90 L50 70 L24 90 L34 57 L6 38 L40 38 Z\" fill=\"#ffd66e\" stroke={ink} strokeWidth=\"4\" strokeLinejoin=\"round\" />\n      </svg>\n      <div style={{ position: 'absolute', left: 76, top: Math.round(splitY * 0.13), width: 22, height: 22, borderRadius: '50%', border: '4px solid ' + accent, opacity: popIn }} />\n      <div style={{ position: 'absolute', left: 0, top: splitY - 10, width: W, height: 18, background: ink, boxShadow: '0 5px 0 ' + ink + '26' }} />\n      {handle ? (\n        <div style={{ position: 'absolute', left: '50%', top: splitY, transform: 'translate(-50%, -50%) rotate(-2deg)', opacity: popIn, background: '#fffdf6', border: '2.5px solid ' + ink, borderRadius: 999, padding: '10px 30px', fontSize: 30, fontWeight: 800, color: ink, whiteSpace: 'nowrap', boxShadow: '4px 5px 0 ' + ink + '2b' }}>{handle}</div>\n      ) : null}\n    </AbsoluteFill>\n  );\n};"
   },
   {
     "id": "kb-kraft-corner",
-    "name": "口播·牛皮纸圆窗（竖）",
-    "description": "竖屏解说位:真实牛皮纸质感(纤维颗粒+斑驳+烘边)+奶白手绘涂鸦+贴纸感小圆窗。人物视频放本模板下方轨道,脸对准圆窗;中间整片留给素材,四角/半径可调。",
+    "name": "Talking Head · Kraft Corner (9:16)",
+    "description": "Vertical commentary layout: realistic kraft paper texture (fiber grain + mottling + scorched edges) + off-white hand-drawn doodles + sticker-style round window. Put the person video on the track below this template and line the face up with the round window; the whole middle is left for footage, corner / radius are adjustable.",
     "category": "koubo-scenes",
     "width": 1080,
     "height": 1920,
@@ -477,8 +477,8 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-kraft-corner.jpg",
     "props": {
-      "title": "旧物新说",
-      "handle": "@牛皮纸研究所",
+      "title": "Old Things, New Takes",
+      "handle": "@KraftPaperLab",
       "position": "bottom-right",
       "size": 150
     },
@@ -486,35 +486,35 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "旧物新说",
-        "label": "标题"
+        "defaultValue": "Old Things, New Takes",
+        "label": "Title"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@牛皮纸研究所",
-        "label": "名牌"
+        "defaultValue": "@KraftPaperLab",
+        "label": "Name tag"
       },
       {
         "key": "position",
         "type": "select",
         "defaultValue": "bottom-right",
-        "label": "人物位置",
+        "label": "Person position",
         "options": [
           {
-            "label": "右下",
+            "label": "Bottom right",
             "value": "bottom-right"
           },
           {
-            "label": "左下",
+            "label": "Bottom left",
             "value": "bottom-left"
           },
           {
-            "label": "右上",
+            "label": "Top right",
             "value": "top-right"
           },
           {
-            "label": "左上",
+            "label": "Top left",
             "value": "top-left"
           }
         ]
@@ -523,7 +523,7 @@
         "key": "size",
         "type": "number",
         "defaultValue": 150,
-        "label": "圆窗半径",
+        "label": "Window radius",
         "min": 110,
         "max": 280
       }
@@ -532,8 +532,8 @@
   },
   {
     "id": "kb-cream-window",
-    "name": "口播·奶油拍立得（竖）",
-    "description": "竖屏居中大窗做成拍立得相片:奶油点阵纸底+白厚相框(下边加宽)+两条胶带+手写名牌。人物视频放本模板下方轨道对准相窗;窗宽/胶带色可调。",
+    "name": "Talking Head · Cream Polaroid (9:16)",
+    "description": "Vertical layout with a big centered window styled as a Polaroid photo: cream dot-grid paper background + thick white frame (wider at the bottom) + two strips of tape + handwritten name tag. Put the person video on the track below this template aligned to the photo window; window width / tape color are adjustable.",
     "category": "koubo-scenes",
     "width": 1080,
     "height": 1920,
@@ -541,8 +541,8 @@
     "durationInFrames": 240,
     "thumb": "/thumbnails/kb-cream-window.jpg",
     "props": {
-      "title": "本周面对面",
-      "handle": "@奶油相册",
+      "title": "Face to Face This Week",
+      "handle": "@CreamAlbum",
       "windowWidth": 820,
       "accentColor": "#f7a8b8"
     },
@@ -550,20 +550,20 @@
       {
         "key": "title",
         "type": "text",
-        "defaultValue": "本周面对面",
-        "label": "标题"
+        "defaultValue": "Face to Face This Week",
+        "label": "Title"
       },
       {
         "key": "handle",
         "type": "text",
-        "defaultValue": "@奶油相册",
-        "label": "手写名牌"
+        "defaultValue": "@CreamAlbum",
+        "label": "Handwritten name tag"
       },
       {
         "key": "windowWidth",
         "type": "number",
         "defaultValue": 820,
-        "label": "窗宽",
+        "label": "Window width",
         "min": 620,
         "max": 960
       },
@@ -571,7 +571,7 @@
         "key": "accentColor",
         "type": "color",
         "defaultValue": "#f7a8b8",
-        "label": "胶带色"
+        "label": "Tape color"
       }
     ],
     "code": "const KbCreamWindow = ({ item }) => {\n  const frame = useCurrentFrame();\n  const { fps, durationInFrames } = useVideoConfig();\n  const p = item.props || {};\n  const W = 1080, H = 1920;\n  const ink = '#2c2620';\n  const accent = p.accentColor || '#f7a8b8';\n  const winW = Math.min(960, Math.max(620, Number(p.windowWidth) || 820));\n  const winH = Math.round(winW * 4 / 3);\n  const r = 18;\n  const x = Math.round((W - winW) / 2);\n  const y = Math.round((H - winH) / 2) - 10;\n  const title = p.title == null ? '' : String(p.title);\n  const handle = p.handle == null ? '' : String(p.handle);\n  const enter = spring({ frame, fps, config: { damping: 13, stiffness: 120 } });\n  const popIn = spring({ frame: frame - 6, fps, config: { damping: 12, stiffness: 140 } });\n  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n  const sway = Math.sin((frame / 150) * Math.PI * 2);\n  const d = 'M0 0H' + W + 'V' + H + 'H0Z'\n    + 'M' + (x + r) + ' ' + y\n    + 'H' + (x + winW - r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + winW) + ' ' + (y + r)\n    + 'V' + (y + winH - r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + winW - r) + ' ' + (y + winH)\n    + 'H' + (x + r) + 'A' + r + ' ' + r + ' 0 0 1 ' + x + ' ' + (y + winH - r)\n    + 'V' + (y + r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + r) + ' ' + y + 'Z';\n  const svg = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ' + W + ' ' + H + '\"><path fill-rule=\"evenodd\" d=\"' + d + '\"/></svg>';\n  const mask = 'url(\"data:image/svg+xml,' + encodeURIComponent(svg) + '\")';\n  return (\n    <AbsoluteFill style={{ opacity: exit }}>\n      <AbsoluteFill style={{ backgroundColor: '#f8f1e3', WebkitMaskImage: mask, maskImage: mask, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', opacity: enter }}>\n        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle 2.5px, #e2d4bb 2.5px, transparent 3px)', backgroundSize: '66px 66px', backgroundPosition: '33px 33px' }} />\n      </AbsoluteFill>\n      {title ? (\n        <div style={{ position: 'absolute', left: 0, right: 0, top: Math.max(70, y - 210) + (1 - enter) * 24, opacity: enter, textAlign: 'center' }}>\n          <span style={{ display: 'inline-block', fontSize: 80, fontWeight: 800, color: ink, letterSpacing: 4, background: 'linear-gradient(0deg, #ffd66e99 0 40%, transparent 40%)', padding: '0 20px 6px', transform: 'rotate(-0.8deg)' }}>{title}</span>\n        </div>\n      ) : null}\n      <div style={{ position: 'absolute', left: x, top: y, width: winW, height: winH, transform: 'scale(' + (0.86 + popIn * 0.14) + ') rotate(' + ((1 - popIn) * -2) + 'deg)', transformOrigin: '50% 40%' }}>\n        <div style={{ position: 'absolute', left: -19, top: -19, width: 'calc(100% + 38px)', height: 19, background: '#fffdf8' }} />\n        <div style={{ position: 'absolute', left: -19, bottom: -117, width: 'calc(100% + 38px)', height: 117, background: '#fffdf8' }} />\n        <div style={{ position: 'absolute', left: -19, top: 0, width: 19, height: '100%', background: '#fffdf8' }} />\n        <div style={{ position: 'absolute', right: -19, top: 0, width: 19, height: '100%', background: '#fffdf8' }} />\n        <div style={{ position: 'absolute', left: -22, top: -22, right: -22, bottom: -120, borderRadius: 14, border: '3px solid ' + ink, boxShadow: '12px 14px 0 ' + ink + '24' }} />\n        <div style={{ position: 'absolute', inset: 0, borderRadius: r, boxShadow: 'inset 0 0 0 2px ' + ink + '26' }} />\n        {handle ? (\n          <div style={{ position: 'absolute', left: 0, right: 0, bottom: -108, textAlign: 'center', fontSize: 42, fontWeight: 700, color: ink, letterSpacing: 4, fontStyle: 'italic' }}>{handle}</div>\n        ) : null}\n        <div style={{ position: 'absolute', left: -60, top: -50, width: 190, height: 52, background: accent + 'b3', transform: 'rotate(-12deg)', boxShadow: '0 4px 12px #2c26201f' }} />\n        <div style={{ position: 'absolute', right: -60, top: -50, width: 190, height: 52, background: accent + 'b3', transform: 'rotate(11deg)', boxShadow: '0 4px 12px #2c26201f' }} />\n      </div>\n      <svg viewBox=\"0 0 100 100\" style={{ position: 'absolute', width: 80, height: 80, left: 74, top: y + winH * 0.72 + sway * 5, transform: 'rotate(' + (-12 + sway * 6) + 'deg)', opacity: popIn }}>\n        <path d=\"M50 6 L60 38 L94 38 L66 57 L76 90 L50 70 L24 90 L34 57 L6 38 L40 38 Z\" fill=\"#ffd66e\" stroke={ink} strokeWidth=\"4\" strokeLinejoin=\"round\" />\n      </svg>\n    </AbsoluteFill>\n  );\n};"

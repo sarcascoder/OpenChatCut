@@ -1,4 +1,3 @@
-import { getLocale } from '../i18n/locale';
 
 export interface ToolExecutionOutcome {
   readonly success: boolean;
@@ -82,8 +81,6 @@ export class ToolFailureTracker {
     const details = [...this.#unresolved]
       .map(([name, reason]) => `${name}: ${reason}`)
       .join('; ');
-    return getLocale() === 'zh'
-      ? `有工具调用失败，未能完成请求（${details}）。本次没有成功执行的记录。`
-      : `I couldn't complete the requested operation because a tool failed (${details}). No success was recorded for the failed operation.`;
+    return `I couldn't complete the requested operation because a tool failed (${details}). No success was recorded for the failed operation.`;
   }
 }

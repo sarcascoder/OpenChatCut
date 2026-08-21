@@ -15,12 +15,13 @@ import {
 import { uploadedMediaRelinkPatch } from './mediaAssetRelink';
 import { createImportContentIdentityHooks } from './importContentIdentity';
 
-assert.equal(normalizeMediaName('  旅行封面.PNG  '), '旅行封面.png');
-assert.equal(normalizeMediaName('ＡＢＣ.mp4'), 'abc.mp4');
-assert.equal(findMediaNameConflict([{ id: 'a', name: '旅行封面.PNG' }], '旅行封面.png')?.id, 'a');
+// '\u65c5\u884c\u5c01\u9762' = "travel cover" — non-ASCII filename must survive NFKC/trim/lowercase
+assert.equal(normalizeMediaName('  \u65c5\u884c\u5c01\u9762.PNG  '), '\u65c5\u884c\u5c01\u9762.png');
+assert.equal(normalizeMediaName('\uff21\uff22\uff23.mp4'), 'abc.mp4');
+assert.equal(findMediaNameConflict([{ id: 'a', name: '\u65c5\u884c\u5c01\u9762.PNG' }], '\u65c5\u884c\u5c01\u9762.png')?.id, 'a');
 assert.equal(isMediaImportCancelled(new MediaImportCancelledError()), true);
-assert.equal(mediaImportErrorMessage(new Error('part 3 failed (503)')), '上传第 3 个分片失败（503）');
-assert.equal(mediaImportErrorMessage(new Error('unexpected internal failure')), '导入素材失败，请重试');
+assert.equal(mediaImportErrorMessage(new Error('part 3 failed (503)')), 'Uploading part 3 failed (503)');
+assert.equal(mediaImportErrorMessage(new Error('unexpected internal failure')), 'Failed to import media; retry');
 
 const oldMaster: MediaAsset = {
   id: 'asset-master',

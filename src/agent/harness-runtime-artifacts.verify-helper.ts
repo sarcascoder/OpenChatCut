@@ -66,7 +66,7 @@ async function createPrivacyRecorder(): Promise<AgentRunRecorder> {
 
 async function verifyArchivedLargeResult(recorder: AgentRunRecorder): Promise<string> {
   const live = {
-    rows: [{ value: '字'.repeat(20_000), apiKey: 'must-not-persist' }],
+    rows: [{ value: 'C'.repeat(20_000), apiKey: 'must-not-persist' }],
     __images: [{ base64: 'a'.repeat(20_000), mediaType: 'image/jpeg' }],
   };
   const keysBefore = Object.keys(live);

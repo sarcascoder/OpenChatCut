@@ -3,7 +3,6 @@ import type { ProviderOptions } from '@ai-sdk/provider-utils';
 import type { AgentToolSchema } from './tool-schema';
 import { hasMutationRoutingIntent, routedToolSelection } from './tool-routing';
 import { activatedToolNamesForResult } from './skills/skill-tool-activation';
-
 const BOOT_TOOL_NAMES: Record<string, true> = {
   ToolSearch: true,
   load_skill: true,
@@ -13,12 +12,9 @@ const BOOT_TOOL_NAMES: Record<string, true> = {
   report_user_friction: true,
   read_agent_artifact: true,
 };
-
 const READ_ONLY_TERMS = [
-  '不要修改', '不要编辑', '只读',
-  'read only', 'read-only', 'do not edit', "don't edit", 'without editing',
+  'read only', 'read-only', 'do not edit', "don't edit", 'without editing'
 ];
-
 /** A natural-language hint may narrow initial routing, but never becomes tool authority. */
 function isReadOnlyRoutingHint(request: string): boolean {
   let remainder = request.toLowerCase();
@@ -30,8 +26,6 @@ function isReadOnlyRoutingHint(request: string): boolean {
   }
   return matched && !hasMutationRoutingIntent(remainder);
 }
-
-
 function textFromMessage(message: ModelMessage): string {
   if (typeof message.content === 'string') return message.content;
   if (!Array.isArray(message.content)) return '';
@@ -40,7 +34,6 @@ function textFromMessage(message: ModelMessage): string {
     return typeof part.text === 'string' ? [part.text] : [];
   }).join(' ');
 }
-
 function latestUserText(messages: readonly ModelMessage[]): string {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     if (messages[index]?.role === 'user') return textFromMessage(messages[index]).toLowerCase();
@@ -50,7 +43,6 @@ function latestUserText(messages: readonly ModelMessage[]): string {
 function bootNames(): string[] {
   return Object.keys(BOOT_TOOL_NAMES);
 }
-
 function collectActivatedNames(value: unknown, names: string[]): void {
   if (typeof value === 'string') {
     try { collectActivatedNames(JSON.parse(value), names); } catch { /* not JSON */ }
@@ -67,7 +59,6 @@ export function activatedToolNamesFromResult(value: unknown): string[] {
   collectActivatedNames(value, names);
   return [...new Set(names)];
 }
-
 function isActivationCheckpoint(message: ModelMessage): boolean {
   if (message.role !== 'assistant' || !Array.isArray(message.content)) return false;
   return message.content.some((part) => {
@@ -79,7 +70,6 @@ function isActivationCheckpoint(message: ModelMessage): boolean {
     return names.length > 0;
   });
 }
-
 function activationScanStart(messages: readonly ModelMessage[]): number {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
@@ -92,12 +82,10 @@ function activationScanStart(messages: readonly ModelMessage[]): number {
   }
   return 0;
 }
-
 export function activationProviderOptions(names: readonly string[]): ProviderOptions | undefined {
   const activatedTools = [...new Set(names)];
   return activatedTools.length ? { openchatcut: { activatedTools } } : undefined;
 }
-
 export function activatedToolNamesFromMessages(messages: readonly ModelMessage[]): string[] {
   const names: string[] = [];
   for (const message of messages.slice(activationScanStart(messages))) {
@@ -119,7 +107,7 @@ export function activatedToolNamesFromMessages(messages: readonly ModelMessage[]
 }
 function routedNames(
   catalog: readonly AgentToolSchema[],
-  messages: readonly ModelMessage[],
+  messages: readonly ModelMessage[]
 ): { readonly names: string[]; readonly overflow: boolean } {
   const request = latestUserText(messages);
   if (!request) return { names: [], overflow: false };
@@ -129,17 +117,15 @@ function routedNames(
     overflow: routed.overflow,
   };
 }
-
 export class ToolActivation {
   private readonly activeNames: ReadonlySet<string>;
   private readonly byName: ReadonlyMap<string, AgentToolSchema>;
   private readonly catalog: readonly AgentToolSchema[];
-
   constructor(
     catalog: readonly AgentToolSchema[],
     messages: readonly ModelMessage[],
     activeNames: Iterable<string> = [],
-    allowSearch = true,
+    allowSearch = true
   ) {
     this.catalog = catalog;
     this.byName = new Map(catalog.map((schema) => [schema.name, schema]));
@@ -149,11 +135,10 @@ export class ToolActivation {
       ...bootNames(),
       ...activatedToolNamesFromMessages(messages),
       ...routed.names,
-      ...activeNames,
+      ...activeNames
     ].filter((name) => searchAllowed || name !== 'ToolSearch');
     this.activeNames = new Set(requested.filter((name) => this.byName.has(name)));
   }
-
   withToolResult(toolName: string, result: unknown): {
     readonly activation: ToolActivation;
     readonly result: unknown;
@@ -165,33 +150,28 @@ export class ToolActivation {
         this.catalog,
         [],
         [...this.activeNames, ...activatedTools],
-        retainSearch,
+        retainSearch
       ),
       result: result && typeof result === 'object' && !Array.isArray(result)
         ? { ...result, activatedTools }
         : result,
     };
   }
-
   withSearchResult(result: unknown): {
     readonly activation: ToolActivation;
     readonly result: unknown;
   } {
     return this.withToolResult('ToolSearch', result);
   }
-
   schemas(): readonly AgentToolSchema[] {
     return this.catalog.filter((schema) => this.activeNames.has(schema.name));
   }
-
   allSchemas(): readonly AgentToolSchema[] {
     return this.catalog;
   }
-
   names(): readonly string[] {
     return this.schemas().map((schema) => schema.name);
   }
-
   /** Canonical-but-inactive call (model remembered a tool from history): activation
    * is a token optimization, not a security boundary, so admit and continue. */
   admit(name: string): ToolActivation {
@@ -200,7 +180,7 @@ export class ToolActivation {
       this.catalog,
       [],
       [...this.activeNames, name],
-      this.activeNames.has('ToolSearch'),
+      this.activeNames.has('ToolSearch')
     );
   }
 }

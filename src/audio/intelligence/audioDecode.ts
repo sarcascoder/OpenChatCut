@@ -167,7 +167,7 @@ async function decodeBytes(
     // memory, so an oversized or un-decodable long audio surfaces here instead
     // of crashing the tab. Tell the user it is a size/resource limit, not a bug.
     throw new Error(
-      '无法分析的音频：文件过大或浏览器内存不足。请裁剪为较短的片段后再分析。'
+      'This audio cannot be analyzed: the file is too large or the browser ran out of memory. Trim it to a shorter clip and analyze again.'
       + ` (${error instanceof Error ? error.message : String(error)})`,
     );
   } finally {

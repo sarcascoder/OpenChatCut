@@ -1,32 +1,32 @@
-// 可运行自检：`npx tsx src/components/chat/widget-parse.check.ts`
-// 覆盖 widget 样例 + formatWidgetAnswer 拼答案 + 畸形 widget 的容错。
+// Runnable self-check: `npx tsx src/components/chat/widget-parse.check.ts`
+// Covers a widget sample + formatWidgetAnswer assembling the answer + tolerance for malformed widgets.
 import assert from 'node:assert';
 import {
   parseWidgets, formatWidgetAnswer,
   type FormMulti, type FormRichChoice, type FormSingle,
 } from './widget-parse';
 
-const REAL_EXAMPLE = `好的！在开始制作之前，我需要了解几个关键信息：
+const REAL_EXAMPLE = `Sounds good! Before we start production, I need a few key details:
 
 <widget>
-  <form-single id="duration" label="视频时长大概多少？" options="60s|约1分钟,180s|约3分钟,300s|约5分钟" allow_other="false"/>
-  <form-single id="ratio" label="视频画幅比例" options="16:9|横屏 16:9,9:16|竖屏 9:16,1:1|方形"/>
-  <form-multi id="content" label="想重点涵盖哪些内容？（多选）" options="生平经历,代表诗作赏析,历史背景与时代"/>
-  <form-visual id="voiceId" label="选择一个配音音色：" required="true">
-    <visual-option value="ruyayichen" name="儒雅逸辰" media="/voice-samples/doubao-ruyayichen.mp3" aspect-ratio="16:5" summary="男 / 年轻 / 儒雅飘逸"/>
+  <form-single id="duration" label="Roughly how long should the video be?" options="60s|About 1 minute,180s|About 3 minutes,300s|About 5 minutes" allow_other="false"/>
+  <form-single id="ratio" label="Video aspect ratio" options="16:9|Landscape 16:9,9:16|Portrait 9:16,1:1|Square"/>
+  <form-multi id="content" label="Which topics should we focus on? (multiple)" options="Life story,Signature poems,Historical context"/>
+  <form-visual id="voiceId" label="Pick a voiceover voice:" required="true">
+    <visual-option value="ruyayichen" name="Refined Yichen" media="/voice-samples/doubao-ruyayichen.mp3" aspect-ratio="16:5" summary="Male / young / refined"/>
     <visual-option value="morgan" name="Morgan" media="/voice-samples/x.mp3" summary="..."/>
   </form-visual>
 </widget>`;
 
-// ---- 段落顺序 + 字段解析 ----
+// ---- Segment order + field parsing ----
 const segs = parseWidgets(REAL_EXAMPLE);
-assert.strictEqual(segs.length, 2, 'segment 数应为 2（文本 + widget）');
+assert.strictEqual(segs.length, 2, 'should be 2 segments (text + widget)');
 assert.strictEqual(segs[0].type, 'text');
-assert.ok(segs[0].type === 'text' && segs[0].text.includes('好的！在开始制作之前'));
+assert.ok(segs[0].type === 'text' && segs[0].text.includes('Sounds good! Before we start production'));
 assert.strictEqual(segs[1].type, 'widget');
 assert.ok(segs[1].type === 'widget');
 const fields = segs[1].type === 'widget' ? segs[1].fields : [];
-assert.strictEqual(fields.length, 4, '应解出 4 个字段');
+assert.strictEqual(fields.length, 4, 'should parse out 4 fields');
 
 const [duration, ratio, content, voiceId] = fields as [
   FormSingle,
@@ -37,27 +37,27 @@ const [duration, ratio, content, voiceId] = fields as [
 
 assert.strictEqual(duration.kind, 'single');
 assert.strictEqual(duration.id, 'duration');
-assert.strictEqual(duration.label, '视频时长大概多少？');
+assert.strictEqual(duration.label, 'Roughly how long should the video be?');
 assert.strictEqual(duration.allowOther, false);
 assert.deepStrictEqual(duration.options, [
-  { value: '60s', display: '约1分钟' },
-  { value: '180s', display: '约3分钟' },
-  { value: '300s', display: '约5分钟' },
+  { value: '60s', display: 'About 1 minute' },
+  { value: '180s', display: 'About 3 minutes' },
+  { value: '300s', display: 'About 5 minutes' },
 ]);
 
 assert.strictEqual(ratio.kind, 'single');
-assert.strictEqual(ratio.allowOther, false, 'allow_other 缺省应为 false');
+assert.strictEqual(ratio.allowOther, false, 'allow_other should default to false');
 assert.deepStrictEqual(ratio.options, [
-  { value: '16:9', display: '横屏 16:9' },
-  { value: '9:16', display: '竖屏 9:16' },
-  { value: '1:1', display: '方形' },
+  { value: '16:9', display: 'Landscape 16:9' },
+  { value: '9:16', display: 'Portrait 9:16' },
+  { value: '1:1', display: 'Square' },
 ]);
 
 assert.strictEqual(content.kind, 'multi');
 assert.deepStrictEqual(content.options, [
-  { value: '生平经历', display: '生平经历' },
-  { value: '代表诗作赏析', display: '代表诗作赏析' },
-  { value: '历史背景与时代', display: '历史背景与时代' },
+  { value: 'Life story', display: 'Life story' },
+  { value: 'Signature poems', display: 'Signature poems' },
+  { value: 'Historical context', display: 'Historical context' },
 ]);
 
 assert.strictEqual(voiceId.kind, 'visual');
@@ -65,9 +65,9 @@ assert.strictEqual(voiceId.required, true);
 assert.strictEqual(voiceId.options.length, 2);
 assert.deepStrictEqual(voiceId.options[0], {
   value: 'ruyayichen',
-  name: '儒雅逸辰',
+  name: 'Refined Yichen',
   media: '/voice-samples/doubao-ruyayichen.mp3',
-  description: '男 / 年轻 / 儒雅飘逸',
+  description: 'Male / young / refined',
   aspectRatio: '16:5',
   submitPrompt: undefined,
 });
@@ -84,32 +84,32 @@ assert.deepStrictEqual(voiceId.options[1], {
 const answer = formatWidgetAnswer(fields, {
   duration: '180s',
   ratio: '16:9',
-  content: ['生平经历', '代表诗作赏析'],
+  content: ['Life story', 'Signature poems'],
   voiceId: 'ruyayichen',
 });
 assert.strictEqual(
   answer,
-  ['- 视频时长大概多少？：约3分钟', '- 视频画幅比例：横屏 16:9', '- 想重点涵盖哪些内容？（多选）：生平经历、代表诗作赏析', '- 选择一个配音音色：：儒雅逸辰'].join('\n'),
+  ['- Roughly how long should the video be?: About 3 minutes', '- Video aspect ratio: Landscape 16:9', '- Which topics should we focus on? (multiple): Life story, Signature poems', '- Pick a voiceover voice:: Refined Yichen'].join('\n'),
 );
 
-// 未作答的字段应跳过；allow_other 的自由文本应原样作为展示
-const partial = formatWidgetAnswer(fields, { duration: '自定义两分钟' });
-assert.strictEqual(partial, '- 视频时长大概多少？：自定义两分钟');
+// Unanswered fields should be skipped; allow_other free text is shown verbatim
+const partial = formatWidgetAnswer(fields, { duration: 'Custom two minutes' });
+assert.strictEqual(partial, '- Roughly how long should the video be?: Custom two minutes');
 
-// ---- 无 widget 的普通文本：整段原样返回 ----
-const plain = parseWidgets('这是一句普通回复，没有表单。');
+// ---- Plain text with no widget: returned verbatim as one segment ----
+const plain = parseWidgets('This is an ordinary reply, with no form.');
 assert.strictEqual(plain.length, 1);
-assert.deepStrictEqual(plain[0], { type: 'text', text: '这是一句普通回复，没有表单。' });
+assert.deepStrictEqual(plain[0], { type: 'text', text: 'This is an ordinary reply, with no form.' });
 
-// ---- 畸形 widget：解不出字段时剥离标记、不抛错（不可信模型输出不残留标记）----
-const malformed = '前面的话<widget><form-single id="x"/></widget>后面的话';
+// ---- Malformed widget: strip the markup without throwing when no field parses (untrusted model output leaves no markup behind) ----
+const malformed = 'Text before<widget><form-single id="x"/></widget>text after';
 assert.doesNotThrow(() => parseWidgets(malformed));
 const malformedSegs = parseWidgets(malformed);
 assert.strictEqual(malformedSegs.length, 2);
-assert.deepStrictEqual(malformedSegs[0], { type: 'text', text: '前面的话' });
-assert.deepStrictEqual(malformedSegs[1], { type: 'text', text: '后面的话' });
+assert.deepStrictEqual(malformedSegs[0], { type: 'text', text: 'Text before' });
+assert.deepStrictEqual(malformedSegs[1], { type: 'text', text: 'text after' });
 
-// ---- 空 widget（无字段）同样被剥离，不残留标记 ----
+// ---- Empty widget (no fields) is stripped too, leaving no markup behind ----
 const empty = '<widget></widget>';
 assert.doesNotThrow(() => parseWidgets(empty));
 assert.deepStrictEqual(parseWidgets(empty), []);

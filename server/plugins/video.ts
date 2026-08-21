@@ -182,8 +182,8 @@ function seedanceConfig(model: 'seedance2' | 'byteplus', options: VideoOptions):
 /** Map agent @ImageN / @VideoN (and image/video) to Kling Omni <<<image_n>>> / <<<video_n>>> tokens.*/
 export function klingPrompt(prompt: string): string {
   return prompt
-    .replace(/@(Image|图片)(\d+)/gi, '<<<image_$2>>>')
-    .replace(/@(Video|视频)(\d+)/gi, '<<<video_$2>>>');
+    .replace(/@(Image|\u56fe\u7247)(\d+)/gi, '<<<image_$2>>>')
+    .replace(/@(Video|\u89c6\u9891)(\d+)/gi, '<<<video_$2>>>');
 }
 
 async function generateKling(
@@ -347,7 +347,7 @@ async function generateHailuo(
   registerProviderTask: RegisterGenerationProviderTask,
   existingTaskId?: string,
 ): Promise<string> {
-  if (!options.minimaxApiKey) throw new Error('MiniMax is not configured. Set MINIMAX_API_KEY in .env.local or 设置面板.');
+  if (!options.minimaxApiKey) throw new Error('MiniMax is not configured. Set MINIMAX_API_KEY in .env.local or the Settings panel.');
   const baseUrl = options.minimaxBaseUrl.replace(/\/$/, '');
   const headers = { Authorization: `Bearer ${options.minimaxApiKey}`, 'Content-Type': 'application/json' };
   let taskId = existingTaskId;

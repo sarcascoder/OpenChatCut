@@ -1,6 +1,5 @@
 import { useState, type CSSProperties } from 'react';
 import type { AgentChangeSession } from '../../agent/changeLog';
-import { useT } from '../../i18n/locale';
 import { theme, themeAlpha } from '../../theme';
 import { Icon } from '../icons';
 
@@ -17,12 +16,11 @@ export function AgentChangeLogMenu({
   canRollback,
   onRollback,
 }: AgentChangeLogMenuProps) {
-  const t = useT();
   const [open, setOpen] = useState(false);
 
   const requestRollback = (session: AgentChangeSession) => {
     const current = canRollback(session.id);
-    if (!current && !window.confirm(t('工程后来已有其他修改，继续回滚会覆盖后续修改。确定继续吗？'))) return;
+    if (!current && !window.confirm('The project has newer edits. Rolling back will overwrite them. Continue?')) return;
     if (onRollback(session.id, !current)) setOpen(false);
   };
 
@@ -31,8 +29,8 @@ export function AgentChangeLogMenu({
     <>
       <button
         type="button"
-        title={`${t('Agent 修改记录')}（${changeLog.length}）`}
-        aria-label={`${t('Agent 修改记录')}（${changeLog.length}）`}
+        title={`${'Agent change log'}(${changeLog.length})`}
+        aria-label={`${'Agent change log'}(${changeLog.length})`}
         onClick={() => setOpen(true)}
         onMouseEnter={(event) => { event.currentTarget.style.color = theme.text; event.currentTarget.style.background = theme.panelAlt; }}
         onMouseLeave={(event) => { event.currentTarget.style.color = theme.textDim; event.currentTarget.style.background = 'none'; }}
@@ -44,12 +42,12 @@ export function AgentChangeLogMenu({
 
       {open && (
         <div onClick={() => setOpen(false)} style={backdrop}>
-          <div role="dialog" aria-modal="true" aria-label={t('Agent 修改记录')}
+          <div role="dialog" aria-modal="true" aria-label="Agent change log"
             onClick={(event) => event.stopPropagation()} style={card}>
             <div style={header}>
               <span style={{ color: theme.accent, lineHeight: 0 }}><Icon name="clipboard" size={17} /></span>
-              <strong style={{ flex: 1, fontSize: 14 }}>{t('Agent 修改记录')}（{changeLog.length}）</strong>
-              <button type="button" onClick={() => setOpen(false)} title={t('关闭')} style={iconButton}>
+              <strong style={{ flex: 1, fontSize: 14 }}>Agent change log({changeLog.length})</strong>
+              <button type="button" onClick={() => setOpen(false)} title="Close" style={iconButton}>
                 <Icon name="x" size={15} />
               </button>
             </div>
@@ -61,7 +59,7 @@ export function AgentChangeLogMenu({
                   <div key={session.id} style={row}>
                     <div style={{ color: theme.text, fontSize: 12.5, lineHeight: 1.45 }}>{session.summary}</div>
                     <div style={{ color: theme.textDim, fontSize: 11, marginTop: 3 }}>
-                      {new Date(session.createdAt).toLocaleString()} · {session.operations.length} {t('项操作')}
+                      {new Date(session.createdAt).toLocaleString()} · {session.operations.length} operations
                     </div>
                     {session.operations.map((operation, index) => (
                       <div key={`${session.id}:${index}`} style={{ color: theme.textDim, fontSize: 11.5, marginTop: 4 }}>
@@ -70,14 +68,14 @@ export function AgentChangeLogMenu({
                     ))}
                     {!current && session.rollbackable && (
                       <div style={{ color: theme.gold, fontSize: 11, marginTop: 7 }}>
-                        {t('工程后来已有其他修改，回滚前会再次确认')}
+                        The project has newer edits. You will be asked to confirm before rollback.
                       </div>
                     )}
                     <button type="button" disabled={disabled}
-                      title={current ? t('恢复到这次 Agent 修改前') : t('工程后来已有其他修改')}
+                      title={current ? 'Restore the project to before this Agent session' : 'The project has newer changes'}
                       onClick={() => requestRollback(session)}
                       style={{ ...rollbackButton, opacity: disabled ? 0.45 : 1, cursor: disabled ? 'default' : 'pointer' }}>
-                      {t('回滚此会话')}
+                      Roll back this session
                     </button>
                   </div>
                 );

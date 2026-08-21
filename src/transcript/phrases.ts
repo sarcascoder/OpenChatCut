@@ -29,9 +29,9 @@ interface IndexedTranscriptWord {
 }
 
 const CJK = /[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/u;
-const NO_SPACE_BEFORE = ',.;:!?%)]}，。！？；：、…';
+const NO_SPACE_BEFORE = ',.;:!?%)]}\uff0c\u3002\uff01\uff1f\uff1b\uff1a\u3001…';
 const NO_SPACE_AFTER = '([{“‘';
-const CONTRACTION = /^(?:['’](?:s|d|m|re|ve|ll)|n't)$/iu;
+const CONTRACTION = /^(?:['\u2019](?:s|d|m|re|ve|ll)|n't)$/iu;
 
 /** Join ASR tokens without introducing spaces around CJK or punctuation. */
 export function joinTranscriptWords(words: readonly Pick<TranscriptWord, 'text'>[]): string {

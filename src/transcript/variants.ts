@@ -25,7 +25,7 @@ export function resolveVariantText(sourceWords: TranscriptWord[], variant: Trans
 
 /** Default display label for a variant when none is supplied. */
 function defaultLabel(lang: string, kind: TranscriptVariant['kind']): string {
-  return kind === 'translation' ? lang : `${lang}(校正)`;
+  return kind === 'translation' ? lang : `${lang} (corrected)`;
 }
 
 /** Build a variant. Validates at the boundary (LLM/user text is untrusted): lang

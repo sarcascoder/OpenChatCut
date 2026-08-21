@@ -1,11 +1,11 @@
 // Runnable contract check: `npx tsx src/agent/template-tools.check.ts`.
 // Covers manage_template (get / list_assets / apply / save):
-//   save 当前工程打包成模板 → get(list) 列出、get(detail) 回带其 doc(MG + 设计风格);
-//   list_assets 返回携带资产;apply 经 applyDoc 单步原子提交,结果含模板的
-//   MG 片段与设计风格;omitAssetIds 跳过资产及引用它的片段;placement=replace 换掉现有内容;
-//   未知 templateId → 干净报错且不动工程。
-// 模板库经 templateStore 的 IndexedDB helper 持久化,故安装内存 IndexedDB shim
-// (同 src/persist/version-store.check.ts),在任何触及 store 的模块被 import 之前安装。
+//   save packs the current project into a template → get(list) lists it, get(detail) returns its doc (MG + design style);
+//   list_assets returns the carried assets; apply commits atomically in one applyDoc step, and the result holds the template's
+//   MG clips and design style; omitAssetIds skips an asset plus the clips referencing it; placement=replace swaps out existing content;
+//   unknown templateId → clean error, project untouched.
+// The template library persists through templateStore's IndexedDB helper, so install an in-memory IndexedDB shim
+// (same as src/persist/version-store.check.ts) before any module that touches the store is imported.
 import assert from 'node:assert';
 import type { MediaAsset, TimelineState } from '../../editor/types';
 import type { AgentContext } from '../context';
@@ -59,7 +59,7 @@ const ctxA = ctxFor(draftA);
 assert.ok('error' in (await call({ action: 'save' }, ctxA) as object));
 
 // save → packages the whole ProjectDoc; carries both pool assets
-const saveRes = await call({ action: 'save', name: '我的模板' }, ctxA) as { ok: boolean; saved: { id: string; name: string; assetCount: number } };
+const saveRes = await call({ action: 'save', name: 'My Template' }, ctxA) as { ok: boolean; saved: { id: string; name: string; assetCount: number } };
 assert.ok(saveRes.ok);
 assert.strictEqual(saveRes.saved.assetCount, 2);
 const templateId = saveRes.saved.id;
@@ -67,7 +67,7 @@ const templateId = saveRes.saved.id;
 // get (list) shows it
 const list = await call({ action: 'get' }, ctxA) as { templates: { id: string; name: string; assetCount: number }[] };
 assert.strictEqual(list.templates.length, 1);
-assert.strictEqual(list.templates[0].name, '我的模板');
+assert.strictEqual(list.templates[0].name, 'My Template');
 assert.strictEqual(list.templates[0].assetCount, 2);
 
 // get (detail) round-trips the packaged doc: MG list + design-style summary

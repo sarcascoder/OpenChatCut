@@ -26,42 +26,42 @@ function rgba(blocks: Array<[r: number, g: number, b: number, n: number]>): Uint
   const blocks: Array<[number, number, number, number]> = [];
   for (let v = 0; v <= 255; v += 5) blocks.push([v, v, v, 40]);
   const s = analyzeRgbaPixels(rgba(blocks), 1);
-  assert.ok(s.blackPoint < 0.03 && s.whitePoint > 0.97, '灰阶黑白点贴边');
-  assert.ok(s.saturationMean < 0.01, '灰阶无饱和');
-  assert.deepEqual(s.dominantHues, [], '灰阶无主色相');
-  assert.ok(near(s.warmCool, 0, 1e-6) && near(s.greenMagenta, 0, 1e-6), '灰阶零色偏');
-  assert.ok(describeScopeStats(s).some((line) => line.includes('near-neutral')), '判读提示中性');
+  assert.ok(s.blackPoint < 0.03 && s.whitePoint > 0.97, 'grayscale black/white points sit at the edges');
+  assert.ok(s.saturationMean < 0.01, 'grayscale has no saturation');
+  assert.deepEqual(s.dominantHues, [], 'grayscale has no dominant hue');
+  assert.ok(near(s.warmCool, 0, 1e-6) && near(s.greenMagenta, 0, 1e-6), 'grayscale has zero color cast');
+  assert.ok(describeScopeStats(s).some((line) => line.includes('near-neutral')), 'the readout calls it neutral');
 }
 
 // ── Pure orange picture: main hue orange, warm, high saturation ──
 {
   const s = analyzeRgbaPixels(rgba([[255, 128, 0, 5000]]), 1);
-  assert.equal(s.dominantHues[0], 'orange', '主色相 orange');
-  assert.ok(s.warmCool > 0.5, '暖冷平衡明显偏暖');
-  assert.ok(s.saturationMean > 0.9, '高饱和');
-  assert.ok(near(s.hueHistogram.find((b) => b.label === 'orange')!.pct, 1, 1e-6), '直方图集中在 orange bin');
+  assert.equal(s.dominantHues[0], 'orange', 'dominant hue is orange');
+  assert.ok(s.warmCool > 0.5, 'the warm/cool balance leans clearly warm');
+  assert.ok(s.saturationMean > 0.9, 'highly saturated');
+  assert.ok(near(s.hueHistogram.find((b) => b.label === 'orange')!.pct, 1, 1e-6), 'the histogram is concentrated in the orange bin');
 }
 
 // ── Overexposure: 35% pure white → highlight bloom ratio ≈ 0.35, white point = 1 ──
 {
   const s = analyzeRgbaPixels(rgba([[255, 255, 255, 3500], [120, 120, 120, 6500]]), 1);
-  assert.ok(near(s.clippedHighlightsPct, 0.35, 0.01), `高光溢出≈35%(${s.clippedHighlightsPct})`);
-  assert.ok(s.whitePoint > 0.99, '白点贴顶');
-  assert.ok(s.clippedShadowsPct < 0.01, '暗部无溢出');
+  assert.ok(near(s.clippedHighlightsPct, 0.35, 0.01), `clipped highlights ≈35% (${s.clippedHighlightsPct})`);
+  assert.ok(s.whitePoint > 0.99, 'the white point is pinned to the top');
+  assert.ok(s.clippedShadowsPct < 0.01, 'no clipping in the shadows');
 }
 
 // ── teal-orange: Both main color clusters are recognized ──
 {
   const s = analyzeRgbaPixels(rgba([[230, 140, 40, 4000], [20, 160, 180, 4000], [128, 128, 128, 2000]]), 1);
   assert.ok(s.dominantHues.includes('orange') && (s.dominantHues.includes('cyan') || s.dominantHues.includes('azure')),
-    `teal-orange 双簇(${s.dominantHues.join(',')})`);
+    `teal-orange twin clusters (${s.dominantHues.join(',')})`);
 }
 
 // ── Segmented color cast: dark parts are bluer, bright parts are warmer, and the segmented tilts should be different from each other ──
 {
   const s = analyzeRgbaPixels(rgba([[20, 25, 60, 4000], [235, 210, 170, 4000]]), 1);
-  assert.ok(s.tilt.shadows.warmCool < -0.05, `暗部偏蓝(${s.tilt.shadows.warmCool})`);
-  assert.ok(s.tilt.highlights.warmCool > 0.05, `亮部偏暖(${s.tilt.highlights.warmCool})`);
+  assert.ok(s.tilt.shadows.warmCool < -0.05, `shadows lean blue (${s.tilt.shadows.warmCool})`);
+  assert.ok(s.tilt.highlights.warmCool > 0.05, `highlights lean warm (${s.tilt.highlights.warmCool})`);
 }
 
 // ── Empty input will not explode ──
@@ -76,13 +76,13 @@ function rgba(blocks: Array<[r: number, g: number, b: number, n: number]>): Uint
   const target = analyzeRgbaPixels(rgba([[230, 135, 40, 5000]]), 1);
   const reference = analyzeRgbaPixels(rgba([[100, 100, 100, 5000]]), 1);
   const compared = compareColorScopes(target, reference);
-  assert.ok(compared.targetMinusReference.meanLuma > 0, '目标比参考更亮时差值为正');
-  assert.ok(compared.targetMinusReference.warmCool > 0, '目标比参考更暖时差值为正');
+  assert.ok(compared.targetMinusReference.meanLuma > 0, 'the delta is positive when the target is brighter than the reference');
+  assert.ok(compared.targetMinusReference.warmCool > 0, 'the delta is positive when the target is warmer than the reference');
   assert.deepEqual(
     compared.suggestions.map((entry) => [entry.control, entry.direction]),
     [['brightness', 'decrease'], ['saturate', 'decrease'], ['temperature', 'cooler']],
   );
-  assert.deepEqual(compareColorScopes(reference, reference).suggestions, [], '死区内不生成无意义建议');
+  assert.deepEqual(compareColorScopes(reference, reference).suggestions, [], 'no pointless suggestions are produced inside the dead zone');
 }
 
-console.log('scopes.verify: ok (灰阶/主色相/溢出/双簇/分段色偏/参考对比/空输入)');
+console.log('scopes.verify: ok (grayscale/dominant hue/clipping/twin clusters/per-range cast/reference comparison/empty input)');

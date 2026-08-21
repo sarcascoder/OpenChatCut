@@ -61,7 +61,7 @@ export function useServerRunControllerActions(
       if (admissionPending) return;
       current.appendMessage({
         role: 'error',
-        text: `服务端任务停止失败：${error instanceof Error ? error.message : String(error)}`,
+        text: `Failed to stop the server run: ${error instanceof Error ? error.message : String(error)}`,
       });
       lifecycle.scheduleRecovery(runId);
     });

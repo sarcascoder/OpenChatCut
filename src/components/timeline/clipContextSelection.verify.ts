@@ -3,9 +3,9 @@ import type { TimelineItem } from '../../editor/types';
 import { contextReferenceItems } from './clipContextSelection';
 
 const items = [
-  { id: 'caption-card', name: '标题卡', kind: 'motion-graphic', track: 'V2', startFrame: 0, durationInFrames: 60 },
-  { id: 'video-main', name: '主视频', kind: 'video', track: 'V1', startFrame: 0, durationInFrames: 120 },
-  { id: 'audio-bed', name: '背景音乐', kind: 'audio', track: 'A1', startFrame: 0, durationInFrames: 120 },
+  { id: 'caption-card', name: 'Title Card', kind: 'motion-graphic', track: 'V2', startFrame: 0, durationInFrames: 60 },
+  { id: 'video-main', name: 'Main Video', kind: 'video', track: 'V1', startFrame: 0, durationInFrames: 120 },
+  { id: 'audio-bed', name: 'Background Music', kind: 'audio', track: 'A1', startFrame: 0, durationInFrames: 120 },
 ] as TimelineItem[];
 
 assert.deepEqual(

@@ -5,7 +5,7 @@ import { paginate } from './types';
 assert.equal(CAPTION_STYLES.length, 22);
 assert.equal(new Set(CAPTION_STYLES.map((style) => style.id)).size, 22);
 assert.equal(CAPTION_STYLE_BY_ID['the-french-dispatch'].label, 'The French Dispatch');
-// 黑底白字默认样式:整句连续渲染(无词间隙/无逐词高亮)+整行黑底
+// black-bar default style: whole sentence rendered continuously (no word gaps / no per-word highlight) + full-line black background
 assert.equal(CAPTION_STYLE_BY_ID['black-bar'].wholeLine, true);
 assert.ok(CAPTION_STYLE_BY_ID['black-bar'].background);
 assert.equal(paginate([

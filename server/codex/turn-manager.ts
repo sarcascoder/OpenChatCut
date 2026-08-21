@@ -92,18 +92,18 @@ function sessionError(error: unknown): string {
  * app-server sends `{ error: { message, codexErrorInfo, ... }, willRetry }`;
  * the previous code dropped that detail behind a generic "Try again.", which
  * left users unable to act (e.g. an OpenAI usage-limit). Translate the common
- * fatal reasons into actionable Chinese copy and keep the original detail.
+ * fatal reasons into actionable copy and keep the original detail.
  */
 function codexErrorNotificationSummary(params: Record<string, unknown>): string {
   const err = object(params.error);
   const detail = typeof err?.message === 'string' ? err.message.trim().slice(0, ERROR_SUMMARY_LIMIT) : '';
   const reason = typeof err?.codexErrorInfo === 'string' ? err.codexErrorInfo : '';
   if (reason === 'usageLimitExceeded' || /usage limit|quota|credits|billing/i.test(detail)) {
-    const base = 'Codex 调用失败：当前 OpenAI Codex 的使用额度已用尽。请前往 chatgpt.com/codex/settings/usage 查看并充值，或等待配额重置后再试；也可以切换到其他模型（如 DeepSeek）。';
-    return detail ? `${base}\n（${detail}）` : base;
+    const base = 'Codex call failed: this OpenAI Codex account has run out of usage quota. Go to chatgpt.com/codex/settings/usage to check it and top up, or wait for the quota to reset and try again; you can also switch to another model (such as DeepSeek).';
+    return detail ? `${base}\n(${detail})` : base;
   }
-  if (detail) return `Codex 调用失败：${detail}`;
-  return 'Codex 调用失败。请稍后重试，或在模型下拉里切换到其他模型（如 DeepSeek）。';
+  if (detail) return `Codex call failed: ${detail}`;
+  return 'Codex call failed. Try again later, or switch to another model (such as DeepSeek) in the model dropdown.';
 }
 
 function browserFailureSummary(result: unknown): string {

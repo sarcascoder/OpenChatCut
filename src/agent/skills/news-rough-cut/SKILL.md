@@ -1,119 +1,119 @@
 ---
 name: news-rough-cut
-description: 新闻素材智能粗剪——把新闻素材粗剪为一条内容完整、逻辑清晰、节奏紧凑的新闻短视频。Use when the user asks to 粗剪新闻、新闻剪辑、把新闻素材剪成短视频、智能粗剪、news rough cut、编辑新闻视频, or provides news footage (发布会/采访/现场/监控素材) to be cut into a factual news short. Never add music, voiceover, or sound effects.
+description: Intelligent news rough cut — cut raw news footage into a short news video that is complete in content, clear in logic, and tight in pacing. Use when the user asks to rough cut news, edit news, cut news footage into a short video, do an intelligent rough cut, news rough cut, edit a news video, or provides news footage (press conference / interview / on-scene / surveillance material) to be cut into a factual news short. Never add music, voiceover, or sound effects.
 ---
 
-# News Rough Cut（新闻智能粗剪）
+# News Rough Cut
 
-把新闻素材粗剪为一条内容完整、逻辑清晰、节奏紧凑的新闻短视频。忠实于原始素材，不加任何外部声音，保持客观、正式、紧凑、清晰的信息型新闻风格。
+Cut raw news footage into a short news video that is complete in content, clear in logic, and tight in pacing. Stay faithful to the source material, add no external audio, and keep the objective, formal, tight, clear style of informational news.
 
 This is an OpenChatCut-native workflow. Use the current project's assets, transcript, word-level editing, timeline, and editing tools. Do not depend on external download or transcode pipelines.
 
-## 工作流总览
+## Workflow overview
 
-1. **完整分析素材**（剪辑前必做）：识别素材中的新闻事件、核心话题、关键人物、重要结论及有效画面，再确定剪辑主线和成片时长。使用 `read_project`、`transcribe_track`、`view_timeline_frames` 逐段核对素材内容。
-2. **话题分析与时长确定**：判断素材包含多少个话题，区分核心话题与次要内容。
-3. **内容组织**：开头直接呈现最重要的新闻结果/核心结论/最新进展/关键现场画面，不铺垫。
-4. **剪辑执行**：按保留/删除规则筛选，讲话按语义完整切割。
-5. **音频只保留目标新闻素材原声**：开始编辑前只把用户明确指定/选中的新闻素材及其原始现场声列入允许来源；未明确指定时只采用活动时间线上已存在的新闻画面与现场声。媒体池里的 BGM、音效、配音、旁白和其他未选素材即使早已存在，也不得进入允许来源。
-6. **终检**：逐段回放核对事实忠实、讲话语义完整、剪切点衔接自然。
+1. **Analyse the footage in full** (mandatory before cutting): identify the news event, core topic, key people, important conclusions and usable visuals in the footage, then decide the through-line of the cut and the final duration. Use `read_project`, `transcribe_track` and `view_timeline_frames` to check the material section by section.
+2. **Topic analysis and duration**: judge how many topics the footage covers, and separate the core topic from secondary content.
+3. **Content organisation**: open directly on the most important news result / core conclusion / latest development / key on-scene shot, with no build-up.
+4. **Execute the cut**: filter by the keep/remove rules, and cut speech at semantically complete boundaries.
+5. **Audio: keep only the production sound of the target news footage**: before editing, add only the news footage the user explicitly specified/selected and its original location sound to the allowed sources; when nothing is explicitly specified, use only the news visuals and location sound already present on the active timeline. BGM, sound effects, dubbing, voiceover and other unselected material in the media pool must not enter the allowed sources, even if they were already there.
+6. **Final check**: play back section by section to confirm factual fidelity, semantically complete speech, and natural transitions at the cut points.
 
-## 话题分析与时长确定
+## Topic analysis and duration
 
-- 原则上一条成片只围绕**一条核心新闻主线**展开。
-- 若素材中存在多个相互独立的话题，优先选择**新闻价值最高、信息最完整、画面最充分**的话题进行剪辑；**不要将无关话题强行拼接**在同一条视频中。
-- 成片时长不做固定限制，根据以下因素自动确定：
-  - 核心新闻的信息量；
-  - 有效人物讲话的长度；
-  - 事件发展阶段和最新进展；
-  - 关键现场画面的数量；
-  - 保证新闻语义完整所需要的时长。
-- 信息较少时应**缩短成片**，避免为了延长时长加入无关内容；信息较多时可以适当延长，**不能为了压缩时长而剪断人物讲话、遗漏关键事实或破坏新闻逻辑**。
+- As a rule, one finished piece follows **a single core news through-line**.
+- If the footage contains several unrelated topics, pick the one with **the highest news value, the most complete information, and the most usable visuals**; **do not force unrelated topics together** in the same video.
+- The final duration is not fixed; determine it automatically from:
+  - the amount of information in the core news story;
+  - the length of usable speech from the people involved;
+  - the stage of the event and its latest developments;
+  - the number of key on-scene shots;
+  - the duration needed to keep the news semantically complete.
+- When there is little information, **shorten the piece** rather than padding it with unrelated content; when there is a lot, it may run longer — **never cut off someone mid-speech, drop key facts, or break the news logic just to compress the duration**.
 
-## 内容组织逻辑
+## Content organisation logic
 
-成片开头直接呈现最重要的新闻结果、核心结论、最新进展或关键现场画面，不使用冗长铺垫。整体按照以下逻辑组织：
+Open directly on the most important news result, core conclusion, latest development or key on-scene shot; do not use long build-ups. Organise the whole piece as follows:
 
-1. 发生了什么；
-2. 目前有哪些最新进展；
-3. 最终结果、后续影响或相关回应。
+1. what happened;
+2. what the latest developments are;
+3. the final outcome, follow-on impact or related responses.
 
-若新闻事件尚未结束，应以**当前已经确认的最新进展收尾**，不得自行推测结果。
+If the news event is still unfolding, end on **the latest development that has already been confirmed**; never speculate about the outcome.
 
-## 内容保留规则
+## Content to keep
 
-优先保留以下内容：
+Prioritise keeping:
 
-- 新闻事件的核心事实；
-- 时间、地点、人物和事件结果；
-- 最新进展及权威回应；
-- 重要人物具有实际信息量的讲话；
-- 新闻现场、采访、发布会、监控画面及相关有效素材；
-- 能够直接说明事件经过、结果或影响的关键画面。
+- the core facts of the news event;
+- time, place, people and outcome;
+- the latest developments and authoritative responses;
+- speech from key figures that carries real information;
+- news scenes, interviews, press conferences, surveillance footage and other usable material;
+- key shots that directly show how the event unfolded, its result, or its impact.
 
-所有保留内容必须服务于核心新闻主线。
+Everything kept must serve the core news through-line.
 
-## 内容删除规则
+## Content to remove
 
-删除以下内容：
+Remove:
 
-- 广告和商业推广；
-- 节目宣传、频道包装及片头片尾；
-- 主持人寒暄和无信息量的串场；
-- 重复表述和重复画面；
-- 无效停顿、口头语及明显空白；
-- 与核心事件无关的冗长背景；
-- 不影响新闻理解的次要内容；
-- 无法验证、表意模糊或容易造成误解的片段。
+- advertising and commercial promotion;
+- programme promos, channel packaging, opening and closing titles;
+- host small talk and link segments with no information;
+- repeated statements and repeated shots;
+- dead pauses, verbal tics and obvious blanks;
+- long background material unrelated to the core event;
+- secondary content that does not affect understanding of the news;
+- segments that cannot be verified, are vague, or are easily misread.
 
-## 人物讲话剪辑规则
+## Rules for cutting speech
 
-- 人物讲话必须保持**语义完整**。
-- 优先在以下位置切割：
-  - 一个完整句子结束后；
-  - 人物自然停顿处；
-  - 讲话内容发生明显转折处；
-  - 镜头自然转场处。
-- **不得**从一句话中间强行切断，**不得**只保留部分表述导致原意改变，**不得**将不同时间、不同语境下的讲话错误拼接。
-- 若一段讲话较长，可删除其中重复、空泛或无关的句子，但保留下来的内容必须能够**独立表达完整意思**。
-- 使用词级编辑工具（文字稿）按词删改，保证落点落在完整句子边界。
+- Speech must stay **semantically complete**.
+- Prefer to cut at:
+  - the end of a complete sentence;
+  - a natural pause by the speaker;
+  - a clear turn in what is being said;
+  - a natural shot transition.
+- **Never** cut in the middle of a sentence, **never** keep only part of a statement in a way that changes its meaning, and **never** wrongly splice together speech from different times or different contexts.
+- If a stretch of speech runs long, you may delete repetitive, vague or irrelevant sentences within it, but what remains must **express a complete idea on its own**.
+- Use the word-level editing tools (transcript) to trim by word, making sure the cut lands on a complete sentence boundary.
 
-## 事实与逻辑要求
+## Factual and logical requirements
 
-剪辑必须忠于原始新闻素材，不得：
+The cut must stay faithful to the original news footage. Do not:
 
-- 改变人物讲话原意；
-- 夸大或弱化事实；
-- 将不同事件错误关联；
-- 通过镜头拼接制造虚假因果关系；
-- 将推测性内容表达为确定事实；
-- 使用与新闻事件不对应的画面误导观众；
-- 为追求节奏而删除必要的前因后果。
+- change the meaning of what someone said;
+- exaggerate or downplay facts;
+- wrongly associate different events;
+- manufacture false causality by splicing shots;
+- present speculation as established fact;
+- mislead viewers with visuals that do not match the news event;
+- cut necessary cause-and-effect for the sake of pacing.
 
-## 音频要求
+## Audio requirements
 
-- **不得新增**任何背景音乐、配音、旁白、音效、转场音效或其他外部声音。
-- 只保留原始素材中与新闻内容直接相关的人声和必要的现场声音。
-- 删除广告音乐、节目包装音乐以及与核心新闻无关的声音。
-- 处理剪切点时应保证原始人声衔接自然，避免突然截断、重叠、爆音或明显音量跳变（用 `edit_item` 的 fadeInSeconds/fadeOutSeconds 微调剪切点即可，不用加音乐）。
+- **Do not add** any background music, dubbing, voiceover, sound effects, transition stingers or other external audio.
+- Keep only the voices directly relevant to the news content and the necessary location sound from the source material.
+- Remove advertising music, programme packaging music and any sound unrelated to the core news.
+- At cut points, make sure the original voices join naturally — avoid abrupt truncation, overlap, pops or obvious volume jumps (nudge the cut point with `edit_item`'s fadeInSeconds/fadeOutSeconds; do not add music).
 
-## 整体风格
+## Overall style
 
-- 客观、正式、紧凑、清晰的信息型新闻风格。
-- 剪辑节奏由新闻内容决定，不刻意追求固定时长或高频切镜。
-- 保证每一个保留片段都有明确的信息价值，在内容完整的前提下提高信息密度。
-- 不添加花字/滤镜/转场特效；可用基础叠化避免硬切，但以新闻克制为原则。
+- Objective, formal, tight, clear informational news style.
+- Let the news content drive the pacing; do not chase a fixed duration or frequent cutting for its own sake.
+- Make sure every segment kept carries clear informational value, raising information density while keeping the content complete.
+- Add no titles/filters/transition effects; a basic dissolve may be used to avoid a hard cut, but stay restrained as news demands.
 
-## OpenChatCut 工具对应
+## OpenChatCut tool mapping
 
-- `read_project` / `read_timeline`：先读工程与时间线状态，按上述范围记录允许来源的 `sourceAssetId` 与 `src`；禁止把媒体池全部资产自动列入。
-- `transcribe_track` + 文字稿词级编辑：讲话语义完整切割、删口头语/重复。
-- `view_timeline_frames`：核对画面内容与关键现场。
-- `edit_item`（trim / ripple delete / fade）与 `split_item`（split）：按保留/删除规则剪辑并处理剪切点衔接。
-- `edit_track`：需要多轨整理时创建、调整或收紧人声轨与现场声轨。
-- 输出前再次 `read_project`，确认所有最终 `video` / `audio` 项均来自允许来源，且没有 BGM、音效、配音或旁白，再用预览/导出预检核对时长与内容完整性。
+- `read_project` / `read_timeline`: read the project and timeline state first, and record the allowed sources' `sourceAssetId` and `src` per the scope above; never add the whole media pool automatically.
+- `transcribe_track` + word-level transcript editing: cut speech at semantically complete boundaries, remove verbal tics and repetitions.
+- `view_timeline_frames`: check the visual content and key on-scene moments.
+- `edit_item` (trim / ripple delete / fade) and `split_item` (split): cut per the keep/remove rules and handle the joins at cut points.
+- `edit_track`: create, adjust or tighten voice and location-sound tracks when multi-track cleanup is needed.
+- Run `read_project` again before output to confirm every final `video` / `audio` item comes from an allowed source and there is no BGM, sound effect, dubbing or voiceover, then use preview/export pre-checks to verify duration and content completeness.
 
-## 参考文件
+## Reference files
 
-- 执行成片时遵循固定的确定性流程与强制性验收清单，见 [references/deterministic-execution-and-acceptance.md](references/deterministic-execution-and-acceptance.md)：环境检查 → 素材解析 → 生成单条编辑方案 → 一次性执行 → 逐项终检验收（至少 1 个视频轨片段、成片后无新增外部音频、讲话语义完整、剪切点衔接自然）。
+- Follow the fixed deterministic process and the mandatory acceptance checklist when producing the final cut; see [references/deterministic-execution-and-acceptance.md](references/deterministic-execution-and-acceptance.md): environment check → footage analysis → produce a single editing plan → execute in one pass → item-by-item final acceptance (at least 1 video track segment, no new external audio in the finished piece, semantically complete speech, natural joins at cut points).
 

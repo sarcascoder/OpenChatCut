@@ -209,7 +209,7 @@ export class ExternalBridgeRuntime {
       needs_confirmation: true,
       confirmationId: guard.guardId,
       tool,
-      note: '这个操作会作用于真实工程。请在 OpenChatCut 中确认后重试同一次调用。',
+      note: 'This operation affects the real project. Confirm it in OpenChatCut, then retry the same call.',
     };
   }
   async confirmRealTool(guardId: string, allow: boolean): Promise<void> {

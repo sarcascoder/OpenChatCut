@@ -4,13 +4,13 @@ import type { TranscriptWord } from '../../transcript/types';
 import { captionsOnTrack, timelineTrackIds, type TimelineState, type TrackId, type TrackKind } from '../../editor/types';
 
 export function trackContextMenuLabels(kind: TrackKind): string[] {
-  const insert = kind === 'audio' ? '插入音频' : kind === 'caption' ? '插入字幕' : '插入素材';
+  const insert = kind === 'audio' ? 'Insert audio' : kind === 'caption' ? 'Insert captions' : 'Insert assets';
   return [
-    insert, '闭合缝隙', '全选', '清空', '隐藏轨道',
-    ...(kind === 'caption' ? [] : ['静音轨道']),
-    '锁定轨道',
-    ...(kind === 'caption' ? ['字幕样式', '翻译全部'] : ['自动闪避']),
-    '删除轨道',
+    insert, 'Close gaps', 'Select all', 'Clear', 'Hide track',
+    ...(kind === 'caption' ? [] : ['Mute track']),
+    'Lock track',
+    ...(kind === 'caption' ? ['Caption styles', 'Translate all'] : ['Auto duck']),
+    'Delete track',
   ];
 }
 

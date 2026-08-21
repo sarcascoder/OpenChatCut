@@ -11,7 +11,7 @@ export function assetMenuSelectionIds(
   return assetIdsInOrder.filter((id) => selectedIds.has(id));
 }
 
-/** Mixed selections become a single "收藏" action; all-favorite selections become "取消收藏". */
+/** Mixed selections become a single "Favorite" action; all-favorite selections become "Unfavorite". */
 export function assetMenuFavoriteValue(assets: readonly { favorite?: boolean }[]): boolean {
   return !assets.every((asset) => asset.favorite === true);
 }

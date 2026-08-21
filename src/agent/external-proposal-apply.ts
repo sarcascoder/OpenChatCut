@@ -142,7 +142,7 @@ export async function commitExternalProposal(
   const chosen = input.proposal.options[0].operations
     .filter((_, index) => input.selected.has(index));
   const result = replayActions(currentDoc, chosen.flatMap((operation) => operation.actions));
-  await input.persistence.saveAutomaticVersion(input.projectId, '外部 Agent 修改前', currentDoc);
+  await input.persistence.saveAutomaticVersion(input.projectId, 'Before external Agent edit', currentDoc);
   throwIfExternalCallCancelled(input.signal);
   const saved = await input.persistence.saveProject(input.projectId, result);
   if (!saved.saved) {

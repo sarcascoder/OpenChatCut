@@ -13,20 +13,20 @@ interface QuickAction {
 }
 
 export const EMPTY_PROJECT_STARTERS: readonly ProjectStarter[] = [
-  { label: '口播净剪', description: '去停顿、赘词并同步字幕', prompt: '精剪当前口播：去掉无效停顿和赘词，并生成同步字幕', icon: 'scissors' },
-  { label: '动态包装', description: '标题、数据卡与转场动效', prompt: '为当前内容设计动态包装，包含标题、信息卡和转场动效', icon: 'film' },
-  { label: '长片拆条', description: '提炼高光并重排为短视频', prompt: '从当前长视频中提炼高光，重排成适合发布的短视频', icon: 'video' },
-  { label: '产品故事', description: '围绕卖点组织脚本和镜头', prompt: '围绕产品卖点组织脚本和镜头，制作一支产品宣传短片', icon: 'sparkles' },
-  { label: 'AI 影像', description: '从概念生成镜头与声音', prompt: '根据我的概念策划一支 AI 影像，补全镜头、声音和节奏', icon: 'image' },
-  { label: '知识成片', description: '把主题整理成清晰讲解', prompt: '把主题整理成结构清晰、带字幕和视觉提示的讲解视频', icon: 'play' },
+  { label: 'Clean talking-head edit', description: 'Remove pauses and filler, then sync captions', prompt: 'Polish the current talking-head video: remove dead air and filler, then generate synced captions', icon: 'scissors' },
+  { label: 'Motion package', description: 'Titles, info cards, and transitions', prompt: 'Design a motion package for the current content, including titles, info cards, and transitions', icon: 'film' },
+  { label: 'Long-form highlights', description: 'Find highlights and reshape them as shorts', prompt: 'Find highlights in the current long video and reshape them into publish-ready shorts', icon: 'video' },
+  { label: 'Product story', description: 'Build the script and shots around key benefits', prompt: 'Build a script and shot sequence around the product benefits, then create a promo', icon: 'sparkles' },
+  { label: 'AI visual', description: 'Develop shots and sound from a concept', prompt: 'Plan an AI visual from my concept, developing the shots, sound, and pacing', icon: 'image' },
+  { label: 'Knowledge video', description: 'Turn a topic into a clear explanation', prompt: 'Turn the topic into a structured explainer with captions and visual cues', icon: 'play' },
 ];
 
 export const QUICK_ACTIONS: readonly QuickAction[] = [
-  { label: '删除填充词', prompt: '删除当前口播中的填充词，并保持字幕与画面同步' },
-  { label: '删除静音', prompt: '删除当前时间线中的静音停顿，并收紧空隙' },
-  { label: '跳切', prompt: '把当前口播剪成节奏紧凑的跳切版本' },
-  { label: '生成字幕', prompt: '为当前口播生成并应用同步字幕' },
-  { label: '响度标准化', prompt: '将当前时间线中的人声音量标准化' },
-  { label: '横转竖', prompt: '将当前工程转换为 9:16 竖屏，并调整主要画面构图' },
+  { label: 'Remove filler words', prompt: 'Remove filler words from the current talking-head edit while keeping captions and video in sync' },
+  { label: 'Remove silence', prompt: 'Remove silent pauses from the current timeline and close the gaps' },
+  { label: 'Jump cut', prompt: 'Turn the current talking-head edit into a tightly paced jump-cut version' },
+  { label: 'Generate captions', prompt: 'Generate and apply synchronized captions for the current talking-head edit' },
+  { label: 'Normalize loudness', prompt: 'Normalize dialogue loudness on the current timeline' },
+  { label: 'Landscape to portrait', prompt: 'Convert the current project to 9:16 portrait and reframe the main visuals' },
 ];
 

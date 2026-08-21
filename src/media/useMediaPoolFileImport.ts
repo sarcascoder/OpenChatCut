@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, type RefObject } from 'react';
 import type { MediaAsset } from '../editor/types';
-import type { t as translate } from '../i18n/locale';
 import {
   canPickMediaFolder,
   collectDroppedFiles,
@@ -29,7 +28,6 @@ interface UseMediaPoolFileImportOptions {
   onImport: ImportMedia;
   onMoveAssets: (ids: string[], folderId?: string) => void;
   setError: (error: string | null) => void;
-  t: typeof translate;
 }
 
 interface MediaPoolFileImportState {
@@ -43,16 +41,16 @@ interface MediaPoolFileImportState {
   handleDrop: (transfer: DataTransfer, folderId?: string) => Promise<void>;
 }
 
-function directoryNotice(result: DirectoryScanResult, t: typeof translate): string | null {
+function directoryNotice(result: DirectoryScanResult): string | null {
   const notices: string[] = [];
   if (result.limitReached) {
-    notices.push(t('文件夹导入不完整：仅检查前 {n} 个文件。', { n: DIRECTORY_SCAN_MAX_FILES }));
+    notices.push(`Folder import is partial: only the first ${DIRECTORY_SCAN_MAX_FILES} files were checked.`);
   }
   if (result.depthReached) {
-    notices.push(t('文件夹导入不完整：已跳过超出 {n} 层的内容。', { n: DIRECTORY_SCAN_MAX_DEPTH }));
+    notices.push(`Folder import is partial: content deeper than ${DIRECTORY_SCAN_MAX_DEPTH} levels was skipped.`);
   }
   if (result.unsupportedFiles > 0) {
-    notices.push(t('已跳过 {n} 个不支持的文件。', { n: result.unsupportedFiles }));
+    notices.push(`Skipped ${result.unsupportedFiles} unsupported files.`);
   }
   return notices.length ? notices.join(' ') : null;
 }
@@ -66,16 +64,15 @@ type PickFiles = MediaPoolFileImportState['pickFiles'];
 function useDirectoryFileActions(
   pickFiles: PickFiles,
   setError: (error: string | null) => void,
-  t: typeof translate,
 ): Pick<MediaPoolFileImportState, 'pickDirectory' | 'handleDrop'> {
   const importResult = useCallback(async (result: DirectoryScanResult, folderId?: string) => {
-    const notice = directoryNotice(result, t);
+    const notice = directoryNotice(result);
     if (!result.files.length) {
-      setError(notice ?? t('文件夹中没有支持的媒体文件。'));
+      setError(notice ?? 'The folder contains no supported media files.');
       return;
     }
     if (await pickFiles(result.files, folderId) && notice) setError(notice);
-  }, [pickFiles, setError, t]);
+  }, [pickFiles, setError]);
   const pickDirectory = useCallback(async (folderId?: string) => {
     try {
       const result = await pickMediaFolder();
@@ -99,7 +96,7 @@ function useDirectoryFileActions(
 }
 
 export function useMediaPoolFileImport(options: UseMediaPoolFileImportOptions): MediaPoolFileImportState {
-  const { onImport, onMoveAssets, setError, t } = options;
+  const { onImport, onMoveAssets, setError } = options;
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [uploadRatio, setUploadRatio] = useState<number | null>(null);
@@ -125,7 +122,7 @@ export function useMediaPoolFileImport(options: UseMediaPoolFileImportOptions): 
       if (inputRef.current) inputRef.current.value = '';
     }
   }, [onImport, onMoveAssets, setError]);
-  const directory = useDirectoryFileActions(pickFiles, setError, t);
+  const directory = useDirectoryFileActions(pickFiles, setError);
   return {
     inputRef, busy, setBusy, uploadRatio, canPickDirectory: canPickMediaFolder(),
     pickFiles, ...directory,

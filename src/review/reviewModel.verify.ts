@@ -55,6 +55,6 @@ assert.equal(replied[0].replies[0].text, 'Done.');
 assert.equal(comment.replies.length, 0, 'reply updates must be immutable');
 assert.equal(setReviewResolved(replied, comment.id, true)[0].resolved, true);
 assert.deepEqual(normalizeReviewComments([comment, { broken: true }]), [comment]);
-assert.throws(() => createReviewComment(anchored, '   '), /不能为空/);
+assert.throws(() => createReviewComment(anchored, '   '), /cannot be empty/);
 
 console.log('reviewModel.verify: ok');

@@ -52,29 +52,29 @@ export interface BuiltProposal extends Proposal {
 
 // map an agent tool call + the store actions it produced into a display Operation.
 const VERB: Record<string, string> = {
-  add_motion_graphic: '添加动画',
-  create_motion_graphic: '生成动画',
-  add_audio: '添加音频',
-  update_item_props: '改属性',
-  move_item: '移动片段',
-  set_item_timing: '改时长/位置',
-  duplicate_item: '复制片段',
-  remove_item: '删除片段',
-  split_item: '切分片段',
-  clear_timeline: '清空时间线',
-  set_aspect_ratio: '改画面比例',
-  set_item_transcript: '挂转写',
-  delete_text: '删文字=删视频',
-  clean_script: '清理口播',
-  edit_captions: '编辑字幕',
-  manage_timelines: '管理序列',
-  edit_track: '管理轨道',
-  manage_media_pool: '整理素材池',
-  isolate_voice: '人声隔离',
-  apply_script: '改稿应用',
-  manage_effects: '特效',
-  edit_item: '编辑片段',
-  browse_library: '浏览资源库',
+  add_motion_graphic: 'Add motion graphic',
+  create_motion_graphic: 'Generate motion graphic',
+  add_audio: 'Add audio',
+  update_item_props: 'Change properties',
+  move_item: 'Move clip',
+  set_item_timing: 'Change duration/position',
+  duplicate_item: 'Duplicate clip',
+  remove_item: 'Delete clip',
+  split_item: 'Split clip',
+  clear_timeline: 'Clear timeline',
+  set_aspect_ratio: 'Change aspect ratio',
+  set_item_transcript: 'Attach transcript',
+  delete_text: 'Delete text = delete video',
+  clean_script: 'Clean up voiceover',
+  edit_captions: 'Edit captions',
+  manage_timelines: 'Manage sequences',
+  edit_track: 'Manage tracks',
+  manage_media_pool: 'Organize media pool',
+  isolate_voice: 'Voice Isolation',
+  apply_script: 'Apply script edits',
+  manage_effects: 'Effects',
+  edit_item: 'Edit clip',
+  browse_library: 'Browse library',
 };
 
 function targetOf(args: Record<string, unknown>, actions: AnyAction[]): string {
@@ -88,7 +88,7 @@ function targetOf(args: Record<string, unknown>, actions: AnyAction[]): string {
     if (a.type === 'tl.create') return a.timeline.name;
     if (a.type === 'tl.duplicate' || a.type === 'tl.rename') return a.name;
   }
-  return '时间线';
+  return 'Timeline';
 }
 
 function impactOf(actions: AnyAction[]): string {
@@ -102,12 +102,12 @@ function impactOf(actions: AnyAction[]): string {
     else mod++;
   }
   const parts: string[] = [];
-  if (addSeq) parts.push(`+${addSeq} 序列`);
-  if (delSeq) parts.push(`−${delSeq} 序列`);
-  if (add) parts.push(`+${add} 片段`);
-  if (del) parts.push(`−${del} 片段`);
-  if (mod) parts.push(`${mod} 处改动`);
-  return parts.join(' · ') || '无变化';
+  if (addSeq) parts.push(`+${addSeq} sequences`);
+  if (delSeq) parts.push(`−${delSeq} sequences`);
+  if (add) parts.push(`+${add} clips`);
+  if (del) parts.push(`−${del} clips`);
+  if (mod) parts.push(`${mod} changes`);
+  return parts.join(' · ') || 'No changes';
 }
 
 export function buildOperation(tool: string, args: Record<string, unknown>, actions: AnyAction[]): Operation {
@@ -165,13 +165,13 @@ export function buildProposal(
 ): BuiltProposal {
   const compacted = compactOperations(operations);
   const totalImpact = impactOf(compacted.flatMap((o) => o.actions));
-  const summary = assistantText.trim() || `${compacted.length} 项编辑`;
+  const summary = assistantText.trim() || `${compacted.length} edits`;
   return {
     id: crypto.randomUUID(),
-    title: 'Agent 编辑提案',
+    title: 'Agent edit proposal',
     summary,
     totalImpact,
-    options: [{ id: 'opt-1', label: '应用全部', recommended: true, summary, totalImpact, operations: compacted }],
+    options: [{ id: 'opt-1', label: 'Apply all', recommended: true, summary, totalImpact, operations: compacted }],
     baseDoc,
     resultState,
     ...(agentRunId ? { agentRunId } : {}),

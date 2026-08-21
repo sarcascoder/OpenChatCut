@@ -36,16 +36,16 @@ export type ZoomShape =
   | 'snap' | 'pulse' | 'whip-in';
 // zh labels: 4 base curves + extended library curves
 export const ZOOM_SHAPE_LABELS: Record<ZoomShape, string> = {
-  punch: '冲击',
-  hold: '推进拉回',
-  'slow-push': '慢推',
-  instant: '瞬时',
-  'zoom-out': '拉远',
-  'ease-in': '缓入推近',
-  bounce: '弹性推近',
-  snap: '快切推近',
-  pulse: '心跳脉冲',
-  'whip-in': '甩入推近',
+  punch: 'Punch',
+  hold: 'Push & Pull Back',
+  'slow-push': 'Slow Push',
+  instant: 'Instant',
+  'zoom-out': 'Zoom Out',
+  'ease-in': 'Ease-In Push',
+  bounce: 'Bouncy Push',
+  snap: 'Snap Push',
+  pulse: 'Pulse',
+  'whip-in': 'Whip-In Push',
 };
 /** library display order */
 export const ZOOM_SHAPE_ORDER: readonly ZoomShape[] = [

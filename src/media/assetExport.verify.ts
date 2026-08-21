@@ -6,13 +6,14 @@ Object.defineProperty(globalThis, 'window', {
 });
 
 const image = {
-  id: 'image-1', name: '封面', kind: 'image' as const,
+  // name '\u5c01\u9762' = "cover" — non-ASCII asset name must survive the download-name round trip
+  id: 'image-1', name: '\u5c01\u9762', kind: 'image' as const,
   src: '/media/uploads/cover.png', durationInFrames: 150,
 };
-assert.equal(mediaAssetDownloadName(image), '封面.png');
+assert.equal(mediaAssetDownloadName(image), '\u5c01\u9762.png');
 
 const mg = {
-  id: 'mg-1', name: '标题', kind: 'motion-graphic' as const, src: '',
+  id: 'mg-1', name: 'Title', kind: 'motion-graphic' as const, src: '',
   durationInFrames: 90, width: 1080, height: 1080, code: 'return null',
 };
 const exported = motionGraphicExport(mg, 30);

@@ -9,7 +9,7 @@ const ALL_OFF: Record<CapabilityKey, boolean> = {
   stock: false, transcription: false, sandbox: false, web: false,
 };
 
-// ── all-off: every gated tool listed as 未配置, none marked available ──
+// ── all-off: every gated tool listed as unconfigured, none marked available ──
 const off = capabilitiesPrompt(ALL_OFF);
 assert.ok(off.includes('submit_image') && off.includes('submit_voice') && off.includes('run_code'), 'lists gated tools');
 assert.ok(off.includes('(no key-gated capabilities)'), 'no capability marked available when all off');
@@ -26,7 +26,7 @@ assert.ok(!onLine.includes('submit_voice'), 'unconfigured cap NOT in ✅ section
 assert.ok(mixed.slice(offIdx).includes('submit_voice'), 'unconfigured cap in ⬜ section');
 
 // ── vendor granularity + routing semantics ──
-// single configured vendor → named with its tool arg and "直接用"
+// single configured vendor → named with its tool arg and "use it directly"
 applyLiveKeyStatus({ KLING_API_KEY: { configured: true } });
 const vendored = capabilitiesPrompt({ ...ALL_OFF, video: true });
 assert.ok(vendored.includes('Kling(model=kling) — use it directly'), 'single vendor → use directly');

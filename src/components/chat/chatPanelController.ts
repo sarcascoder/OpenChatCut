@@ -18,7 +18,6 @@ import { refPromptToken, onSelectionRef, setSelectionRefMode } from '../../agent
 import { setAgentAutoApply } from '../../agent/approval-mode';
 import type { AgentSettings } from '../../agent/settings/agentSettings';
 import { loadAgentSettings, saveAgentSettings } from '../../agent/settings/agentSettings';
-import { useT } from '../../i18n/locale';
 import {
   clearComposerDraft,
   loadChatAutoApply,
@@ -51,7 +50,6 @@ import {
 export type { ChatScrollController } from './useChatScrollController';
 
 const MESSAGE_WINDOW_SIZE = 40;
-type Translate = (key: string, params?: Record<string, string | number>) => string;
 type StateSetter<T> = Dispatch<SetStateAction<T>>;
 interface MutableValue<T> { current: T }
 
@@ -109,7 +107,6 @@ export interface ChatPanelActions {
 
 export interface ChatPanelController {
   props: ChatPanelProps;
-  t: Translate;
   agent: AgentController;
   externalProposal: ExternalProposalController;
   composer: ChatComposerController;
@@ -303,7 +300,6 @@ function useReferenceActions(ctx: AgentContext, composer: ChatComposerController
 
 function useChatActions(
   props: ChatPanelProps,
-  t: Translate,
   agent: AgentController,
   composer: ChatComposerController,
 ): ChatPanelActions {
@@ -311,7 +307,6 @@ function useChatActions(
   const references = useReferenceActions(props.ctx, composer);
   useReferenceSelection(references.insertRef, composer, props.collapsed);
   const importPastedFiles = createChatAttachmentImporter({
-    t,
     onImportMedia: props.onImportMedia,
     lifecycle: () => composer.attachmentLifecycleRef.current,
     references: () => composer.selectedRefsRef.current,
@@ -382,7 +377,6 @@ function useChangeLogSlot(): HTMLElement | null {
 }
 
 export function useChatPanelController(props: ChatPanelProps): ChatPanelController {
-  const t = useT();
   const composer = useComposerState(props.projectId);
   const agent = useChatAgentController(
     props.ctx,
@@ -395,14 +389,13 @@ export function useChatPanelController(props: ChatPanelProps): ChatPanelControll
   useComposerSeed(composer, props.seed, props.collapsed);
   useChatAutoScroll(scroll, agent.messages, agent.running, agent.proposal);
   usePanelEffects(props, agent, composer);
-  const actions = useChatActions(props, t, agent, composer);
+  const actions = useChatActions(props, agent, composer);
   const references = chatReferences(props.ctx);
   const run = useRunPresentation(agent.messages, agent.running);
   const changeLogSlot = useChangeLogSlot();
   const visibleFrom = Math.max(0, agent.messages.length - composer.visibleMessageCount);
   return {
     props,
-    t,
     agent,
     externalProposal,
     composer,

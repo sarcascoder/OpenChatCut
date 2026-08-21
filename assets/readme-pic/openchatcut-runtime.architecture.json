@@ -2,15 +2,15 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "OpenChatCut 运行时架构",
-    "subtitle": "Agent、真实时间线、本地数据与渲染导出的统一工作流",
+    "title": "OpenChatCut Runtime Architecture",
+    "subtitle": "A unified workflow across the agent, the real timeline, local data, and render/export",
     "output": "openchatcut-runtime.html"
   },
   "components": [
     {
       "id": "external-agents",
       "type": "external",
-      "label": "外部 Agent",
+      "label": "External Agent",
       "sublabel": "Codex · Claude Code",
       "pos": [30, 330],
       "size": [180, 72]
@@ -22,21 +22,21 @@
       "sublabel": "Streamable HTTP",
       "pos": [250, 330],
       "size": [180, 72],
-      "tag": "本机默认"
+      "tag": "Local by default"
     },
     {
       "id": "builtin-agent",
       "type": "frontend",
-      "label": "内置 Agent",
-      "sublabel": "Vercel AI SDK · 多厂商",
+      "label": "Built-in Agent",
+      "sublabel": "Vercel AI SDK · multi-vendor",
       "pos": [480, 130],
       "size": [180, 72]
     },
     {
       "id": "editor-ui",
       "type": "frontend",
-      "label": "编辑器 UI",
-      "sublabel": "素材 · 文字稿 · 时间线",
+      "label": "Editor UI",
+      "sublabel": "Media · Transcript · Timeline",
       "pos": [710, 130],
       "size": [180, 72]
     },
@@ -44,7 +44,7 @@
       "id": "agent-tools",
       "type": "messagebus",
       "label": "Agent Skills & Tools",
-      "sublabel": "Runtime · Skills · 工具注册表",
+      "sublabel": "Runtime · Skills · Tool registry",
       "pos": [480, 330],
       "size": [180, 72]
     },
@@ -52,15 +52,15 @@
       "id": "editor-core",
       "type": "backend",
       "label": "EditorCore",
-      "sublabel": "命令 · 不可变时间线",
+      "sublabel": "Commands · Immutable timeline",
       "pos": [710, 330],
       "size": [180, 72],
-      "tag": "单一编辑入口"
+      "tag": "Single edit entry point"
     },
     {
       "id": "preview",
       "type": "frontend",
-      "label": "实时预览",
+      "label": "Live Preview",
       "sublabel": "Remotion Player · WebGL",
       "pos": [950, 220],
       "size": [180, 72]
@@ -68,7 +68,7 @@
     {
       "id": "render-export",
       "type": "backend",
-      "label": "渲染与导出",
+      "label": "Render & Export",
       "sublabel": "Remotion · FFmpeg",
       "pos": [950, 440],
       "size": [180, 72]
@@ -76,7 +76,7 @@
     {
       "id": "outputs",
       "type": "external",
-      "label": "可交付文件",
+      "label": "Deliverable Files",
       "sublabel": "MP4 · SRT · FCPXML",
       "pos": [1180, 440],
       "size": [180, 72]
@@ -85,33 +85,33 @@
       "id": "server-plugins",
       "type": "backend",
       "label": "Server Plugins",
-      "sublabel": "LLM 中转 · AI 任务 · 素材",
+      "sublabel": "LLM relay · AI jobs · Media",
       "pos": [480, 600],
       "size": [180, 72]
     },
     {
       "id": "local-store",
       "type": "database",
-      "label": "本机共享工程库",
-      "sublabel": "~/.openchatcut · IndexedDB 缓存",
+      "label": "Local Shared Project Store",
+      "sublabel": "~/.openchatcut · IndexedDB cache",
       "pos": [710, 600],
       "size": [180, 72],
-      "tag": "跨浏览器与端口共享"
+      "tag": "Shared across browsers and ports"
     },
     {
       "id": "providers",
       "type": "cloud",
-      "label": "外部服务",
-      "sublabel": "模型 · ASR · 生成 · R2",
+      "label": "External Services",
+      "sublabel": "Models · ASR · Generation · R2",
       "pos": [30, 600],
       "size": [180, 72],
-      "tag": "按配置启用"
+      "tag": "Enabled by configuration"
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "OpenChatCut 本机运行时",
+      "label": "OpenChatCut Local Runtime",
       "wraps": [
         "mcp-broker",
         "builtin-agent",
@@ -127,7 +127,7 @@
     },
     {
       "kind": "security-group",
-      "label": "浏览器 / Electron Renderer",
+      "label": "Browser / Electron Renderer",
       "wraps": [
         "builtin-agent",
         "editor-ui",
@@ -139,7 +139,7 @@
     },
     {
       "kind": "security-group",
-      "label": "本地数据边界",
+      "label": "Local Data Boundary",
       "wraps": ["local-store"],
       "pad": 18
     }
@@ -154,7 +154,7 @@
     {
       "from": "mcp-broker",
       "to": "agent-tools",
-      "label": "工具调用",
+      "label": "Tool calls",
       "variant": "emphasis"
     },
     {
@@ -175,7 +175,7 @@
     {
       "from": "agent-tools",
       "to": "editor-core",
-      "label": "命令",
+      "label": "Commands",
       "variant": "emphasis"
     },
     {
@@ -188,7 +188,7 @@
     {
       "from": "editor-core",
       "to": "render-export",
-      "label": "时间线状态",
+      "label": "Timeline state",
       "fromSide": "right",
       "toSide": "left",
       "route": "orthogonal-h",
@@ -218,33 +218,33 @@
     {
       "from": "server-plugins",
       "to": "providers",
-      "label": "厂商 API",
+      "label": "Vendor APIs",
       "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "统一编辑主链路",
+      "title": "One unified editing path",
       "items": [
-        "自然语言 → 模型流 → 工具调用 → EditorCore 命令",
-        "同一时间线状态驱动预览、撤销与导出"
+        "Natural language → model stream → tool calls → EditorCore commands",
+        "The same timeline state drives preview, undo, and export"
       ]
     },
     {
       "dot": "emerald",
       "title": "Local-first",
       "items": [
-        "工程、聊天、版本和用户媒体优先保存在本机",
-        "基础时间线编辑不依赖外部服务"
+        "Projects, chats, versions, and user media are stored locally first",
+        "Basic timeline editing does not depend on external services"
       ]
     },
     {
       "dot": "rose",
-      "title": "信任边界",
+      "title": "Trust boundary",
       "items": [
-        "供应商密钥只由本地服务端读取",
-        "公网 MCP 入口可使用 Bearer Token 保护"
+        "Vendor keys are read only by the local server",
+        "The public MCP entry point can be protected with a Bearer token"
       ]
     }
   ]

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { theme, themeAlpha } from '../../theme';
 import { ratioLabel, type ProjectDoc } from '../../editor/types';
 import type { EditorCommands } from '../../editor/store';
-import { useT } from '../../i18n/locale';
 import { Icon } from '../icons';
 
 interface TimelineTabsProps {
@@ -14,7 +13,6 @@ interface TimelineTabsProps {
  * duplicate / delete timelines, plus a one-click 9:16 vertical copy for
  * long→short retargeting. */
 export function TimelineTabs({ doc, commands }: TimelineTabsProps) {
-  const t = useT();
   const [renaming, setRenaming] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -37,7 +35,7 @@ export function TimelineTabs({ doc, commands }: TimelineTabsProps) {
             key={tl.id}
             onClick={() => !active && commands.switchTimeline(tl.id)}
             onDoubleClick={() => { setRenaming(tl.id); setDraft(tl.name); }}
-            title={t('单击切换 · 双击重命名')}
+            title="Click to switch · double-click to rename"
             style={{
       display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', flexShrink: 0,
               background: active ? themeAlpha.accent(0.14) : 'transparent',
@@ -63,7 +61,7 @@ export function TimelineTabs({ doc, commands }: TimelineTabsProps) {
             {timelines.length > 1 && (
               <button
                 onClick={(e) => { e.stopPropagation(); commands.deleteTimeline(tl.id); }}
-                title={t('删除该序列')}
+                title="Delete this sequence"
                 style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}
               >×</button>
             )}
@@ -71,13 +69,13 @@ export function TimelineTabs({ doc, commands }: TimelineTabsProps) {
         );
       })}
       <span style={{ width: 6 }} />
-      <button onClick={() => commands.createTimeline()} title={t('新建序列')} style={tabBtn}>{t('＋序列')}</button>
-      <button onClick={() => commands.duplicateTimeline(doc.activeTimelineId)} title={t('复制当前序列')} style={{ ...tabBtn, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="copy" size={13} />{t('复制')}</button>
+      <button onClick={() => commands.createTimeline()} title="New sequence" style={tabBtn}>+ Sequence</button>
+      <button onClick={() => commands.duplicateTimeline(doc.activeTimelineId)} title="Duplicate current sequence" style={{ ...tabBtn, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="copy" size={13} />Duplicate</button>
       <button
-        onClick={() => commands.duplicateTimeline(doc.activeTimelineId, { retarget: { width: 1080, height: 1920, fit: 'cover' }, name: '竖屏' })}
-        title={t('把当前序列复制为 9:16 竖屏（长转短）')}
+        onClick={() => commands.duplicateTimeline(doc.activeTimelineId, { retarget: { width: 1080, height: 1920, fit: 'cover' }, name: 'Vertical' })}
+        title="Duplicate the current sequence as a 9:16 vertical (long-to-short)"
         style={{ ...tabBtn, display: 'inline-flex', alignItems: 'center', gap: 4 }}
-      ><Icon name="swap" size={13} />{t('竖屏副本')}</button>
+      ><Icon name="swap" size={13} />Vertical copy</button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// Pure-logic check for the 上传即转写 job helpers: the transcribe-eligibility gate and
+// Pure-logic check for the transcribe-on-upload job helpers: the transcribe-eligibility gate and
 // the tool-facing status reconciliation. Run: tsx src/transcript/transcribe-jobs.check.ts
 import assert from 'node:assert';
 import { shouldTranscribe, transcriptionReport, type TranscribeJob } from './transcribe-jobs';

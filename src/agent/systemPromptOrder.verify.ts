@@ -32,7 +32,7 @@ const commonPrefixLength = (a: string, b: string): number => {
 {
   const stable = ['AAA', 'BBB', 'CCC'];
   assert.equal(assembleSystemPrompt(stable, '<state/>'), 'AAABBBCCC<state/>');
-  assert.equal(assembleSystemPrompt(stable, ''), 'AAABBBCCC', '易变段为空也不留多余分隔');
+  assert.equal(assembleSystemPrompt(stable, ''), 'AAABBBCCC', 'an empty volatile section leaves no stray separator');
   assert.equal(assembleSystemPrompt([], 'x'), 'x');
 
   // The invariant is "**at least** covering all stable segments"; if the two volatile segments happen to have the same head, the common prefix will only be longer.
@@ -42,15 +42,12 @@ const commonPrefixLength = (a: string, b: string): number => {
   assert.equal(
     commonPrefixLength(one, two),
     stable.join('').length,
-    '公共前缀必须覆盖全部稳定段——短一个字节就意味着有易变内容混进了前缀',
+    'the common prefix must cover every stable section — one byte short means volatile content leaked into the prefix',
   );
 }
 
 {
-  assert.match(agentLanguagePrompt('zh'), /interface language is Chinese/);
-  assert.match(agentLanguagePrompt('zh'), /in Chinese/);
-  assert.match(agentLanguagePrompt('en'), /interface language is English/);
-  assert.match(agentLanguagePrompt('en'), /in English/);
+  assert.match(agentLanguagePrompt(), /in English/);
 }
 
 // ── Public product identity must override stale names in workflows or conversation memory ──
@@ -110,16 +107,16 @@ const commonPrefixLength = (a: string, b: string): number => {
   const before = assembleSystemPrompt(stable, editorStatePrompt(ctxOf([item('a', 0)])));
   const after = assembleSystemPrompt(stable, editorStatePrompt(ctxOf([item('a', 0), item('b', 60)])));
 
-  assert.notEqual(before, after, '时间线变了,易变段当然要变');
+  assert.notEqual(before, after, 'the timeline changed, so of course the volatile section changes');
   assert.ok(
     commonPrefixLength(before, after) >= stable.join('').length,
-    '加一个片段只能影响末尾那段;前缀一动,工具 schema 和历史的缓存就全废了',
+    'adding one clip may only affect the trailing section; move the prefix and the tool schema and history caches are all wasted',
   );
-  assert.equal(before.slice(0, stable.join('').length), stable.join(''), '稳定段逐字节不变');
-  assert.ok(before.includes('<editor_state>'), '快照确实拼进来了');
+  assert.equal(before.slice(0, stable.join('').length), stable.join(''), 'the stable sections stay byte-for-byte identical');
+  assert.ok(before.includes('<editor_state>'), 'the snapshot really was spliced in');
   assert.ok(
     before.indexOf('<editor_state>') >= stable.join('').length,
-    '快照整段都落在稳定段之后',
+    'the whole snapshot lands after the stable sections',
   );
 }
 
@@ -128,7 +125,7 @@ const commonPrefixLength = (a: string, b: string): number => {
   // Similarly select two values with no common beginning, so that the boundary falls exactly at the starting point of the changing section.
   const a = assembleSystemPrompt(['SYSTEM', 'CAPS', 'AAAA'], 'S');
   const b = assembleSystemPrompt(['SYSTEM', 'CAPS', 'BBBB'], 'S');
-  assert.equal(commonPrefixLength(a, b), 'SYSTEMCAPS'.length, '只从真正变化的那一段开始失效');
+  assert.equal(commonPrefixLength(a, b), 'SYSTEMCAPS'.length, 'invalidation starts only at the section that actually changed');
 }
 
 // ── The project creation guide will enter the prompt word and cover all edits instead of just constraining MG ──
@@ -136,9 +133,9 @@ const commonPrefixLength = (a: string, b: string): number => {
   const prompt = designStylePrompt({
     colors: [],
     fonts: [],
-    styleGuide: '字幕保持两行以内，避免炫光转场。',
+    styleGuide: 'Keep captions to two lines or fewer; avoid glare transitions.',
   });
-  assert.match(prompt, /字幕保持两行以内/);
+  assert.match(prompt, /Keep captions to two lines or fewer/);
   assert.match(prompt, /Follow it for every edit/);
   assert.match(SYSTEM_PROMPT, /creative direction and asset plan/);
   assert.match(SYSTEM_PROMPT, /Never claim or imply success after an unresolved tool failure/);
@@ -185,4 +182,4 @@ const commonPrefixLength = (a: string, b: string): number => {
   );
 }
 
-console.log('systemPromptOrder.verify: ok (易变段收尾/真 editorStatePrompt 不污染前缀/失效点最小化)');
+console.log('systemPromptOrder.verify: ok (volatile section last / real editorStatePrompt does not pollute the prefix / minimal invalidation point)');

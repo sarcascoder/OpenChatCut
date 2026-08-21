@@ -225,8 +225,8 @@ function reportModelProgress(
   progress?: number,
   file?: string,
 ): void {
-  if (progress != null) onWait?.(`模型下载 ${Math.min(100, Math.round(progress))}%`);
-  else if (file) onWait?.(`加载模型 ${file.split('/').pop() ?? ''}`);
+  if (progress != null) onWait?.(`Downloading model ${Math.min(100, Math.round(progress))}%`);
+  else if (file) onWait?.(`Loading model ${file.split('/').pop() ?? ''}`);
 }
 
 /** Transcribe a same-origin media path with the on-device model. */
@@ -249,7 +249,7 @@ export async function assertAsrModelDownloaded(config: AsrConfig): Promise<void>
     if (entry && entry.downloaded === false) {
       throw new TranscriptionError(
         'service-unavailable',
-        `本地转写模型未完整下载（${config.modelId}）。请到 设置 → 转写 → 本地模型 重新下载后再试。`,
+        `The local transcription model is not fully downloaded (${config.modelId}). Re-download it under Settings → Transcription → Local model, then try again.`,
       );
     }
   } catch (error) {
@@ -281,7 +281,7 @@ export async function localTranscribePathResumable(
       config,
       language: opts.languageCode ?? 'zh',
       onProgress: (progress, file) => reportModelProgress(onWait, progress, file),
-      onFallback: () => onWait?.('桌面原生推理不可用，已回退浏览器引擎'),
+      onFallback: () => onWait?.('Desktop native inference is unavailable; fell back to the browser engine'),
     });
     if (native) {
       await onCheckpoint({ ...checkpoint, providerStatus: 'completed' });

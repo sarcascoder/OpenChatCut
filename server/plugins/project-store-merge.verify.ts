@@ -10,15 +10,15 @@ import { prepareAgentSessionMigrationEntries } from './project-store-agent-sessi
 import { runtimeSidecar } from './project-store-merge.verify-support';
 
 const left = {
-  projects: [{ id: 'a', name: 'Chrome 工程', updatedAt: 10 }],
+  projects: [{ id: 'a', name: 'Chrome Project', updatedAt: 10 }],
   'project:a': { marker: 'left' },
   'versions:a': [{ id: 'v1', createdAt: 1 }],
   'skills:custom': [{ id: 's1', createdAt: 1 }],
 };
 const right = {
   projects: [
-    { id: 'b', name: 'Brave 工程', updatedAt: 20 },
-    { id: 'a', name: '更新后的工程', updatedAt: 30 },
+    { id: 'b', name: 'Brave Project', updatedAt: 20 },
+    { id: 'a', name: 'Updated Project', updatedAt: 30 },
   ],
   'project:a': { marker: 'newer' },
   'project:b': { marker: 'right' },
@@ -34,14 +34,14 @@ assert.deepEqual((merged['versions:a'] as Array<{ id: string }>).map((version) =
 assert.deepEqual((merged['skills:custom'] as Array<{ id: string }>).map((skill) => skill.id), ['s1', 's2']);
 
 const older = mergeProjectEntries(merged, {
-  projects: [{ id: 'a', name: '旧工程', updatedAt: 5 }],
+  projects: [{ id: 'a', name: 'Old Project', updatedAt: 5 }],
   'project:a': { marker: 'older' },
 });
 assert.deepEqual(older['project:a'], { marker: 'newer' });
-assert.equal((older.projects as Array<{ name: string }>)[0].name, '更新后的工程');
+assert.equal((older.projects as Array<{ name: string }>)[0].name, 'Updated Project');
 
 const afterPermanentDelete = mergeProjectEntries(merged, {
-  projects: [{ id: 'a', name: '另一个浏览器里的旧副本', updatedAt: 40 }],
+  projects: [{ id: 'a', name: 'Stale copy from another browser', updatedAt: 40 }],
   'project:a': { marker: 'stale-browser' },
   'chat:a': { messages: ['stale'] },
   'versions:a': [{ id: 'v3', createdAt: 3 }],
@@ -49,7 +49,7 @@ const afterPermanentDelete = mergeProjectEntries(merged, {
 assert.deepEqual(
   (afterPermanentDelete.projects as Array<{ id: string }>).map((project) => project.id),
   ['b'],
-  '永久删除标记必须阻止另一个浏览器的旧工程复活',
+  'a permanent deletion marker must stop another browser resurrecting an old project',
 );
 assert.ok(!('project:a' in afterPermanentDelete));
 assert.ok(!('chat:a' in afterPermanentDelete));

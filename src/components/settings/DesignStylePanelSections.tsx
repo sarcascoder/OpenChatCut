@@ -14,25 +14,17 @@ import {
   searchFontCatalog,
   type FontCatalogEntry,
 } from '../../fonts/googleFontCatalog';
-import type { Locale } from '../../i18n/locale';
-import { useT } from '../../i18n/locale';
 import type { OwnedStyle } from '../../persist/ownedStyleStore';
 import { theme, themeAlpha } from '../../theme';
 import { Icon } from '../icons';
 import { DesignStyleTransferButtons } from './DesignStyleTransferButtons';
-import {
-  localizeDesignFontRole,
-  localizeDesignPresetName,
-  localizeDesignRole,
-  localizeDesignStyleGuide,
-} from './designStyleLocalization';
 import type { useDesignStylePanelModel } from './useDesignStylePanelModel';
 
 type Model = ReturnType<typeof useDesignStylePanelModel>;
 const COLOR_LABEL: Record<string, string> = {
-  primary: '主色', secondary: '辅色', accent: '强调色', background: '背景', text: '文字',
+  primary: 'Primary', secondary: 'Secondary', accent: 'Accent', background: 'Background', text: 'Text',
 };
-const FONT_LABEL: Record<string, string> = { heading: '标题字体', body: '正文字体' };
+const FONT_LABEL: Record<string, string> = { heading: 'Heading font', body: 'Body font' };
 const isEmpty = (style: DesignStyle): boolean => !style.colors.length && !style.fonts.length && !style.styleGuide;
 const sameStyle = (first: DesignStyle, second: DesignStyle): boolean => JSON.stringify(first) === JSON.stringify(second);
 
@@ -49,11 +41,10 @@ export function DesignStylePanelHeader({ primary, onClose }: {
   primary: string;
   onClose: () => void;
 }) {
-  const t = useT();
   return <div style={header}>
     <span style={{ color: primary, lineHeight: 0 }}><Icon name="palette" size={16} /></span>
-    <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{t('设计风格')}</span>
-    <button onClick={onClose} title={t('关闭')} style={iconBtn}><Icon name="x" size={15} /></button>
+    <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>Design Style</span>
+    <button onClick={onClose} title="Close" style={iconBtn}><Icon name="x" size={15} /></button>
   </div>;
 }
 
@@ -66,7 +57,6 @@ function StyleRow({ colors, thumbnailUrl, name, title, selected, onClick, onDele
   onClick: () => void;
   onDelete?: () => void;
 }) {
-  const t = useT();
   return <div style={{ position: 'relative' }}>
     <button onClick={onClick} title={title} style={{ ...styleRowBtn, background: selected ? themeAlpha.ink(0.06) : 'transparent', paddingRight: onDelete ? 28 : 12 }}
       onMouseEnter={(event) => { if (!selected) event.currentTarget.style.background = themeAlpha.ink(0.035); }}
@@ -79,24 +69,23 @@ function StyleRow({ colors, thumbnailUrl, name, title, selected, onClick, onDele
       <span style={rowName}>{name}</span><div style={{ flex: 1 }} />
       {selected && <span style={dot} />}
     </button>
-    {onDelete && <button onClick={onDelete} title={t('删除此风格')}
+    {onDelete && <button onClick={onDelete} title="Delete this style"
       style={{ ...iconBtn, position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', padding: 2 }}>
       <Icon name="x" size={11} />
     </button>}
   </div>;
 }
 
-function PresetStyleList({ model, locale }: { model: Model; locale: Locale }) {
-  const t = useT();
+function PresetStyleList({ model }: { model: Model }) {
   return <>
     <div style={styleList}>
-      <StyleRow name={t('无')} selected={isEmpty(model.draft)}
+      <StyleRow name="None" selected={isEmpty(model.draft)}
         onClick={() => { model.setDraft({ colors: [], fonts: [] }); model.library.setSelectedOwnedId(null); }} />
     </div>
-    <div style={{ ...sectionTitle, marginTop: 12 }}>{t('预设')}</div>
+    <div style={{ ...sectionTitle, marginTop: 12 }}>Presets</div>
     <div style={styleList}>{DESIGN_STYLE_PRESETS.map((preset) => (
-      <StyleRow key={preset.id} name={localizeDesignPresetName(preset.name, locale)}
-        title={localizeDesignStyleGuide(preset.style.styleGuide ?? '', locale)}
+      <StyleRow key={preset.id} name={preset.name}
+        title={preset.style.styleGuide ?? ''}
         colors={preset.style.colors.map((color) => color.value)} thumbnailUrl={preset.thumbnailUrl}
         selected={sameStyle(model.draft, preset.style)}
         onClick={() => { model.setDraft(preset.style); model.library.setSelectedOwnedId(null); }} />
@@ -105,16 +94,15 @@ function PresetStyleList({ model, locale }: { model: Model; locale: Locale }) {
 }
 
 function OwnedStyleList({ model }: { model: Model }) {
-  const t = useT();
   const { library } = model;
   if (!library.owned.length) return null;
   return <>
     <div style={{ ...sectionTitle, marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span>{t('我的风格')}</span>
+      <span>My styles</span>
       {!!library.sceneOptions.length && <select value={library.sceneFilter}
         onChange={(event) => library.setSceneFilter(event.target.value)}
         style={{ ...textInput, marginLeft: 'auto', width: 128, padding: '4px 6px' }}>
-        <option value="">{t('全部场景')}</option>
+        <option value="">All scenarios</option>
         {library.sceneOptions.map((scenario) => <option key={scenario} value={scenario}>{scenario}</option>)}
       </select>}
     </div>
@@ -127,43 +115,40 @@ function OwnedStyleList({ model }: { model: Model }) {
   </>;
 }
 
-function StyleSelectorSection({ model, locale }: { model: Model; locale: Locale }) {
-  const t = useT();
+function StyleSelectorSection({ model }: { model: Model }) {
   return <section>
-    <div style={sectionTitle}>{t('选择 MG 动画的视觉风格')}</div>
-    <PresetStyleList model={model} locale={locale} />
+    <div style={sectionTitle}>Pick a visual style for MG animations</div>
+    <PresetStyleList model={model} />
     <OwnedStyleList model={model} />
   </section>;
 }
 
 function MetadataSection({ model }: { model: Model }) {
-  const t = useT();
   const { library, metadata } = model;
   if (!library.selectedOwnedId) return null;
   return <section>
-    <div style={sectionTitle}>{t('风格资料')}</div>
+    <div style={sectionTitle}>Style details</div>
     <div style={{ display: 'grid', gap: 7 }}>
-      <input value={metadata.name} onChange={(event) => metadata.setName(event.target.value)} placeholder={t('风格名称')} style={textInput} />
-      <input value={metadata.scenarios} onChange={(event) => metadata.setScenarios(event.target.value)} placeholder={t('适用场景，用逗号分隔')} style={textInput} />
-      <input value={metadata.thumbnail} onChange={(event) => metadata.setThumbnail(event.target.value)} placeholder={t('缩略图 URL（仅用于风格选择器）')} style={textInput} />
+      <input value={metadata.name} onChange={(event) => metadata.setName(event.target.value)} placeholder="Style name" style={textInput} />
+      <input value={metadata.scenarios} onChange={(event) => metadata.setScenarios(event.target.value)} placeholder="Scenarios, separated by commas" style={textInput} />
+      <input value={metadata.thumbnail} onChange={(event) => metadata.setThumbnail(event.target.value)} placeholder="Thumbnail URL (style picker only)" style={textInput} />
       <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={() => { void metadata.save(); }} style={primaryBtn}>{t('保存资料')}</button>
-        {metadata.thumbnail && <button onClick={() => { void metadata.clearThumbnail(); }} style={ghostBtn}>{t('清除缩略图')}</button>}
+        <button onClick={() => { void metadata.save(); }} style={primaryBtn}>Save details</button>
+        {metadata.thumbnail && <button onClick={() => { void metadata.clearThumbnail(); }} style={ghostBtn}>Clear thumbnail</button>}
       </div>
     </div>
   </section>;
 }
 
-function ColorsSection({ model, locale }: { model: Model; locale: Locale }) {
-  const t = useT();
+function ColorsSection({ model }: { model: Model }) {
   return <section>
-    <div style={sectionTitle}>{t('配色')}</div>
+    <div style={sectionTitle}>Colors</div>
     <div style={colorGrid}>{model.colorRoles.map((role) => {
       const value = colorOf(model.draft, role) ?? '';
       return <label key={role} style={colorRow}>
         <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000'}
           onChange={(event) => model.setColor(role, event.target.value)} style={colorInput(value)} />
-        <span title={role} style={colorLabel}>{COLOR_LABEL[role] ? t(COLOR_LABEL[role]) : localizeDesignRole(role, locale)}</span>
+        <span title={role} style={colorLabel}>{COLOR_LABEL[role] ? COLOR_LABEL[role] : role}</span>
         <input value={value} placeholder="#—" onChange={(event) => model.setColor(role, event.target.value)} style={hexInput} />
       </label>;
     })}</div>
@@ -211,7 +196,6 @@ function FontField({ label, role, value, onChange }: {
   value: string;
   onChange: (value: string) => void;
 }) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const options = useFontOptions(value);
@@ -219,63 +203,60 @@ function FontField({ label, role, value, onChange }: {
   useFontClickAway(open, boxRef, close);
   const pick = (family: string) => { onChange(family); close(); };
   return <div ref={boxRef} style={fontField}>
-    <span title={role} style={fontLabel}>{t(label)}</span>
+    <span title={role} style={fontLabel}>{label}</span>
     <div style={{ position: 'relative' }}>
-      <input value={value} placeholder={t('如 Inter / 得意黑')} onFocus={() => setOpen(true)}
+      <input value={value} placeholder="e.g. Inter / Smiley Sans" onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)} onChange={(event) => { onChange(event.target.value); setOpen(true); }}
         onKeyDown={(event) => { if (event.key === 'Escape') close(); }} style={{ ...textInput, paddingRight: 26 }} />
-      <button type="button" aria-label={t('从清单选择字体')}
+      <button type="button" aria-label="Pick a font from the list"
         onMouseDown={(event) => { event.preventDefault(); setOpen((current) => !current); }} style={caretBtn}>▾</button>
     </div>
     {open && <div style={fontMenu}>
-      <FontOptionGroup title={t('中文')} options={options.filter((option) => option.source === 'bundled')} onPick={pick} />
-      <FontOptionGroup title={t('西文')} options={options.filter((option) => option.source !== 'bundled')} onPick={pick} />
+      <FontOptionGroup title="Chinese" options={options.filter((option) => option.source === 'bundled')} onPick={pick} />
+      <FontOptionGroup title="Latin" options={options.filter((option) => option.source !== 'bundled')} onPick={pick} />
     </div>}
   </div>;
 }
 
-function FontsSection({ model, locale }: { model: Model; locale: Locale }) {
-  const t = useT();
+function FontsSection({ model }: { model: Model }) {
   return <section>
-    <div style={sectionTitle}>{t('字体')}</div>
+    <div style={sectionTitle}>Fonts</div>
     <div style={fontGrid}>{model.fontRoles.map((role) => <FontField key={role}
-      label={FONT_LABEL[role] ? t(FONT_LABEL[role]) : localizeDesignFontRole(role, locale)} role={role}
+      label={FONT_LABEL[role] ? FONT_LABEL[role] : role} role={role}
       value={fontOf(model.draft, role) ?? ''} onChange={(value) => model.setFont(role, value)} />)}</div>
   </section>;
 }
 
 function GuideSection({ model }: { model: Model }) {
-  const t = useT();
   return <section>
-    <div style={sectionTitle}>{t('工程创作指引（可选）')}</div>
-    <textarea value={model.draft.styleGuide ?? ''} placeholder={t('写下调色、字幕、节奏、转场偏好和禁用项，Agent 编辑时会遵守。')}
+    <div style={sectionTitle}>Project editing guide (optional)</div>
+    <textarea value={model.draft.styleGuide ?? ''} placeholder="Describe color, captions, pacing, transition preferences, and anything the Agent should avoid."
       onChange={(event) => model.setDraft((current) => ({ ...current, styleGuide: event.target.value }))}
       style={{ ...textInput, minHeight: 54, resize: 'vertical', fontFamily: 'inherit' }} />
   </section>;
 }
 
 function PreviewSection({ model }: { model: Model }) {
-  const t = useT();
   const { bg, fg, primary, accent, heading, body } = model.preview;
   return <section>
-    <div style={sectionTitle}>{t('预览')}</div>
+    <div style={sectionTitle}>Preview</div>
     <div style={{ background: bg, color: fg, borderRadius: 4, padding: '20px 22px', border: `0.5px solid ${theme.border}` }}>
-      <div style={{ fontFamily: heading, fontSize: 26, fontWeight: 800, marginBottom: 6 }}>{t('标题示例 Heading')}</div>
-      <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, marginBottom: 12 }}>{t('正文示例:这段文字演示正文字体与文字颜色的搭配效果。')}</div>
+      <div style={{ fontFamily: heading, fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Heading Sample</div>
+      <div style={{ fontFamily: body, fontSize: 14, opacity: 0.85, marginBottom: 12 }}>Body sample: this text shows the body font paired with the text color.</div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <span style={{ background: primary, color: bg, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 6 }}>{t('主色按钮')}</span>
-        <span style={{ background: accent, color: bg, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 6 }}>{t('强调')}</span>
+        <span style={{ background: primary, color: bg, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 6 }}>Primary button</span>
+        <span style={{ background: accent, color: bg, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 6 }}>Accent</span>
       </div>
     </div>
   </section>;
 }
 
-export function DesignStylePanelBody({ model, locale }: { model: Model; locale: Locale }) {
+export function DesignStylePanelBody({ model }: { model: Model }) {
   return <div style={body}>
-    <StyleSelectorSection model={model} locale={locale} />
+    <StyleSelectorSection model={model} />
     <MetadataSection model={model} />
-    <ColorsSection model={model} locale={locale} />
-    <FontsSection model={model} locale={locale} />
+    <ColorsSection model={model} />
+    <FontsSection model={model} />
     <GuideSection model={model} />
     <PreviewSection model={model} />
   </div>;
@@ -286,29 +267,28 @@ export function DesignStylePanelFooter({ model, onApply, onClose }: {
   onApply: (style: DesignStyle | null) => void;
   onClose: () => void;
 }) {
-  const t = useT();
   const { library, metadata } = model;
   const clear = () => { onApply(null); onClose(); };
   const apply = () => { onApply(model.draft); onClose(); };
   const imported = (entry: OwnedStyle) => { model.selectOwned(entry); void library.refreshOwned(); };
   return <div style={footer}>
     {model.savingName !== null && <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-      <input autoFocus value={model.savingName} placeholder={t('风格名称')}
+      <input autoFocus value={model.savingName} placeholder="Style name"
         onChange={(event) => model.setSavingName(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter') void model.saveOwned(); if (event.key === 'Escape') model.setSavingName(null); }}
         style={{ ...textInput, flex: 1 }} />
-      <button onClick={() => { void model.saveOwned(); }} style={primaryBtn}>{t('确定')}</button>
-      <button onClick={() => model.setSavingName(null)} style={ghostBtn}>{t('取消')}</button>
+      <button onClick={() => { void model.saveOwned(); }} style={primaryBtn}>OK</button>
+      <button onClick={() => model.setSavingName(null)} style={ghostBtn}>Cancel</button>
     </div>}
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-      <button onClick={clear} style={{ ...ghostBtn, color: theme.textDim }}>{t('清除风格')}</button>
-      <button onClick={() => model.setSavingName('')} style={ghostBtn}>{t('保存为我的风格')}</button>
+      <button onClick={clear} style={{ ...ghostBtn, color: theme.textDim }}>Clear style</button>
+      <button onClick={() => model.setSavingName('')} style={ghostBtn}>Save as my style</button>
       <DesignStyleTransferButtons name={metadata.name} style={model.draft}
         scenarios={metadata.scenarios.split(',').map((value) => value.trim()).filter(Boolean)}
         thumbnailUrl={metadata.thumbnail} onImported={imported} />
       <div style={{ flex: 1, minWidth: 8 }} />
-      <button onClick={onClose} style={ghostBtn}>{t('取消')}</button>
-      <button onClick={apply} style={primaryBtn}>{t('应用到工程')}</button>
+      <button onClick={onClose} style={ghostBtn}>Cancel</button>
+      <button onClick={apply} style={primaryBtn}>Apply to project</button>
     </div>
   </div>;
 }

@@ -37,8 +37,8 @@ const compacted = compactOperations([
 assert.equal(compacted.length, 1);
 assert.equal(compacted[0].callCount, 4);
 assert.equal(compacted[0].actions.length, 4);
-assert.equal(compacted[0].action, '人声隔离');
-assert.equal(compacted[0].impact, '4 处改动');
+assert.equal(compacted[0].action, 'Voice Isolation');
+assert.equal(compacted[0].impact, '4 changes');
 
 const distinctArguments = compactOperations([
   buildOperation('edit_captions', { itemId: 'clip-1', text: 'First' }, [{ type: 'setItemDenoise', id: 'clip-1', denoisedSrc: '/first.m4a', strength: 10 }]),
@@ -164,7 +164,7 @@ async function verifyProposalPersistenceFence(): Promise<void> {
     proposalPersistence(failedOrder, { saveDoc: async () => saveResult(false) }),
   );
   assert.equal(failedOrder.includes('apply'), false);
-  assert.match(failedErrors[0] ?? '', /提案未应用/);
+  assert.match(failedErrors[0] ?? '', /was not applied/);
 }
 async function verifyConcurrentRestoreFailureFence(): Promise<void> {
   const proposal = buildProposal(
@@ -201,7 +201,7 @@ async function verifyConcurrentRestoreFailureFence(): Promise<void> {
   assert.equal(order.filter((entry) => entry === 'apply').length, 1);
   assert.equal(order.some((entry) => entry.startsWith('settle-')), false);
   assert.equal(order.includes('durable-clear'), false, 'the applying recovery record remains durable');
-  assert.match(errors[0] ?? '', /提案未应用/);
+  assert.match(errors[0] ?? '', /was not applied/);
 }
 
 async function verifyCommittedRecoveryFence(): Promise<void> {
@@ -225,7 +225,7 @@ async function verifyCommittedRecoveryFence(): Promise<void> {
   );
   assert.equal(quotaOrder.includes('save'), false);
   assert.equal(quotaOrder.includes('apply'), false);
-  assert.match(quotaErrors[0] ?? '', /提案未应用/);
+  assert.match(quotaErrors[0] ?? '', /was not applied/);
 
   const crashOrder: string[] = [];
   const crashErrors: string[] = [];
@@ -239,7 +239,7 @@ async function verifyCommittedRecoveryFence(): Promise<void> {
   );
   assert.equal(crashOrder.includes('apply'), true, 'a saved document remains applied if settlement cleanup fails');
   assert.equal(crashOrder.includes('durable-clear'), false, 'the applying recovery record remains durable');
-  assert.match(crashErrors[0] ?? '', /已保存到工程/);
+  assert.match(crashErrors[0] ?? '', /saved to the project/);
 }
 
 async function verifyProposalOwnershipFence(): Promise<void> {
@@ -258,7 +258,7 @@ async function verifyProposalOwnershipFence(): Promise<void> {
     proposalState(unowned, applyOrder, applyErrors), 'proposal-persistence-verify', new Set([0]),
   );
   assert.equal(applyOrder.includes('apply'), false);
-  assert.match(applyErrors[0] ?? '', /运行权限/);
+  assert.match(applyErrors[0] ?? '', /claim the proposal run/);
   const rejectOrder: string[] = [];
   const rejectErrors: string[] = [];
   await rejectPendingProposal(
@@ -274,7 +274,7 @@ async function verifyProposalOwnershipFence(): Promise<void> {
     }),
   );
   assert.equal(rejectOrder.includes('clear'), true);
-  assert.match(rejectErrors[0] ?? '', /已拒绝/);
+  assert.match(rejectErrors[0] ?? '', /rejected/);
 }
 
 function persistentTurn(order: string[], controller = new AbortController()): AgentTurn {

@@ -244,19 +244,19 @@ export function formatWidgetAnswer(fields: WidgetField[], values: WidgetValues, 
     if (field.kind === 'multi') {
       const selected = Array.isArray(value) ? value : [value];
       const displays = selected.map((entry) => field.options.find((option) => option.value === entry)?.display ?? entry).filter(Boolean);
-      if (displays.length) lines.push(`- ${field.label}：${displays.join('、')}`);
+      if (displays.length) lines.push(`- ${field.label}: ${displays.join(', ')}`);
     } else if (field.kind === 'visual' || field.kind === 'voice' || field.kind === 'scenario') {
       const selected = Array.isArray(value) ? value : [value];
       const displays = selected.map((entry) => richDisplay(field, entry)).filter(Boolean);
-      if (displays.length) lines.push(`- ${field.label}：${displays.join('、')}`);
+      if (displays.length) lines.push(`- ${field.label}: ${displays.join(', ')}`);
     } else if (field.kind === 'text') {
       const text = typeof value === 'string' ? value.trim() : '';
-      if (text) lines.push(`- ${field.label}：${text}`);
+      if (text) lines.push(`- ${field.label}: ${text}`);
     } else {
       const selected = typeof value === 'string' ? value : '';
       const single = field as FormSingle;
       const display = single.options.find((option) => option.value === selected)?.display ?? selected;
-      if (display) lines.push(`- ${field.label}：${display}`);
+      if (display) lines.push(`- ${field.label}: ${display}`);
     }
   }
   return [messagePrefix?.trim(), ...lines].filter(Boolean).join('\n');

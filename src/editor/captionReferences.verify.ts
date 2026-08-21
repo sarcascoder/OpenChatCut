@@ -14,7 +14,7 @@ const staleEntries = Array.from({ length: 3 }, (_, index) => ({
 const manualEntry = {
   id: 'manual-lane',
   itemId: 'manual:manual-lane',
-  words: [{ text: '保留', start: 0, end: 500 }],
+  words: [{ text: 'Keep', start: 0, end: 500 }],
 };
 const captions = {
   enabled: true,

@@ -29,7 +29,7 @@ export async function execLoudnessTool(name: string, args: Args, ctx: AgentConte
   if (items.length === 0) {
     return args.itemId
       ? { error: `no audio clip ${args.itemId}` }
-      : { ok: true, normalized: [], target, note: 'timeline 上没有音频 clip' };
+      : { ok: true, normalized: [], target, note: 'no audio clips on the timeline' };
   }
 
   const normalized: { itemId: string; measuredLufs: number; gain: number }[] = [];
@@ -46,7 +46,7 @@ export async function execLoudnessTool(name: string, args: Args, ctx: AgentConte
       ctx.commands.setItemVolume(item.id, gain); // Reuse existing commands without adding reducer actions
       normalized.push({ itemId: item.id, measuredLufs, gain });
     } catch (e) {
-      skipped.push({ itemId: item.id, note: `解码失败: ${e instanceof Error ? e.message : String(e)}` });
+      skipped.push({ itemId: item.id, note: `decode failed: ${e instanceof Error ? e.message : String(e)}` });
     }
   }
 

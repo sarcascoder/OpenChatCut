@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from 'react';
-import { useT } from '../../i18n/locale';
 import type { AgentContextUsage } from '../../agent/context-compaction';
 import {
   getAgentModelSnapshot,
@@ -31,7 +30,6 @@ export interface ComposerModelView {
 export function useComposerModelView(
   contextUsage: AgentContextUsage | null,
 ): ComposerModelView {
-  const t = useT();
   const modelState = useSyncExternalStore(
     subscribeAgentModels,
     getAgentModelSnapshot,
@@ -65,24 +63,16 @@ export function useComposerModelView(
     ? `${usedEstimated ? '~' : ''}${compactTokens(used)} / ${limitEstimated ? '~' : ''}${compactTokens(limit)}`
     : '';
   const breakdown = contextUsage && usageMatchesModel && contextUsage.systemTokens !== undefined
-    ? t('系统 {system} · 工具 {tools}（{toolCount} 个）· 历史 {history}', {
-        system: `≈${compactTokens(contextUsage.systemTokens)}`,
-        tools: `≈${compactTokens(contextUsage.toolSchemaTokens ?? 0)}`,
-        toolCount: String(contextUsage.toolCount ?? 0),
-        history: `≈${compactTokens(contextUsage.historyTokens ?? 0)}`,
-      })
+    ? `System ${`≈${compactTokens(contextUsage.systemTokens)}`} · tools ${`≈${compactTokens(contextUsage.toolSchemaTokens ?? 0)}`} (${String(contextUsage.toolCount ?? 0)}) · history ${`≈${compactTokens(contextUsage.historyTokens ?? 0)}`}`
     : '';
   const cache = contextUsage && usageMatchesModel && contextUsage.cacheReadTokens !== undefined
-    ? t('缓存读取 {tokens}', { tokens: compactTokens(contextUsage.cacheReadTokens) })
+    ? `Cache read ${compactTokens(contextUsage.cacheReadTokens)}`
     : '';
   const contextSummary = activeModel
-    ? t('上下文：{used} / {limit}', {
-        used: `${usedEstimated ? '≈' : ''}${compactTokens(used)}`,
-        limit: `${limitEstimated ? '≈' : ''}${compactTokens(limit)}`,
-      })
-    : t('选择模型');
+    ? `Context: ${`${usedEstimated ? '≈' : ''}${compactTokens(used)}`} / ${`${limitEstimated ? '≈' : ''}${compactTokens(limit)}`}`
+    : 'Choose model';
   const warning = contextNearLimit
-    ? t('上下文接近上限，发送后可能自动压缩较早对话。')
+    ? 'Context is near its limit; sending may compact earlier conversation.'
     : '';
   const contextTitle = [contextSummary, warning, breakdown, cache].filter(Boolean).join('\n');
   return {

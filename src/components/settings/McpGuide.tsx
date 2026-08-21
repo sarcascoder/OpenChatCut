@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { editorBootstrapInfo } from '../../agent/editor-credential';
 import { theme } from '../../theme';
-import { useT } from '../../i18n/locale';
 import { Icon } from '../icons';
 
 interface Snippet {
@@ -36,7 +35,6 @@ function snippets(endpoint: string, token: string): Snippet[] {
 }
 
 function CopyButton({ text }: { text: string }) {
-  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -55,13 +53,12 @@ function CopyButton({ text }: { text: string }) {
       }}
     >
       <Icon name={copied ? 'check' : 'copy'} size={11} />
-      {copied ? t('已复制') : t('复制到剪贴板')}
+      {copied ? 'Copied' : 'Copy'}
     </button>
   );
 }
 
 export function McpGuideDialog({ onClose }: { onClose: () => void }) {
-  const t = useT();
   const endpoint = `${window.location.origin}/api/external-mcp/mcp`;
   const [mcpToken, setMcpToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState(false);
@@ -88,30 +85,30 @@ export function McpGuideDialog({ onClose }: { onClose: () => void }) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start' }}>
           <Icon name="plug" size={15} />
-          <strong style={{ fontSize: 14 }}>{t('外部 Agent 接入 (MCP)')}</strong>
-          <button type="button" onClick={onClose} style={{ marginLeft: 'auto', padding: '3px 9px' }}>{t('关闭')}</button>
+          <strong style={{ fontSize: 14 }}>External agents (MCP)</strong>
+          <button type="button" onClick={onClose} style={{ marginLeft: 'auto', padding: '3px 9px' }}>Close</button>
         </div>
         <div style={{ color: theme.textMuted, fontSize: 12, lineHeight: 1.55 }}>
-          {t('OpenChatCut 暴露一个 Streamable HTTP MCP 端点。Claude Code / Codex / Cursor 等外部 Agent 接入后,与内置 Agent 共用同一套编辑工具,可直接读写当前工程。')}
+          OpenChatCut exposes a Streamable HTTP MCP endpoint. External agents such as Claude Code, Codex, and Cursor share the same editing tools as the built-in agent and can read and edit the current project directly.
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 12, fontWeight: 600 }}>{t('内置 Agent 与外部 MCP')}</span>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Built-in Agent vs external MCP</span>
           <div style={{ color: theme.textMuted, fontSize: 12, lineHeight: 1.55 }}>
-            {t('内置 Agent 会先生成可预览的修改提案，由你应用或拒绝；外部 MCP 使用独立编辑会话，manual 模式等待审核，auto 模式在 review 时直接应用。两者都只通过 EditorCore 命令修改工程。')}
+            The built-in Agent creates a previewable proposal for you to apply or reject. External MCP uses an isolated edit session: manual mode waits for review, while auto mode applies during review. Both modify projects only through EditorCore commands.
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 12, fontWeight: 600 }}>{t('连接本地模型')}</span>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Connect a local model</span>
           <div style={{ color: theme.textMuted, fontSize: 12, lineHeight: 1.55 }}>
-            {t('打开 设置 → Agent 模型 → Agent 大脑 → OpenAI，填写本地或兼容服务的 API URL 和模型；按服务选择 Responses API 或 Chat Completions API，再点“测试并读取模型”。仅在服务要求时填写 API Key。')}
+            Open Settings → Agent Model → Agent Brain → OpenAI, enter the API URL and model for your local or compatible service, choose Responses API or Chat Completions API as required, then click “Test and load models.” Enter an API key only if the service requires one.
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start' }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>{t('端点地址')}</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Endpoint</span>
             <CopyButton text={endpoint} />
           </div>
           <pre style={codeStyle}>{endpoint}</pre>
@@ -127,12 +124,12 @@ export function McpGuideDialog({ onClose }: { onClose: () => void }) {
           </div>
         )) : (
           <div style={{ color: tokenError ? theme.danger : theme.textMuted, fontSize: 12 }}>
-            {tokenError ? t('无法读取 MCP 连接令牌，请从受信任的编辑器窗口重试。') : t('正在读取 MCP 连接令牌…')}
+            {tokenError ? 'Could not load the MCP connection token. Retry from a trusted editor window.' : 'Loading the MCP connection token…'}
           </div>
         )}
 
         <div style={{ color: theme.textDim, fontSize: 11.5, lineHeight: 1.55, borderTop: `0.5px solid ${theme.borderLight}`, paddingTop: 8 }}>
-          {t('MCP 端点始终要求 Bearer 令牌。令牌在首次启动时生成并保存在本机，重启后保持不变，配置一次即可持续使用；OPENCHATCUT_MCP_TOKEN 环境变量可覆盖。令牌只在当前受信任编辑器会话中显示，不写入工程、聊天或浏览器存储。')}
+          The MCP endpoint always requires a bearer token. The token is generated on first launch and kept on this machine, so it stays the same across restarts: registering once keeps working; the OPENCHATCUT_MCP_TOKEN environment variable overrides it. The token is shown only in the current trusted editor session and is never written to the project, chat, or browser storage.
         </div>
       </div>
     </div>

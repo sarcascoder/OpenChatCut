@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { theme } from '../theme';
-import { t as translate, useT } from '../i18n/locale';
 import { setLibraryDrag, type LibraryDragKind } from './drag';
 import {
   PreviewCleanupContext,
@@ -61,7 +60,6 @@ interface ResourceBrowserProps {
   dragKind?: LibraryDragKind;
 }
 
-type Translate = typeof translate;
 
 interface ActiveInteraction {
   scope: LibraryDragKind | undefined;
@@ -81,13 +79,12 @@ interface ResourceCardProps {
   onPointerChange: (id: string | null) => void;
   onFocusChange: (id: string | null) => void;
   onDragChange: (id: string | null) => void;
-  t: Translate;
 }
 
-function resourceCardTitle(item: ResourceItem, clickable: boolean, canDrag: boolean, t: Translate): string {
-  if (clickable) return t('点击应用 / 拖到时间线：{name}', { name: item.name });
-  if (canDrag) return t('拖到时间线片段：{name}', { name: item.name });
-  return t('预览：{name}（选中片段后可应用）', { name: item.name });
+function resourceCardTitle(item: ResourceItem, clickable: boolean, canDrag: boolean): string {
+  if (clickable) return `Click to apply / drag to timeline: ${item.name}`;
+  if (canDrag) return `Drag onto a timeline clip: ${item.name}`;
+  return `Preview: ${item.name} (select a clip to apply)`;
 }
 
 const ResourceCard = memo(function ResourceCard(props: ResourceCardProps) {
@@ -102,7 +99,7 @@ const ResourceCard = memo(function ResourceCard(props: ResourceCardProps) {
       onDragStart={(event) => { props.onDragChange(item.id); onDragStart(event, item); }}
       onDragEnd={() => props.onDragChange(null)}
       onClick={() => { if (clickable) onApply(item.id); }}
-      title={resourceCardTitle(item, clickable, canDrag, props.t)}
+      title={resourceCardTitle(item, clickable, canDrag)}
       className={classes}
       onPointerEnter={() => props.onPointerChange(item.id)}
       onPointerLeave={() => props.onPointerChange(null)}
@@ -116,7 +113,7 @@ const ResourceCard = memo(function ResourceCard(props: ResourceCardProps) {
             ? <img src={src} alt="" draggable={false} loading="lazy" decoding="async" />
             : <span className="cc-resource-thumb-placeholder" />}
       </div>
-      <div className="cc-resource-name">{props.t(item.name)}</div>
+      <div className="cc-resource-name">{item.name}</div>
     </button>
   );
 });
@@ -178,14 +175,13 @@ interface ResourceListItemProps {
   onApply: (id: string) => void;
   onDragStart: (event: DragEvent<HTMLButtonElement>, item: ResourceItem) => void;
   onDragChange: (id: string | null) => void;
-  t: Translate;
 }
 
-const ResourceListItem = memo(function ResourceListItem({ item, clickable, canDrag, thumb, onApply, onDragStart, onDragChange, t }: ResourceListItemProps) {
+const ResourceListItem = memo(function ResourceListItem({ item, clickable, canDrag, thumb, onApply, onDragStart, onDragChange }: ResourceListItemProps) {
   const src = thumb?.(item.id) ?? '';
   const title = clickable
-    ? t('应用到选中片段：{name}', { name: item.name })
-    : canDrag ? t('拖到时间线：{name}', { name: item.name }) : undefined;
+    ? `Apply to selected clip: ${item.name}`
+    : canDrag ? `Drag to timeline: ${item.name}` : undefined;
   return (
     <button
       className="cc-resource-list-item"
@@ -206,10 +202,10 @@ const ResourceListItem = memo(function ResourceListItem({ item, clickable, canDr
       {src ? <img src={src} alt="" draggable={false} loading="lazy" decoding="async"
         style={{ width: '100%', height: 66, objectFit: 'cover', borderRadius: 5, marginBottom: 5, background: theme.inset }} /> : null}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12.5, fontWeight: 500 }}>{t(item.name)}</span>
-        {item.badge && <span style={{ fontSize: 9, color: theme.accent, border: `0.5px solid ${theme.accent}`, borderRadius: 3, padding: '0 3px' }}>{t(item.badge)}</span>}
+        <span style={{ fontSize: 12.5, fontWeight: 500 }}>{item.name}</span>
+        {item.badge && <span style={{ fontSize: 9, color: theme.accent, border: `0.5px solid ${theme.accent}`, borderRadius: 3, padding: '0 3px' }}>{item.badge}</span>}
       </div>
-      {item.desc && <span style={{ fontSize: 10.5, color: theme.textDim, lineHeight: 1.35 }}>{t(item.desc)}</span>}
+      {item.desc && <span style={{ fontSize: 10.5, color: theme.textDim, lineHeight: 1.35 }}>{item.desc}</span>}
     </button>
   );
 });
@@ -250,17 +246,16 @@ function usePreviewCleanupRegistration(scope: LibraryDragKind | undefined): Regi
 export function ResourceBrowser({
   hint, items, onApply, applicable, disabledNote, thumb, renderThumb, layout = 'list', dragKind,
 }: ResourceBrowserProps) {
-  const t = useT();
   const registerCleanup = usePreviewCleanupRegistration(dragKind);
   const { activeId, setPointerId, setFocusId } = useActivePreview(dragKind);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const clickable = applicable && !disabledNote;
   const canDrag = !!dragKind && !disabledNote;
   const hintText = disabledNote
-    ? t(disabledNote)
+    ? disabledNote
     : applicable
-      ? `${t(hint)}${canDrag ? t(' · 也可拖到时间线片段上') : ''}`
-      : `${t(hint)}${t('（先在时间线选中，或直接拖到片段上）')}`;
+      ? `${hint}${canDrag ? ' · You can also drag it onto a timeline clip' : ''}`
+      : `${hint}${' (select a clip on the timeline first, or drag straight onto a clip)'}`;
   const onDragStart = useCallback((event: DragEvent<HTMLButtonElement>, item: ResourceItem) => {
     if (!canDrag || !dragKind) return;
     setLibraryDrag(event, {
@@ -280,10 +275,10 @@ export function ResourceBrowser({
           <ResourceGrid items={items} activeId={activeId} draggedId={draggedId}
             clickable={clickable} canDrag={canDrag} renderThumb={renderThumb} thumb={thumb}
             onApply={onApply} onDragStart={onDragStart} onDragChange={setDraggedId}
-            onPointerChange={setPointerId} onFocusChange={setFocusId} t={t} />
+            onPointerChange={setPointerId} onFocusChange={setFocusId} />
         ) : items.map((item) => (
           <ResourceListItem key={item.id} item={item} clickable={clickable} canDrag={canDrag}
-            thumb={thumb} onApply={onApply} onDragStart={onDragStart} onDragChange={setDraggedId} t={t} />
+            thumb={thumb} onApply={onApply} onDragStart={onDragStart} onDragChange={setDraggedId} />
         ))}
       </div>
     </PreviewCleanupContext.Provider>

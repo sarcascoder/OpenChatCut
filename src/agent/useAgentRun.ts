@@ -84,9 +84,9 @@ async function restoreUncommittedSave(
   if (!turn.abortController.signal.aborted && latestDoc === expectedDoc) return false;
   const restored = await persist(turn.projectId, latestDoc).catch(() => null);
   if (!restored?.saved) {
-    showRunError(turn, 'Agent 已停止，但无法恢复工程存储。请重新打开工程并检查内容。');
+    showRunError(turn, 'The agent stopped, but the project storage could not be restored. Reopen the project and check its contents.');
   } else if (!turn.abortController.signal.aborted) {
-    showRunError(turn, '保存期间工程发生了其他修改；Agent 改动未应用，请重新发送请求。');
+    showRunError(turn, 'The project changed elsewhere while saving; the agent edits were not applied, please send the request again.');
   }
   return true;
 }
@@ -98,14 +98,14 @@ export async function commitPersistentOperations(
   await turn.persistentSnapshot;
   if (turn.abortController.signal.aborted) return false;
   if (turn.persistentSaveError) {
-    showRunError(turn, '无法创建修改前版本，Agent 改动未应用。请检查本地存储后重试。');
+    showRunError(turn, 'Could not create the pre-edit version, so the agent edits were not applied. Check local storage and try again.');
     return false;
   }
   turn.state.llmProviderRef.current = PROVIDER;
   if (!turn.persistentBeforeDoc || !turn.persistentOps.length) return true;
   const currentDoc = turn.state.ctxRef.current.getDoc();
   if (turn.draftInvalidated || currentDoc !== turn.persistentBeforeDoc) {
-    showRunError(turn, '生成期间工程发生了其他修改；Agent 改动未应用，请重新发送请求。');
+    showRunError(turn, 'The project changed elsewhere while generating; the agent edits were not applied, please send the request again.');
     return false;
   }
   const actions = turn.persistentOps.flatMap((operation) => operation.actions);
@@ -113,7 +113,7 @@ export async function commitPersistentOperations(
   if (turn.abortController.signal.aborted) return false;
   const saved = await persist(turn.projectId, afterDoc).catch(() => null);
   if (!saved?.saved) {
-    showRunError(turn, '无法保存工程，Agent 改动未应用。请检查本地存储后重试。');
+    showRunError(turn, 'Could not save the project, so the agent edits were not applied. Check local storage and try again.');
     return false;
   }
   if (await restoreUncommittedSave(turn, currentDoc, persist)) return false;
@@ -146,7 +146,7 @@ export async function createPendingProposal(
     return null;
   }
   if (turn.draftInvalidated) {
-    showRunError(turn, '生成期间工程发生了其他修改；素材已保存到媒体池，请重新发送落轨请求。');
+    showRunError(turn, 'The project changed elsewhere while generating; the media was saved to the media pool, please send the place-on-timeline request again.');
     return null;
   }
   if (!turn.runId) return null;

@@ -1,6 +1,5 @@
 import { heicTo } from 'heic-to/csp';
 import type { MediaAsset, MediaAssetKind } from '../editor/types';
-import { t } from '../i18n/locale';
 import { kindOfDescriptor, probeMediaSource } from './mediaProbe';
 import type { MobileUploadRecord } from './mobileUploadApi';
 import { importMedia, normalizeUploadedVideo } from './upload';
@@ -26,13 +25,13 @@ async function convertHeic(record: MobileUploadRecord): Promise<File> {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const converted = await heicTo({ blob: await response.blob(), type: 'image/jpeg', quality: HEIC_JPEG_QUALITY });
   const jpeg = Array.isArray(converted) ? converted[0] : converted;
-  if (!(jpeg instanceof Blob)) throw new Error(t('HEIC 转换失败'));
+  if (!(jpeg instanceof Blob)) throw new Error('HEIC conversion failed');
   return new File([jpeg], jpegName(record.name), { type: 'image/jpeg' });
 }
 
 async function importServerMedia(record: MobileUploadRecord, fps: number): Promise<MediaAsset> {
   const kind = kindOfDescriptor(record.name, record.mime);
-  if (!kind) throw new Error(t('不支持的文件类型（视频 / 图片 / 音频 / GIF / SVG）'));
+  if (!kind) throw new Error('Unsupported file type (video / image / audio / GIF / SVG)');
   const metadata = await probeMediaSource(record.path, kind, fps);
   const sourceSize = record.bytes;
   const sourceModifiedAt = record.createdAt;

@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import type { EditorCommands } from '../editor/store';
 import type { TimelineItem, TimelineState } from '../editor/types';
 import { Icon } from '../components/icons';
-import { useT } from '../i18n/locale';
 import { analyzeMotion } from './analyzeMotion';
 import { buildTrackingKeyframeActions, trackingTargets, type TrackingApplyMode } from './keyframeActions';
 import { TrackingError, type TrackingProgress, type TrackingRegion, type TrackingResult } from './types';
@@ -19,18 +18,17 @@ interface AnalysisState {
 const STABILIZE = '__stabilize__';
 const INITIAL_REGION: TrackingRegion = { x: 0.35, y: 0.3, width: 0.3, height: 0.4 };
 
-function errorLabel(error: unknown, t: ReturnType<typeof useT>): string {
+function errorLabel(error: unknown): string {
   if (!(error instanceof TrackingError)) return error instanceof Error ? error.message : String(error);
   return ({
-    'load-failed': t('无法读取所选视频'),
-    'seek-failed': t('读取视频帧超时'),
-    'flat-target': t('框选区域缺少纹理，请选择边缘和细节更明显的目标'),
-    'invalid-region': t('框选区域太小，请重新框选'),
+    'load-failed': 'Could not read the selected video',
+    'seek-failed': 'Timed out while reading video frames',
+    'flat-target': 'The selected area lacks texture. Choose a target with clearer edges and detail.',
+    'invalid-region': 'The selected area is too small. Draw a larger box.',
   })[error.code];
 }
 
 function useTrackingAnalysis(state: TimelineState, item: TimelineItem, region: TrackingRegion, minConfidence: number): AnalysisState {
-  const t = useT();
   const [progress, setProgress] = useState<TrackingProgress | null>(null);
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +46,7 @@ function useTrackingAnalysis(state: TimelineState, item: TimelineItem, region: T
         region, minConfidence, signal: controller.signal, onProgress: setProgress,
       }));
     } catch (cause) {
-      if (!(cause instanceof DOMException && cause.name === 'AbortError')) setError(errorLabel(cause, t));
+      if (!(cause instanceof DOMException && cause.name === 'AbortError')) setError(errorLabel(cause));
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       setRunning(false);
@@ -59,10 +57,9 @@ function useTrackingAnalysis(state: TimelineState, item: TimelineItem, region: T
 }
 
 function TrackingHeader({ item, close }: { item: TimelineItem; close: () => void }) {
-  const t = useT();
   return <header className="cc-tracking-header">
-    <div><h2 id="cc-tracking-title">{t('运动跟踪')} <em>{t('实验功能')}</em></h2><p>{item.name} · {t('本机分析，不上传素材')}</p></div>
-    <button type="button" autoFocus onClick={close} aria-label={t('关闭')}><Icon name="x" size={17} /></button>
+    <div><h2 id="cc-tracking-title">Motion tracking <em>Experimental</em></h2><p>{item.name} · Analyzed locally — media is not uploaded</p></div>
+    <button type="button" autoFocus onClick={close} aria-label="Close"><Icon name="x" size={17} /></button>
   </header>;
 }
 
@@ -73,38 +70,35 @@ interface TrackingSettingsProps {
 }
 
 function TrackingSettings(props: TrackingSettingsProps) {
-  const t = useT();
   return <aside>
-    <label><span>{t('应用方式')}</span><select value={props.targetId} disabled={props.running} onChange={(event) => props.onTarget(event.target.value)}>
-      <option value={STABILIZE}>{t('稳定所选视频画面')}</option>
-      {props.targets.map((target) => <option key={target.id} value={target.id}>{t('让「{name}」跟随目标', { name: target.name })}</option>)}
+    <label><span>Apply mode</span><select value={props.targetId} disabled={props.running} onChange={(event) => props.onTarget(event.target.value)}>
+      <option value={STABILIZE}>Stabilize the selected video</option>
+      {props.targets.map((target) => <option key={target.id} value={target.id}>{`Make “${target.name}” follow the target`}</option>)}
     </select></label>
-    <label><span>{t('最低置信度')}</span><strong>{props.minConfidence.toFixed(2)}</strong><input type="range" min={0.5} max={0.9} step={0.01} value={props.minConfidence} disabled={props.running} onChange={(event) => props.onConfidence(Number(event.target.value))} /></label>
-    <div className="cc-tracking-progress"><div><span>{props.running ? t('正在跟踪画面…') : props.result ? t('跟踪分析完成') : t('等待框选目标')}</span><strong>{props.percent}%</strong></div><i><b style={{ transform: `scaleX(${props.percent / 100})` }} /></i></div>
+    <label><span>Minimum confidence</span><strong>{props.minConfidence.toFixed(2)}</strong><input type="range" min={0.5} max={0.9} step={0.01} value={props.minConfidence} disabled={props.running} onChange={(event) => props.onConfidence(Number(event.target.value))} /></label>
+    <div className="cc-tracking-progress"><div><span>{props.running ? 'Tracking frames…' : props.result ? 'Tracking complete' : 'Waiting for target selection'}</span><strong>{props.percent}%</strong></div><i><b style={{ transform: `scaleX(${props.percent / 100})` }} /></i></div>
     {props.result && <div className={`cc-tracking-result${props.result.stoppedBecauseLost ? ' warning' : ''}`}>
-      <strong>{t('{n} 个有效跟踪点', { n: props.result.points.length })}</strong>
-      <span>{t('平均置信度 {value}', { value: props.result.averageConfidence.toFixed(2) })}</span>
-      {props.result.stoppedBecauseLost && <small>{t('目标连续丢失，已提前停止；低置信度帧不会写入关键帧。')}</small>}
+      <strong>{`${props.result.points.length} valid tracking points`}</strong>
+      <span>{`Average confidence ${props.result.averageConfidence.toFixed(2)}`}</span>
+      {props.result.stoppedBecauseLost && <small>The target was repeatedly lost, so tracking stopped early. Low-confidence frames will not become keyframes.</small>}
     </div>}
-    {props.locked && <p className="cc-tracking-error">{t('目标轨道已锁定')}</p>}
+    {props.locked && <p className="cc-tracking-error">The target track is locked</p>}
     {props.error && <p className="cc-tracking-error">{props.error}</p>}
-    <p className="cc-tracking-note">{t('应用后会替换目标现有的 X/Y 关键帧；可在“变换”中继续手动修正。')}</p>
+    <p className="cc-tracking-note">Applying replaces the target’s existing X/Y keyframes. You can refine them manually under Transform.</p>
   </aside>;
 }
 
 interface TrackingFooterProps { analysis: AnalysisState; applied: boolean; canApply: boolean; apply: () => void }
 function TrackingFooter({ analysis, applied, canApply, apply }: TrackingFooterProps) {
-  const t = useT();
-  return <footer><span>{applied ? t('已应用；一次撤销可还原全部跟踪关键帧') : ''}</span><div>
+  return <footer><span>{applied ? 'Applied. One undo restores all previous tracking keyframes.' : ''}</span><div>
     {analysis.running
-      ? <button type="button" onClick={analysis.cancel}>{t('取消跟踪')}</button>
-      : <button type="button" onClick={() => void analysis.run()}>{analysis.result ? t('重新分析') : t('开始分析')}</button>}
-    <button type="button" className="primary" disabled={!canApply || applied} onClick={apply}>{t('应用关键帧')}</button>
+      ? <button type="button" onClick={analysis.cancel}>Cancel tracking</button>
+      : <button type="button" onClick={() => void analysis.run()}>{analysis.result ? 'Analyze again' : 'Start analysis'}</button>}
+    <button type="button" className="primary" disabled={!canApply || applied} onClick={apply}>Apply keyframes</button>
   </div></footer>;
 }
 
 export function MotionTrackingDialog({ state, commands, item, onClose }: MotionTrackingDialogProps) {
-  const t = useT();
   const targets = useMemo(() => trackingTargets(state, item), [state, item]);
   const [targetId, setTargetId] = useState(targets[0]?.id ?? STABILIZE);
   const [region, setRegion] = useState<TrackingRegion>(INITIAL_REGION);
@@ -119,7 +113,7 @@ export function MotionTrackingDialog({ state, commands, item, onClose }: MotionT
   const apply = () => {
     if (!analysis.result || !target || locked) return;
     const actions = buildTrackingKeyframeActions({ state, source: item, target, result: analysis.result, mode });
-    if (!actions.length) return analysis.setError(t('有效跟踪点与目标片段没有足够的重叠范围'));
+    if (!actions.length) return analysis.setError('The valid tracking points do not overlap the target clip long enough');
     commands.batch(actions, 'Apply experimental motion tracking');
     setApplied(true);
   };
@@ -131,7 +125,7 @@ export function MotionTrackingDialog({ state, commands, item, onClose }: MotionT
       <TrackingHeader item={item} close={close} />
       <div className="cc-tracking-body"><main>
         <TrackingRegionPicker item={item} fps={state.fps} region={region} points={analysis.result?.points ?? []} disabled={analysis.running} onChange={changeRegion} />
-        <p>{t('在起始画面拖拽框选纹理清晰的目标；按住 Ctrl/⌘ 滚轮可缩放预览。分析后轨迹会显示在画面上。')}</p>
+        <p>Drag around a clearly textured target in the first frame. Hold Ctrl/⌘ and scroll to zoom the preview. Its path appears after analysis.</p>
       </main><TrackingSettings targets={targets} targetId={targetId} running={analysis.running} minConfidence={minConfidence} percent={percent} result={analysis.result} locked={locked} error={analysis.error} onTarget={changeTarget} onConfidence={changeConfidence} /></div>
       <TrackingFooter analysis={analysis} applied={applied} canApply={!!analysis.result && analysis.result.points.length >= 2 && !!target && !locked} apply={apply} />
     </section>

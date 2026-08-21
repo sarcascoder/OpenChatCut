@@ -90,11 +90,11 @@ export const modelSelect = (
 export const routeSelect = (
   name: string,
   options: readonly SelectOption[],
-  defaultOptionLabel = '每次询问（默认）',
+  defaultOptionLabel = 'Ask every time (default)',
 ): SettingsField => ({
   name,
-  label: '默认厂商',
+  label: 'Default vendor',
   kind: 'select',
-  note: '选中未配置的厂商时，Agent 会回退为先询问。',
+  note: 'If the chosen vendor is not configured, the Agent falls back to asking first.',
   options: [{ value: '', label: defaultOptionLabel }, ...options],
 });

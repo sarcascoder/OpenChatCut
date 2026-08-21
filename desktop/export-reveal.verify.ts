@@ -34,13 +34,12 @@ assert.equal(
 const main = readFileSync(new URL('./main.ts', import.meta.url), 'utf8');
 const preload = readFileSync(new URL('./preload.ts', import.meta.url), 'utf8');
 const history = readFileSync(new URL('../src/components/ExportHistory.tsx', import.meta.url), 'utf8');
-const english = readFileSync(new URL('../src/i18n/dict/en/components.ts', import.meta.url), 'utf8');
 assert.match(main, /openchatcut:reveal-export/, 'Electron main must own the filesystem reveal operation');
 assert.match(preload, /revealExport\(destinationId: string, filename: string\)/, 'the preload bridge must expose a narrow identity-bound reveal method');
 assert.match(history, /r\.destinationId && window\.openChatCutDesktop\?\.revealExport/, 'legacy and browser rows must not offer reveal');
 assert.match(history, /revealExport\(r\.destinationId!, r\.name\)\.catch\(\(\) => undefined\)/, 'history reveal must carry its own destination identity without unhandled rejections');
 assert.match(main, /trustedDesktopHandler\(trustedOrigin, async \(/, 'native reveal must remain behind trusted sender validation');
 assert.doesNotMatch(main, /restorePersistedExportDirectory\(exportStatePath\) \?\? app\.getPath\('downloads'\)/, 'reveal must never fall back to the current directory or Downloads');
-assert.match(english, /'打开文件夹': 'Open Folder'/, 'the new export action must stay localized in English');
+assert.match(history, /Open Folder/, 'the export row must offer the reveal action by name');
 
 console.log('export-reveal.verify: history reveal stays inside the trusted desktop boundary');

@@ -35,9 +35,9 @@ const tl: Timeline = {
   selectedId: null,
   trackOrder: ['V1', 'A1', 'A2'],
   tracks: {
-    V1: { kind: 'video', name: '视频 1' },
-    A1: { kind: 'audio', name: '音频 1' },
-    A2: { kind: 'audio', name: '音频 2' },
+    V1: { kind: 'video', name: 'Video 1' },
+    A1: { kind: 'audio', name: 'Audio 1' },
+    A2: { kind: 'audio', name: 'Audio 2' },
   },
 };
 
@@ -75,7 +75,7 @@ console.log(`catalog: fx=${FX_IDS.length} lut=${LUT_IDS.length} tr=${TRANSITION_
   const root = await execLibraryTool('browse_library', {}, ctx) as { mode: string; categories: Record<string, number> };
   assert.strictEqual(root.mode, 'root');
   assert.ok(root.categories.fx >= 20, 'browse root lists fx');
-  assert.ok(root.categories.transitions >= 12, `browse root transitions ≥12 builtin (got ${root.categories.transitions}; clone 扩展超集)`);
+  assert.ok(root.categories.transitions >= 12, `browse root transitions ≥12 builtin (got ${root.categories.transitions}; a clone may extend the set)`);
   assert.ok(root.categories.zoom >= 4, 'browse root zoom');
   assert.ok(root.categories.luts >= 4, 'browse root luts');
 
@@ -155,14 +155,14 @@ console.log(`catalog: fx=${FX_IDS.length} lut=${LUT_IDS.length} tr=${TRANSITION_
   console.log('edit_item transition: OK');
 }
 
-// ── 4b. edit_item 引用 plugin: 转场 assetId(已装插件注册进 custom 注册表) ────
+// ── 4b. edit_item referencing a plugin: transition assetId (installed plugins register into the custom registry) ──
 {
   const { registerCustomTransition, __resetCustomTransitions } = await import('../../gl/customTransitions');
   registerCustomTransition({
     id: 'plugin:demo/ink',
-    label: '水墨',
+    label: 'Ink wash',
     frag: 'uniform sampler2D u_outgoing; uniform sampler2D u_incoming; uniform float u_progress; void main(){}',
-    props: [{ key: 'soft', label: '柔和', default: 0.3, min: 0, max: 1 }],
+    props: [{ key: 'soft', label: 'Softness', default: 0.3, min: 0, max: 1 }],
   });
   const d = makeDraft(base);
   const ctx = ctxOf(d);
@@ -172,10 +172,10 @@ console.log(`catalog: fx=${FX_IDS.length} lut=${LUT_IDS.length} tr=${TRANSITION_
   assert.strictEqual(r.ok, true, `plugin transition failed: ${JSON.stringify(r)}`);
   const t = (ctx.getState().transitions ?? [])[0];
   assert.strictEqual(t.type, 'custom-shader');
-  assert.ok(t.customFrag?.includes('u_progress'), 'frag 快照上 item');
-  assert.strictEqual(t.customLabel, '水墨');
+  assert.ok(t.customFrag?.includes('u_progress'), 'frag snapshotted onto the item');
+  assert.strictEqual(t.customLabel, 'Ink wash');
   assert.deepStrictEqual(t.customUniforms, { u_soft: 0.3 });
-  // 未装/坏 id → 明确报错不落库
+  // uninstalled/bad id → explicit error, nothing written
   const bad = await execEditItemTool('edit_item', {
     adds: [{ type: 'transition', assetId: 'plugin:ghost/nope', incomingItemId: 'v_b' }],
   }, ctxOf(makeDraft(base))) as { ok?: boolean; error?: string };
@@ -184,38 +184,38 @@ console.log(`catalog: fx=${FX_IDS.length} lut=${LUT_IDS.length} tr=${TRANSITION_
   console.log('edit_item plugin transition: OK');
 }
 
-// ── 4c. edit_item 缩放:插件曲线 assetId + raw envelope 入参 + shape/envelope 互斥 ──
+// ── 4c. edit_item zoom: plugin curve assetId + raw envelope argument + shape/envelope are mutually exclusive ──
 {
   const { registerCustomZoom, __resetCustomZooms } = await import('../../editor/customZooms');
-  registerCustomZoom({ id: 'plugin:demo/elastic', label: '弹力', envelope: [0, 1.1, 1], magnification: 1.6 });
+  registerCustomZoom({ id: 'plugin:demo/elastic', label: 'Elastic', envelope: [0, 1.1, 1], magnification: 1.6 });
   const d = makeDraft(base);
   const ctx = ctxOf(d);
-  // 插件曲线直接引用(propertyOverrides.magnification 覆盖包内默认)
+  // reference the plugin curve directly (propertyOverrides.magnification overrides the pack default)
   let r = await execEditItemTool('edit_item', {
     adds: [{ type: 'effect', targetItemId: 'v_a', assetId: 'plugin:demo/elastic', propertyOverrides: { magnification: 2 } }],
   }, ctx) as { ok: boolean };
   assert.strictEqual(r.ok, true, `plugin zoom failed: ${JSON.stringify(r)}`);
   let z = ctx.getState().items.find((i) => i.id === 'v_a')?.zoom;
-  assert.deepStrictEqual(z?.envelope, [0, 1.1, 1], '包络快照上 item');
-  assert.strictEqual(z?.magnification, 2, 'overrides 覆盖倍率');
-  assert.strictEqual(z?.label, '弹力');
-  // agent 直接作曲线:builtin:zoom + envelope 入参(cleanOverrides 吞不掉)
+  assert.deepStrictEqual(z?.envelope, [0, 1.1, 1], 'envelope snapshotted onto the item');
+  assert.strictEqual(z?.magnification, 2, 'overrides win over the magnification');
+  assert.strictEqual(z?.label, 'Elastic');
+  // agent authors the curve directly: builtin:zoom + envelope argument (cleanOverrides must not swallow it)
   r = await execEditItemTool('edit_item', {
     adds: [{ type: 'effect', targetItemId: 'v_b', assetId: 'builtin:zoom', propertyOverrides: { envelope: [0, 0.4, 1, 0.9, 1], magnification: 1.8 } }],
   }, ctx) as { ok: boolean };
   assert.strictEqual(r.ok, true, `raw envelope failed: ${JSON.stringify(r)}`);
   z = ctx.getState().items.find((i) => i.id === 'v_b')?.zoom;
   assert.deepStrictEqual(z?.envelope, [0, 0.4, 1, 0.9, 1]);
-  assert.strictEqual(z?.shape, undefined, 'envelope 入参不留 shape');
-  // update 显式 shape → 曲线让位
+  assert.strictEqual(z?.shape, undefined, 'an envelope argument leaves no shape behind');
+  // update with an explicit shape → the curve gives way
   r = await execEditItemTool('edit_item', {
     updates: [{ type: 'effect', targetItemId: 'v_b', assetId: 'builtin:zoom', propertyOverrides: { shape: 'punch' } }],
   }, ctx) as { ok: boolean };
   assert.strictEqual(r.ok, true, `shape update failed: ${JSON.stringify(r)}`);
   z = ctx.getState().items.find((i) => i.id === 'v_b')?.zoom;
   assert.strictEqual(z?.shape, 'punch');
-  assert.strictEqual(z?.envelope, undefined, '显式 shape 丢掉 envelope');
-  // 越界包络被忽略(不带垃圾进 state)
+  assert.strictEqual(z?.envelope, undefined, 'an explicit shape drops the envelope');
+  // out-of-range envelopes are ignored (no garbage into state)
   r = await execEditItemTool('edit_item', {
     adds: [{ type: 'effect', targetItemId: 'v_a', assetId: 'builtin:zoom', propertyOverrides: { envelope: [0, 99] } }],
   }, ctxOf(makeDraft(base))) as { ok: boolean };
@@ -224,16 +224,16 @@ console.log(`catalog: fx=${FX_IDS.length} lut=${LUT_IDS.length} tr=${TRANSITION_
   console.log('edit_item plugin/envelope zoom: OK');
 }
 
-// ── 4d. fx 注册/反注册(ALL_FX 原地写入/摘除;内置不可卸) ─────────────────────
+// ── 4d. fx register/unregister (ALL_FX mutated in place; built-ins cannot be removed) ──
 {
   const { ALL_FX, registerCustomFx, unregisterCustomFx } = await import('../../gl/fx/effects');
   registerCustomFx({ id: 'plugin:p/f', name: 'f', desc: 'x', frag: 'uniform sampler2D u_input; void main(){}', props: [] });
-  assert.ok('plugin:p/f' in ALL_FX, '注册进 ALL_FX');
+  assert.ok('plugin:p/f' in ALL_FX, 'registered into ALL_FX');
   assert.strictEqual(unregisterCustomFx('plugin:p/f'), true);
-  assert.ok(!('plugin:p/f' in ALL_FX), '反注册后 ALL_FX 摘除');
-  assert.strictEqual(unregisterCustomFx('builtin:fx-invert'), false, '内置不可卸');
-  assert.ok('builtin:fx-invert' in ALL_FX, '内置仍在');
-  console.log('fx 注册/反注册: OK');
+  assert.ok(!('plugin:p/f' in ALL_FX), 'removed from ALL_FX after unregistering');
+  assert.strictEqual(unregisterCustomFx('builtin:fx-invert'), false, 'built-ins cannot be unregistered');
+  assert.ok('builtin:fx-invert' in ALL_FX, 'built-in still present');
+  console.log('fx register/unregister: OK');
 }
 
 // ── 5. atomic batch — failure rolls back nothing ───────────────────────────

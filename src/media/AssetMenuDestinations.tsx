@@ -1,4 +1,3 @@
-import { useT } from '../i18n/locale';
 import { Icon } from '../components/icons';
 import { runAssetDestinationAction, type AssetDestinationActions } from './assetDestination';
 
@@ -13,7 +12,6 @@ export function AssetMenuDestinations({
   onAddTimeline,
   onAddChat,
 }: AssetMenuDestinationsProps) {
-  const t = useT();
   const actions: AssetDestinationActions = {
     timeline: onAddTimeline,
     chat: onAddChat,
@@ -21,27 +19,27 @@ export function AssetMenuDestinations({
 
   return (
     <div className="cc-asset-menu-destinations">
-      <span>{t('添加到：')}</span>
+      <span>Add to:</span>
       <div className="cc-asset-menu-destination-buttons">
         <button
           type="button"
           className="cc-media-menu-item"
           role="menuitem"
-          aria-label={t('添加 {name} 到 AI 对话框', { name: assetName })}
+          aria-label={`Add ${assetName} to AI chat`}
           onClick={() => runAssetDestinationAction('chat', actions)}
         >
           <span className="cc-media-menu-item-icon" aria-hidden="true"><Icon name="sparkles" size={15} /></span>
-          <span className="cc-media-menu-item-label">{t('AI 对话框')}</span>
+          <span className="cc-media-menu-item-label">AI chat</span>
         </button>
         <button
           type="button"
           className="cc-media-menu-item"
           role="menuitem"
-          aria-label={t('添加 {name} 到时间线', { name: assetName })}
+          aria-label={`Add ${assetName} to timeline`}
           onClick={() => runAssetDestinationAction('timeline', actions)}
         >
           <span className="cc-media-menu-item-icon" aria-hidden="true"><Icon name="film" size={15} /></span>
-          <span className="cc-media-menu-item-label">{t('时间线')}</span>
+          <span className="cc-media-menu-item-label">Timeline</span>
         </button>
       </div>
     </div>

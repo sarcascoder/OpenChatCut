@@ -3,7 +3,7 @@ import { kindOfDescriptor } from './mediaProbe';
 
 /**
  * Folder relink matching: exact filename first (case-insensitive), then
- * extension-insensitive stem matching (e.g. `素材.mp4` matches `素材.mov`).
+ * extension-insensitive stem matching (e.g. `clip.mp4` matches `clip.mov`).
  * Multiple stem candidates prefer the file whose kind matches the asset.
  */
 export function matchRelinkFile(

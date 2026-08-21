@@ -93,7 +93,7 @@ export async function rotateAgentSessionGeneration(projectId: string): Promise<s
   let record: AgentSessionGenerationRecord;
   if (projectStoreRemoteAvailable()) {
     if (!projectStoreWriteCredential()) {
-      throw new Error('共享工程库为只读模式（未连接编辑器会话），Agent 上下文未清理');
+      throw new Error('The shared project store is read-only (no editor session connected); the Agent context was not cleared.');
     }
     const response = await requestProjectStore({
       operation: 'agent-session-rotate',

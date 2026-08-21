@@ -245,7 +245,7 @@ export async function captionFaceQaIssues(
       issues.push({
         code: 'caption_covers_face',
         severity: 'warning',
-        message: '字幕位置可能遮挡说话人脸部（几何检测）；建议上移或换侧。',
+        message: 'The caption may be covering the speaker\'s face (geometry check); consider moving it up or to the other side.',
       });
     }
   }

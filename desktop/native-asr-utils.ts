@@ -40,7 +40,7 @@ export function whisperTokensToChunks(
       const offsets = token.offsets;
       if (!tokenText || !offsets
         || typeof offsets.from !== 'number' || typeof offsets.to !== 'number') continue;
-      if (/[<>,_.!?。，、！？；：""''《》\s]+$/.test(tokenText)) continue;
+      if (/[<>,_.!?\u3002\uff0c\u3001\uff01\uff1f\uff1b\uff1a""''\u300a\u300b\s]+$/.test(tokenText)) continue;
       if (tokenText.startsWith('[') || tokenText.endsWith(']')) continue;
       chunks.push({
         text: tokenText,
@@ -60,7 +60,7 @@ export function whisperWordsToChunks(
   for (const word of words ?? []) {
     const text = (word.word ?? '').trim();
     if (!text || typeof word.start !== 'number' || typeof word.end !== 'number') continue;
-    if (/[<>,_.!?。，、！？；：""''《》\s]+$/.test(text)) continue;
+    if (/[<>,_.!?\u3002\uff0c\u3001\uff01\uff1f\uff1b\uff1a""''\u300a\u300b\s]+$/.test(text)) continue;
     if (text.startsWith('[') || text.endsWith(']')) continue;
     chunks.push({ text, start: Math.round(word.start * 1000), end: Math.round(word.end * 1000) });
   }

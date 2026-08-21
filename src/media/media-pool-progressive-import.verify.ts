@@ -19,8 +19,8 @@ const firstBatchErrors = await importMediaBatch({
   onProgress: () => undefined,
 });
 
-assert.deepEqual(starts, ['bad.txt', 'good.mov'], '单文件在 placeholder 前失败后仍须继续导入后续文件');
-assert.deepEqual(firstBatchErrors, [failedProbe], '批次结束后只汇总实际导入失败');
+assert.deepEqual(starts, ['bad.txt', 'good.mov'], 'a single file failing before its placeholder must not stop the remaining files from importing');
+assert.deepEqual(firstBatchErrors, [failedProbe], 'only real import failures are collected once the batch ends');
 
 const conflictStarts: string[] = [];
 const conflictPlacements: string[] = [];
@@ -37,8 +37,8 @@ const conflictErrors = await importMediaBatch({
   onProgress: () => undefined,
 });
 
-assert.deepEqual(conflictStarts, ['cancel.mov', 'same-name.mov'], '无 placeholder 的取消不能阻断后续覆盖导入');
-assert.deepEqual(conflictErrors, [], '用户取消不应显示为批次失败');
-assert.deepEqual(conflictPlacements, ['overwrite:folder-b'], '无 placeholder 的覆盖结果仍须进入目标文件夹');
+assert.deepEqual(conflictStarts, ['cancel.mov', 'same-name.mov'], 'a cancellation with no placeholder must not block the following overwrite import');
+assert.deepEqual(conflictErrors, [], 'a user cancellation should not surface as a batch failure');
+assert.deepEqual(conflictPlacements, ['overwrite:folder-b'], 'an overwrite result with no placeholder must still land in the target folder');
 
 console.log('media-pool-progressive-import.verify: failures and conflict choices preserve batch progress');

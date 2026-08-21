@@ -36,18 +36,18 @@ export function llmErrorMessage(status: number, req?: IncomingMessage): string {
   const provider = llmProviderForRequest(req);
   const label = llmProviderPreset(provider).label;
   if (status === 401 || status === 403) {
-    return `${label} 认证失败。请在“设置 → Agent 模型”中检查 API Key。`;
+    return `${label} authentication failed. Check the API key under Settings → Agent Model.`;
   }
   if (status === 402 || status === 429) {
-    return `${label} 额度不足或请求过于频繁。请检查账户额度，稍后重试。`;
+    return `${label} is out of quota or rate limited. Check your account balance and try again later.`;
   }
   if (status === 404) {
-    return `${label} 的接口或模型不存在。请检查 Base URL 和模型名称。`;
+    return `The ${label} endpoint or model does not exist. Check the base URL and the model name.`;
   }
   if (status >= 500) {
-    return `${label} 服务暂时不可用（HTTP ${status}）。请稍后重试或切换模型。`;
+    return `${label} is temporarily unavailable (HTTP ${status}). Try again later or switch models.`;
   }
-  return `${label} 请求失败（HTTP ${status}）。请检查“设置 → Agent 模型”中的连接配置。`;
+  return `${label} request failed (HTTP ${status}). Check the connection settings under Settings → Agent Model.`;
 }
 
 /** One dynamic proxy implementation shared by Vite dev and Electron production. */

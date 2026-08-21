@@ -28,13 +28,15 @@ async function main(): Promise<void> {
     const { hybridSearch } = await import('./hybrid-search.ts');
 
     // ── text lane: chat mentioning the visual topic ──
+    // "this clip has a seaside at dusk, cut it in" / "change the caption style to gold"
+    // — Chinese text exercises the jieba FTS5 index/query segmentation pipeline.
     indexStoreKey('chat:project-a', {
       messages: [
-        { role: 'user', text: '这段素材有黄昏的海边，帮我剪进去' },
-        { role: 'user', text: '字幕样式改成金色' },
+        { role: 'user', text: '\u8fd9\u6bb5\u7d20\u6750\u6709\u9ec4\u660f\u7684\u6d77\u8fb9\uff0c\u5e2e\u6211\u526a\u8fdb\u53bb' },
+        { role: 'user', text: '\u5b57\u5e55\u6837\u5f0f\u6539\u6210\u91d1\u8272' },
       ],
     });
-    // ── visual lane: a vector close to "黄昏的海边" (seed 1) ──
+    // ── visual lane: a vector close to "seaside at dusk" (seed 1) ──
     upsertSemanticVectors('project-a', 'asset-sunset', [
       { assetId: 'asset-sunset', sampleTime: 0, sourceRevision: 'rev-1', vector: vector(1) },
     ]);
@@ -43,7 +45,7 @@ async function main(): Promise<void> {
     ]);
 
     // ── hybrid: both lanes match the query ──
-    const hits = hybridSearch('黄昏的海边', vector(1), { projectId: 'project-a', limit: 10 });
+    const hits = hybridSearch('\u9ec4\u660f\u7684\u6d77\u8fb9', vector(1), { projectId: 'project-a', limit: 10 });
     assert.ok(hits.some((hit) => hit.kind === 'chat'), 'the text lane must contribute');
     assert.ok(hits.some((hit) => hit.kind === 'visual' && hit.assetId === 'asset-sunset'),
       'the visual lane must contribute the closest asset');
@@ -57,7 +59,7 @@ async function main(): Promise<void> {
     }
 
     // ── without a project scope the visual lane is skipped ──
-    const textOnly = hybridSearch('金色', undefined, { limit: 10 });
+    const textOnly = hybridSearch('\u91d1\u8272', undefined, { limit: 10 });
     assert.ok(textOnly.every((hit) => hit.kind !== 'visual'), 'no vector → text only');
     assert.ok(textOnly.some((hit) => hit.kind === 'chat'), 'text lane must still work');
 
@@ -67,7 +69,7 @@ async function main(): Promise<void> {
     const { resetSemanticVectorsForTests } = await import('./semantic-vectors.ts');
     resetSearchForTests();
     resetSemanticVectorsForTests();
-    assert.equal(hybridSearch('黄昏的海边', vector(1), { projectId: 'project-a' }).length, 0,
+    assert.equal(hybridSearch('\u9ec4\u660f\u7684\u6d77\u8fb9', vector(1), { projectId: 'project-a' }).length, 0,
       'hybrid must be a no-op without the SQLite store');
 
     console.log('✓ hybrid-search verify: RRF fusion / dual-lane / scoping / disabled-store all passed');

@@ -34,7 +34,7 @@ const stateOf = (items: TimelineItem[]): TimelineState => ({
   assert.equal(sourceFrameAt(incoming, -15), 1248);
   assert.equal(sourceFrameAt(incoming, 0), 1263);
   assert.equal(sourceFrameAt(item({ srcInFrame: 100, playbackRate: 2 }), -15), 70);
-  assert.equal(sourceFrameAt(item({ srcInFrame: 5 }), -15), 0, '源入点不足时不越过素材开头');
+  assert.equal(sourceFrameAt(item({ srcInFrame: 5 }), -15), 0, 'a short source in-point never runs past the head of the asset');
 }
 
 // ── One authoritative timeline/source conversion, including clamped pre-roll windows ──
@@ -53,18 +53,18 @@ const stateOf = (items: TimelineItem[]): TimelineState => ({
 // ── Remaining source frames: How much is left after the entry point, variable speed timeline frame = source frame / rate conversion ──
 {
   assert.equal(remainingSourceFrames(item(), 0, assets), 300);
-  assert.equal(remainingSourceFrames(item(), 120, assets), 180, '入点吃掉的部分不算数');
-  assert.equal(remainingSourceFrames(item({ playbackRate: 2 }), 0, assets), 150, '2 倍速时同样的源料只够一半时间线帧');
-  assert.equal(remainingSourceFrames(item({ playbackRate: 0.5 }), 0, assets), 600, '慢放能撑更久');
-  assert.equal(remainingSourceFrames(item(), 999, assets), 1, '入点越过尾部时至少留 1 帧,不返回 0/负数');
+  assert.equal(remainingSourceFrames(item(), 120, assets), 180, 'the part consumed by the in-point does not count');
+  assert.equal(remainingSourceFrames(item({ playbackRate: 2 }), 0, assets), 150, 'at 2x speed the same source only covers half as many timeline frames');
+  assert.equal(remainingSourceFrames(item({ playbackRate: 0.5 }), 0, assets), 600, 'slow motion stretches further');
+  assert.equal(remainingSourceFrames(item(), 999, assets), 1, 'an in-point past the tail still leaves at least 1 frame, never 0 or negative');
 }
 
 // ── If you can’t determine the length, don’t set a limit, so as not to lock something that can be stretched arbitrarily ──
 {
-  assert.equal(remainingSourceFrames(item({ kind: 'image', src: '/m/a.png' }), 0, assets), null, '图片可以任意拉长');
-  assert.equal(remainingSourceFrames(item({ kind: 'motion-graphic', src: undefined }), 0, assets), null, 'MG 是生成的');
+  assert.equal(remainingSourceFrames(item({ kind: 'image', src: '/m/a.png' }), 0, assets), null, 'images can be stretched arbitrarily');
+  assert.equal(remainingSourceFrames(item({ kind: 'motion-graphic', src: undefined }), 0, assets), null, 'MGs are generated');
   assert.equal(remainingSourceFrames(item({ kind: 'text', src: undefined }), 0, assets), null);
-  assert.equal(remainingSourceFrames(item({ src: '/m/missing.mp4' }), 0, assets), null, '素材表里没有就不猜');
+  assert.equal(remainingSourceFrames(item({ src: '/m/missing.mp4' }), 0, assets), null, 'no guessing when the asset is not in the table');
   assert.equal(remainingSourceFrames(item(), 0, []), null);
   assert.equal(remainingSourceFrames(item(), 0, undefined), null);
   assert.equal(
@@ -73,7 +73,7 @@ const stateOf = (items: TimelineItem[]): TimelineState => ({
       0, assets,
     ),
     null,
-    '词驱动音频由 retime 按编辑后词流收口,两套上界不能打架',
+    'word-driven audio is bounded by retime against the edited word stream; the two upper bounds must not fight',
   );
 }
 
@@ -81,13 +81,13 @@ const stateOf = (items: TimelineItem[]): TimelineState => ({
 {
   const before = stateOf([item({ durationInFrames: 100 })]);
   const stretched = reduce(before, { type: 'retime', id: 'a', durationInFrames: 5000 });
-  assert.equal(stretched.items[0]!.durationInFrames, 300, '最多用满整条素材');
+  assert.equal(stretched.items[0]!.durationInFrames, 300, 'at most the whole asset is used');
 
   const trimmed = reduce(before, { type: 'retime', id: 'a', durationInFrames: 5000, srcInFrame: 200 });
-  assert.equal(trimmed.items[0]!.durationInFrames, 100, '左裁之后可用长度也跟着变短');
+  assert.equal(trimmed.items[0]!.durationInFrames, 100, 'trimming from the left shortens the available length too');
 
   const shorter = reduce(before, { type: 'retime', id: 'a', durationInFrames: 60 });
-  assert.equal(shorter.items[0]!.durationInFrames, 60, '范围内的裁剪不受影响');
+  assert.equal(shorter.items[0]!.durationInFrames, 60, 'trims within range are unaffected');
 }
 
 // ──Clips without asset information can still be lengthened (MG/template)──
@@ -131,4 +131,4 @@ const stateOf = (items: TimelineItem[]): TimelineState => ({
     '0.5x split preserves the fractional source boundary instead of skipping ahead',
   );
 }
-console.log('sourceLimit.verify: ok (剩余源帧换算/变速/不设限规则/真 reduce 右裁上界)');
+console.log('sourceLimit.verify: ok (remaining-source-frame conversion/speed changes/no-limit rules/real reduce right-trim upper bound)');

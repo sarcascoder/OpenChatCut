@@ -18,9 +18,10 @@ const asset = (id: string, sourceRevision: string, transcriptStale = false): Med
   durationInFrames: 300,
   sourceRevision,
   transcriptStale,
+  // "hello" + "world" — CJK transcript words that join without a space
   transcript: [
-    { text: '你好', start: 1_000, end: 1_350 },
-    { text: '世界', start: 1_400, end: 1_900 },
+    { text: '\u4f60\u597d', start: 1_000, end: 1_350 },
+    { text: '\u4e16\u754c', start: 1_400, end: 1_900 },
   ],
 });
 
@@ -43,7 +44,8 @@ assert.deepEqual(
 );
 assert.ok((visual[0]?.score ?? 0) >= 0 && (visual[0]?.score ?? 0) <= 1);
 
-const spoken = spokenMediaSearchHits('你好世界', assets);
+// query "helloworld" spans both CJK words with no separator
+const spoken = spokenMediaSearchHits('\u4f60\u597d\u4e16\u754c', assets);
 assert.equal(spoken.length, 1, 'stale transcripts do not leak into unified search');
 assert.deepEqual(
   { start: spoken[0]?.sourceStartMs, end: spoken[0]?.sourceEndMs },

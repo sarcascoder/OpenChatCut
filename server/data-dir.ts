@@ -56,17 +56,17 @@ export interface DataDirProbe { ok: boolean; note?: string; error?: string; }
 
 /** Writability probe for the settings "test" action and for save-time validation. */
 export async function checkDataDir(raw: string, currentDir: string): Promise<DataDirProbe> {
-  if (!raw.trim()) return { ok: true, note: `未设置 · 使用默认目录 ${currentDir}` };
+  if (!raw.trim()) return { ok: true, note: `Not set · using the default directory ${currentDir}` };
   const dir = expandDataDir(raw);
-  if (!dir) return { ok: false, error: '必须是绝对路径（可用 ~/ 开头）' };
+  if (!dir) return { ok: false, error: 'Must be an absolute path (may start with ~/)' };
   try {
     await mkdir(dir, { recursive: true });
     const probe = join(dir, `.cc-data-probe-${process.pid}`);
     await writeFile(probe, 'ok');
     await unlink(probe);
-    return { ok: true, note: `目录可写 · ${dir}` };
+    return { ok: true, note: `Directory is writable · ${dir}` };
   } catch (err) {
-    return { ok: false, error: `目录不可写 · ${err instanceof Error ? err.message : String(err)}` };
+    return { ok: false, error: `Directory is not writable · ${err instanceof Error ? err.message : String(err)}` };
   }
 }
 

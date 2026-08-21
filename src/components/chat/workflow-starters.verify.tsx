@@ -8,24 +8,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
-const localeModuleId = '\0workflow-picker-test-locale';
 const vite = await createServer({
   appType: 'custom',
-  plugins: [{
-    name: 'workflow-picker-test-locale',
-    enforce: 'pre',
-    resolveId(id) {
-      return id.endsWith('/i18n/locale') || id.endsWith('/i18n/locale.ts') ? localeModuleId : null;
-    },
-    load(id) {
-      if (id !== localeModuleId) return null;
-      return `
-        export const getLocale = () => 'zh';
-        export const t = (text) => text;
-        export const useT = () => t;
-      `;
-    },
-  }],
   server: { middlewareMode: true },
 });
 
@@ -51,7 +35,7 @@ try {
   assert.equal(hasPendingComposerAttachment(false, 1), true, 'one pending attachment must close the submit gate');
   assert.equal(shouldSubmitComposerOnKeyDown('Enter', false, false), false, 'Enter must not submit while the gate is closed');
   pendingComposerMarkup = renderToStaticMarkup(createElement(ChatComposer, {
-    value: '请处理这个附件',
+    value: 'please handle this attachment',
     onChange: () => undefined,
     onSubmit: () => undefined,
     onStop: () => undefined,
@@ -83,10 +67,10 @@ assert.equal(
   'every built-in workflow should render as an independently bordered card',
 );
 assert.equal((pickerMarkup.match(/aria-pressed="true"/g) ?? []).length, 1, 'exactly one workflow should expose selected state');
-assert.match(pickerMarkup, /长视频转短视频/);
-assert.match(pickerMarkup, /技能创作器/);
-assert.match(pickerMarkup, /新闻智能粗剪/);
-assert.match(pendingComposerMarkup, /请等待附件导入完成。/, 'pending attachment reason should be visible');
+assert.match(pickerMarkup, /Long Video to Shorts/);
+assert.match(pickerMarkup, /Skill Creator/);
+assert.match(pickerMarkup, /News Rough Cut/);
+assert.match(pendingComposerMarkup, /Wait for attachment imports to finish\./, 'pending attachment reason should be visible');
 assert.match(pendingComposerMarkup, /aria-describedby="cc-chat-composer-import-status"/, 'textarea should describe its pending gate');
 const pendingSubmitButton = pendingComposerMarkup.match(/<button[^>]*class="cc-chat-send-btn"[^>]*>/)?.[0];
 assert.ok(pendingSubmitButton, 'pending composer should render the submit button');

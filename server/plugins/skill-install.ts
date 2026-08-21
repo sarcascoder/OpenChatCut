@@ -228,7 +228,7 @@ export function skillInstallPlugin(): Plugin {
         try {
           const body = await readJson(req);
           const result = await installGitHubSkill(body.repo, body.slug);
-          sendJson(res, 200, { ok: true, ...result, note: '技能已安装到用户技能目录，面板会自动展示。' });
+          sendJson(res, 200, { ok: true, ...result, note: 'The skill was installed into the user skills directory; the panel will show it automatically.' });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           server.config.logger.error(`[api/skills/install] ${message}`);

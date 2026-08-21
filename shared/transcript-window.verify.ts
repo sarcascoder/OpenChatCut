@@ -3,8 +3,8 @@ import { isTranscriptWindowPayload, type TranscriptWindowPayload } from './trans
 
 const valid: TranscriptWindowPayload = {
   entries: [
-    { id: 'a1', name: '访谈一', transcript: [{ text: '你好', start: 0, end: 200 }] },
-    { id: 'a2', name: '访谈二', transcript: [] },
+    { id: 'a1', name: 'Interview One', transcript: [{ text: 'Hello', start: 0, end: 200 }] },
+    { id: 'a2', name: 'Interview Two', transcript: [] },
   ],
   index: 1,
 };

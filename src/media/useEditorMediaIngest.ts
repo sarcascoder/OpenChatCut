@@ -7,7 +7,6 @@ import { sourceRevisionOf } from '../editor/mediaSourceRevision';
 import type { EditorCommands } from '../editor/store';
 import { captionsOnTrack, defaultTrackId, trackKind, type MediaAsset, type ProjectDoc, type TimelineState, type TrackId } from '../editor/types';
 import type { Tpl } from '../types';
-import type { t as translate } from '../i18n/locale';
 import { duplicateAssetName } from './assetMenuSelection';
 import { classifyExternalFile, parseDroppedCaptions } from './externalFileDrop';
 import { createImportContentIdentityHooks } from './importContentIdentity';
@@ -20,7 +19,6 @@ import { enqueueTranscription, getTranscribeJob, shouldTranscribe, untranscribed
 import { shouldAutoTranscribeIngest } from '../transcript/provider';
 import { showAppToast } from '../ui/appToast';
 
-type Translate = typeof translate;
 type StartAssetTranscription = (asset: ImportTranscriptionStart['asset'], asrPath?: string | null | Promise<string | null>, markRunning?: boolean) => void;
 type ChatSeed = { text: string; nonce: number; references?: AgentReference[] } | null;
 type ImportLifecycle = {
@@ -44,7 +42,6 @@ interface EditorMediaIngestOptions {
   getPlayhead: () => number;
   setChatCollapsed: (collapsed: boolean) => void;
   setChatSeed: (seed: ChatSeed) => void;
-  t: Translate;
 }
 
 interface ImportTranscriptionGate {
@@ -84,7 +81,6 @@ interface DropContext {
   commands: EditorCommands;
   stateRef: { current: TimelineState };
   startAssetTranscription: StartAssetTranscription;
-  t: Translate;
 }
 
 function finishTranscription(job: TranscribeJob, projectId: string, commands: EditorCommands, stateRef: { current: TimelineState }, docRef: { current: ProjectDoc }): void {
@@ -142,12 +138,9 @@ function poolImportHooks(run: PoolImportRun, onProgress?: (ratio: number) => voi
   };
 }
 
-async function importAssetToPool(file: File, onProgress: ((ratio: number) => void) | undefined, lifecycle: ImportLifecycle | undefined, context: Pick<EditorMediaIngestOptions, 'commands' | 'stateRef' | 't'>, startAssetTranscription: StartAssetTranscription): Promise<MediaAsset> {
+async function importAssetToPool(file: File, onProgress: ((ratio: number) => void) | undefined, lifecycle: ImportLifecycle | undefined, context: Pick<EditorMediaIngestOptions, 'commands' | 'stateRef'>, startAssetTranscription: StartAssetTranscription): Promise<MediaAsset> {
   const existing = findMediaNameConflict(context.stateRef.current.assets ?? [], file.name);
-  if (existing && !window.confirm(context.t(
-    '素材「{name}」已存在。覆盖会同步替换已在时间线中使用的该素材。',
-    { name: existing.name },
-  ))) throw new MediaImportCancelledError();
+  if (existing && !window.confirm(`Asset “${existing.name}” already exists. Overwriting also replaces the copy already used on the timeline.`)) throw new MediaImportCancelledError();
   const run: PoolImportRun = {
     commands: context.commands,
     stateRef: context.stateRef,
@@ -271,7 +264,7 @@ function awaitTimelinePlaceholder(file: File, batch: DropBatch, context: DropCon
   ).catch((error) => {
     if (!placeholder.id) reject(error);
     else removePlacedAsset(batch, placeholder.id, context);
-    showAppToast(error instanceof Error ? error.message : context.t('导入失败'), { error: true });
+    showAppToast(error instanceof Error ? error.message : 'Import failed', { error: true });
   });
   return promise;
 }
@@ -282,19 +275,19 @@ async function importDroppedCaptions(file: File, trackId: TrackId, startFrame: n
     const captionTrackId = trackKind(snapshot, trackId) === 'caption'
       ? trackId
       : defaultTrackId(snapshot, 'caption');
-    if (!captionTrackId) throw new Error(context.t('请先创建字幕轨道'));
+    if (!captionTrackId) throw new Error('Create a caption track first');
     const words = identifyManualCues(parseDroppedCaptions(
       file.name,
       await file.text(),
       Math.max(0, startFrame) * 1000 / snapshot.fps,
     ));
-    if (!words.length) throw new Error(context.t('字幕文件没有可用内容'));
+    if (!words.length) throw new Error('The caption file has no usable content');
     const current = captionsOnTrack(snapshot, captionTrackId) ?? newManualCaptions();
     const withLane = current.sourceEntries?.some(isManualCaptionEntry)
       ? current
       : { ...current, ...appendManualLane(current, snapshot.items) };
     const lane = withLane.sourceEntries?.find(isManualCaptionEntry);
-    if (!lane) throw new Error(context.t('无法创建字幕轨道'));
+    if (!lane) throw new Error('Could not create a caption track');
     context.commands.setCaptions({
       ...withLane,
       enabled: true,
@@ -303,7 +296,7 @@ async function importDroppedCaptions(file: File, trackId: TrackId, startFrame: n
         : entry),
     }, captionTrackId);
   } catch (error) {
-    showAppToast(error instanceof Error ? error.message : context.t('读取字幕文件失败'), { error: true });
+    showAppToast(error instanceof Error ? error.message : 'Failed to read the caption file', { error: true });
   }
 }
 
@@ -330,7 +323,7 @@ async function placeDroppedMedia(file: File, mediaKind: MediaAsset['kind'], trac
     });
     return itemId;
   } catch (error) {
-    showAppToast(error instanceof Error ? error.message : context.t('导入失败'), { error: true });
+    showAppToast(error instanceof Error ? error.message : 'Import failed', { error: true });
     return null;
   }
 }
@@ -346,7 +339,7 @@ async function dropFilesToTimeline(files: File[], trackId: TrackId, startFrame: 
   for (const file of files) {
     const target = classifyExternalFile(file);
     if (!target) {
-      showAppToast(context.t('不支持导入「{name}」', { name: file.name }), { error: true });
+      showAppToast(`Unsupported file: “${file.name}”`, { error: true });
     } else if (target.type === 'caption') {
       await importDroppedCaptions(file, trackId, startFrame, context);
     } else {
@@ -385,7 +378,7 @@ function useAssetTranscription(options: EditorMediaIngestOptions): StartAssetTra
 }
 
 function usePoolImports(options: EditorMediaIngestOptions, start: StartAssetTranscription): PoolImports {
-  const { commands, stateRef, t } = options;
+  const { commands, stateRef } = options;
   const ingestToPool = useCallback((asset: MediaAsset) => {
     const autoTranscribe = shouldTranscribe(asset.kind) && shouldAutoTranscribeIngest();
     commands.addAsset(autoTranscribe ? { ...asset, transcribeStatus: 'running' } : asset);
@@ -400,8 +393,8 @@ function usePoolImports(options: EditorMediaIngestOptions, start: StartAssetTran
     onProgress?: (ratio: number) => void,
     lifecycle?: ImportLifecycle,
   ) => importAssetToPool(
-    file, onProgress, lifecycle, { commands, stateRef, t }, start,
-  ), [commands, start, stateRef, t]);
+    file, onProgress, lifecycle, { commands, stateRef }, start,
+  ), [commands, start, stateRef]);
   return { ingestToPool, importMobileUpload, importToPool };
 }
 
@@ -410,10 +403,10 @@ function useTimelineImports(
   start: StartAssetTranscription,
   importToPool: ImportToPool,
 ) {
-  const { commands, stateRef, getPlayhead, t } = options;
+  const { commands, stateRef, getPlayhead } = options;
   const dropExternalFilesToTimeline = useCallback((files: File[], trackId: TrackId, startFrame: number) => (
-    dropFilesToTimeline(files, trackId, startFrame, { commands, stateRef, startAssetTranscription: start, t })
-  ), [commands, start, stateRef, t]);
+    dropFilesToTimeline(files, trackId, startFrame, { commands, stateRef, startAssetTranscription: start })
+  ), [commands, start, stateRef]);
   const addMediaAssetsToTimeline = useCallback((assets: MediaAsset[]) => {
     placeMediaAssets({
       assetIds: assets.map((asset) => asset.id),
@@ -431,7 +424,7 @@ function useTimelineImports(
 }
 
 function useMediaPaste(options: EditorMediaIngestOptions) {
-  const { commands, stateRef, t } = options;
+  const { commands, stateRef } = options;
   return useCallback((assets: MediaAsset[], folderId?: string) => {
     const readyAssets = readyMediaAssetsForPaste(assets, stateRef.current.assets ?? []);
     if (!readyAssets.length) return;
@@ -440,15 +433,15 @@ function useMediaPaste(options: EditorMediaIngestOptions) {
       asset: {
         ...asset,
         id: `asset_${crypto.randomUUID()}`,
-        name: duplicateAssetName(asset.name, t('副本')),
+        name: duplicateAssetName(asset.name, 'copy'),
         folderId,
       },
-    })), t('粘贴素材'));
-  }, [commands, stateRef, t]);
+    })), 'Paste media');
+  }, [commands, stateRef]);
 }
 
 function useMediaAISeeds(options: EditorMediaIngestOptions) {
-  const { setChatCollapsed, setChatSeed, t } = options;
+  const { setChatCollapsed, setChatSeed } = options;
   const useMediaAI = useCallback((assets: MediaAsset[]) => {
     const seed = createMediaAssetsChatSeed(assets);
     if (!seed) return;
@@ -458,11 +451,11 @@ function useMediaAISeeds(options: EditorMediaIngestOptions) {
   const useTemplateAI = useCallback((tpl: Tpl) => {
     setChatCollapsed(false);
     setChatSeed({
-      text: t('参考模板「{name}」，用 create_motion_graphic 生成一个类似风格的动画： @{name} ', { name: tpl.name }),
+      text: `Using template "${tpl.name}" as a style reference, generate a similar animation with create_motion_graphic: @${tpl.name} `,
       nonce: Date.now(),
       references: [{ id: tpl.id, name: tpl.name, kind: 'template' }],
     });
-  }, [setChatCollapsed, setChatSeed, t]);
+  }, [setChatCollapsed, setChatSeed]);
   return { useMediaAI, useTemplateAI };
 }
 

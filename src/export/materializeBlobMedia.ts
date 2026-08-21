@@ -1,5 +1,4 @@
 import type { ProjectDoc, Timeline } from '../editor/types';
-import { t } from '../i18n/locale';
 import { createExportFailure, ExportFailureError } from './exportFailure';
 import { collectExportMediaPlan, immutableExportSnapshot } from './exportMediaPlan';
 
@@ -192,15 +191,12 @@ export async function materializeBlobMedia<T extends object>(
   if (failed.length > 0) {
     const detail = failed
       .map((item) => `${item.name ? `${item.name} (${item.source})` : item.source}: ${item.message}`)
-      .join('、');
+      .join(', ');
     throw new ExportFailureError(createExportFailure({
       stage: 'preflight',
       code: 'export_media_not_ready',
       retryable: false,
-      message: t('导出素材未就绪：{n} 个素材仍是未完成的上传占位（可能因磁盘满或断网上传失败），请删除或重新导入这些素材：{list}', {
-        n: failed.length,
-        list: detail,
-      }),
+      message: `Export media not ready: ${failed.length} assets are still unfinished upload placeholders (upload may have failed due to disk full or network loss). Delete or re-import them: ${detail}`,
     }));
   }
   return replaceBlobSources(snapshot, (source) => published.get(source) ?? null);

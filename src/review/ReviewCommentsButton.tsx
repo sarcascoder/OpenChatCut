@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Icon } from '../components/icons';
 import type { TimelineItem, TimelineState } from '../editor/types';
-import { useT } from '../i18n/locale';
 import { theme, themeAlpha } from '../theme';
 import {
   appendReviewReply,
@@ -41,7 +40,6 @@ interface ReviewPanelProps extends ReviewCommentsButtonProps {
 }
 
 export function ReviewCommentsButton(props: ReviewCommentsButtonProps) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<ReviewOpenRequest | null>(null);
   const { comments, busy, error, commit } = useStoredComments(props.projectId);
@@ -60,11 +58,11 @@ export function ReviewCommentsButton(props: ReviewCommentsButtonProps) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <button type="button" title={t('审阅评论')} aria-label={t('审阅评论')}
+      <button type="button" title="Review comments" aria-label="Review comments"
         onClick={toggle}
         style={{ ...toolbarButton, color: open ? theme.text : theme.textDim, background: open ? theme.panelAlt : 'transparent' }}>
         <Icon name="clipboard" size={12} />
-        <span>{t('评论')}</span>
+        <span>Comments</span>
         {openCount > 0 && <span style={countBadge}>{openCount}</span>}
       </button>
       {open && (
@@ -76,7 +74,6 @@ export function ReviewCommentsButton(props: ReviewCommentsButtonProps) {
 }
 
 function useStoredComments(projectId: string) {
-  const t = useT();
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -88,10 +85,10 @@ function useStoredComments(projectId: string) {
     loadReviewComments(projectId)
       .then((loaded) => { if (!cancelled) setComments(loaded); })
       .catch((cause) => {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : t('评论加载失败'));
+        if (!cancelled) setError(cause instanceof Error ? cause.message : 'Failed to load comments');
       });
     return () => { cancelled = true; };
-  }, [projectId, t]);
+  }, [projectId]);
 
   const commit = async (next: ReviewComment[]) => {
     setBusy(true);
@@ -101,7 +98,7 @@ function useStoredComments(projectId: string) {
       setComments(next);
       return true;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('评论保存失败'));
+      setError(cause instanceof Error ? cause.message : 'Failed to save comment');
       return false;
     } finally {
       setBusy(false);
@@ -111,7 +108,6 @@ function useStoredComments(projectId: string) {
 }
 
 function ReviewPanel(props: ReviewPanelProps) {
-  const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -154,7 +150,7 @@ function ReviewPanel(props: ReviewPanelProps) {
   });
 
   return (
-    <div ref={panelRef} role="dialog" aria-label={t('审阅评论')}
+    <div ref={panelRef} role="dialog" aria-label="Review comments"
       style={props.target ? { ...popover, position: 'fixed', left: position.left, top: position.top, right: 'auto' } : popover}>
       <PanelHeader onClose={props.onClose} />
       <AddCommentForm text={text} setText={setText} busy={props.busy} onAdd={addComment} />
@@ -166,11 +162,10 @@ function ReviewPanel(props: ReviewPanelProps) {
 }
 
 function PanelHeader({ onClose }: { onClose: () => void }) {
-  const t = useT();
   return (
     <div style={header}>
-      <strong>{t('审阅评论')}</strong>
-      <button type="button" title={t('关闭')} onClick={onClose} style={iconButton}>
+      <strong>Review comments</strong>
+      <button type="button" title="Close" onClick={onClose} style={iconButton}>
         <Icon name="x" size={14} />
       </button>
     </div>
@@ -183,17 +178,16 @@ function AddCommentForm({ text, setText, busy, onAdd }: {
   busy: boolean;
   onAdd: () => Promise<void>;
 }) {
-  const t = useT();
   return (
     <div style={{ padding: 10, borderBottom: `0.5px solid ${theme.border}` }}>
       <textarea autoFocus value={text} onChange={(event) => setText(event.target.value)}
-        placeholder={t('在当前帧添加审阅评论')} style={textarea} />
+        placeholder="Add a review comment at the current frame" style={textarea} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
         <span style={{ flex: 1, fontSize: 10, color: theme.textMuted }}>
-          {t('绑定当前帧；可用时同时记录片段与源位置')}
+          Anchors to this frame and, when available, the clip and source position
         </span>
         <button type="button" disabled={busy || !text.trim()} onClick={() => void onAdd()} style={primaryButton}>
-          {t('添加评论')}
+          Add comment
         </button>
       </div>
     </div>
@@ -209,10 +203,9 @@ interface CommentListProps extends ReviewPanelProps {
 }
 
 function CommentList(props: CommentListProps) {
-  const t = useT();
   return (
     <div style={{ overflowY: 'auto', maxHeight: 360, padding: 8 }}>
-      {props.comments.length === 0 && <div style={empty}>{t('还没有审阅评论')}</div>}
+      {props.comments.length === 0 && <div style={empty}>No review comments yet</div>}
       {props.comments.map((comment) => (
         <CommentCard key={comment.id} {...props} comment={comment} />
       ))}
@@ -221,13 +214,12 @@ function CommentList(props: CommentListProps) {
 }
 
 function CommentCard({ comment, ...props }: CommentListProps & { comment: ReviewComment }) {
-  const t = useT();
   const startReply = () => { props.setReplyingTo(comment.id); props.setReply(''); };
   return (
     <article style={{ ...commentCard, opacity: comment.resolved ? 0.58 : 1 }}>
       <button type="button" onClick={() => props.onSeek(comment.anchor.frame)} style={anchorButton}>
         {formatFrame(comment.anchor.frame, props.state.fps)}
-        {comment.anchor.itemId ? ` · ${t('片段')}` : ` · ${t('时间线')}`}
+        {comment.anchor.itemId ? ` · ${'Clip'}` : ` · ${'Timeline'}`}
       </button>
       <p style={{ margin: '7px 0', whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{comment.text}</p>
       {comment.replies.map((entry) => <div key={entry.id} style={replyRow}>{entry.text}</div>)}
@@ -235,13 +227,13 @@ function CommentCard({ comment, ...props }: CommentListProps & { comment: Review
         <ReplyForm {...props} commentId={comment.id} />
       )}
       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-        <button type="button" onClick={startReply} style={smallButton}>{t('回复')}</button>
+        <button type="button" onClick={startReply} style={smallButton}>Reply</button>
         <button type="button" disabled={props.busy}
           onClick={() => void props.commit(setReviewResolved(props.comments, comment.id, !comment.resolved))} style={smallButton}>
-          {comment.resolved ? t('重新打开') : t('解决')}
+          {comment.resolved ? 'Reopen' : 'Resolve'}
         </button>
         <span style={{ flex: 1 }} />
-        <button type="button" disabled={props.busy} title={t('删除评论')}
+        <button type="button" disabled={props.busy} title="Delete comment"
           onClick={() => void props.commit(removeReviewComment(props.comments, comment.id))} style={iconButton}>
           <Icon name="trash" size={12} />
         </button>
@@ -251,14 +243,13 @@ function CommentCard({ comment, ...props }: CommentListProps & { comment: Review
 }
 
 function ReplyForm({ commentId, reply, setReply, addReply, busy }: CommentListProps & { commentId: string }) {
-  const t = useT();
   return (
     <div style={{ display: 'flex', gap: 6, marginTop: 7 }}>
       <input autoFocus value={reply} onChange={(event) => setReply(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter' && reply.trim()) void addReply(commentId); }}
-        placeholder={t('输入回复')} style={replyInput} />
+        placeholder="Write a reply" style={replyInput} />
       <button type="button" disabled={busy || !reply.trim()} onClick={() => void addReply(commentId)} style={smallButton}>
-        {t('回复')}
+        Reply
       </button>
     </div>
   );

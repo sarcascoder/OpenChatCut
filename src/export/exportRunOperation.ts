@@ -12,7 +12,6 @@ import type {
   ExportOperationResult,
   ExportQaUiState,
   StateSetter,
-  Translate,
   UseExportWorkflowOptions,
   WorkflowOperations,
 } from './exportWorkflowTypes';
@@ -30,7 +29,6 @@ interface ExportRunContext {
   setFailure: StateSetter<ExportFailure | null>;
   setProgress: StateSetter<ExportProgress | null>;
   setQa: StateSetter<ExportQaUiState | null>;
-  t: Translate;
   targetPath: string | null;
 }
 
@@ -49,7 +47,7 @@ function markCancelled(context: ExportRunContext): void {
     retryable: false,
     cleanupStatus: 'succeeded',
     targetPath: context.targetPath,
-    message: context.t('已取消导出'),
+    message: 'Export cancelled',
   });
   context.setFailure(failure);
   context.setError(failure.message);
@@ -57,7 +55,7 @@ function markCancelled(context: ExportRunContext): void {
     ...current,
     phase: 'cancelled',
     finishedAt: Date.now(),
-    detail: context.t('已取消导出'),
+    detail: 'Export cancelled',
   } : current);
 }
 
@@ -73,7 +71,7 @@ async function runExport(context: ExportRunContext): Promise<void> {
   const startedAt = Date.now();
   context.setClock(startedAt);
   context.setProgress({ phase: 'preparing', percent: 0, startedAt });
-  context.setBusy(context.t('准备导出…'));
+  context.setBusy('Preparing export…');
   try {
     context.signal.throwIfAborted();
     const mediaSnapshot = context.options.project
@@ -99,7 +97,7 @@ async function runExport(context: ExportRunContext): Promise<void> {
       return;
     }
     const existing = exportFailureFrom(reason);
-    const message = exportDestinationErrorMessage(reason, context.t);
+    const message = exportDestinationErrorMessage(reason);
     const failure = existing
       ? withExportFailureTarget(existing, context.targetPath ?? existing.targetPath)
       : createExportFailure({

@@ -46,7 +46,7 @@ try {
   const forbiddenProbe = join(fixture, 'must-not-be-created');
   assert.deepEqual(await checkMediaDir(forbiddenProbe, profileA), {
     ok: false,
-    error: '隔离开发配置固定使用独立素材目录，不能修改 MEDIA_DIR',
+    error: 'The isolated dev profile is pinned to its own media directory; MEDIA_DIR cannot be changed',
   });
   await assert.rejects(access(forbiddenProbe));
   let legacyLogs = 0;

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Dashboard } from '../components/Dashboard';
 import type { ProjectDoc } from '../editor/types';
-import { useT } from '../i18n/locale';
 import { loadProject, renameProject } from '../persist/projectStore';
 import type { ProjectMeta } from '../persist/projectStoreCoordinators';
 import { theme } from '../theme';
@@ -28,16 +27,15 @@ interface EditorLoaderProps {
 }
 
 function EditorLoader({ meta, onHome, onRename }: EditorLoaderProps) {
-  const t = useT();
   const [initial, setInitial] = useState<ProjectDoc | null>(null);
   useEffect(() => {
     let alive = true;
     loadProject(meta.id).then((document) => { if (alive) setInitial(document ?? emptyProjectDoc()); });
     return () => { alive = false; };
   }, [meta.id]);
-  if (!initial) return <AppSplash text={t('加载工程…')} />;
+  if (!initial) return <AppSplash text="Loading project…" />;
   return (
-    <Suspense fallback={<AppSplash text={t('加载编辑器…')} />}>
+    <Suspense fallback={<AppSplash text="Loading editor…" />}>
       <Editor initial={initial} project={meta} onHome={onHome} onRename={onRename} />
     </Suspense>
   );
@@ -50,11 +48,10 @@ interface EditorRouteProps {
 }
 
 export function EditorRoute({ route, projects, refresh }: EditorRouteProps) {
-  const t = useT();
   const meta = projects.find((project) => project.id === route.id);
   if (!meta) {
     navigateTo('#/');
-    return <AppSplash text={t('工程不存在，返回…')} />;
+    return <AppSplash text="Project not found, going back…" />;
   }
   return (
     <EditorLoader

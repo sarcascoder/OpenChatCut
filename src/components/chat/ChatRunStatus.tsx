@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import type { LiveTool } from '../../agent/agent-session';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 import { thinkingPhrase } from './thinkingPhrases';
 import { elapsedRunSeconds } from './ChatRunStatus.ts';
@@ -28,7 +27,6 @@ export function ChatRunStatus({
   phraseSeed: number;
   startedAt: number;
 }) {
-  const t = useT();
   return <>
     {running && liveTool && (
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, margin: '9px 0', color: theme.textDim, fontSize: 12.5 }}>
@@ -41,7 +39,7 @@ export function ChatRunStatus({
                 {liveTool.partial}
               </span>
             )
-            : <span style={{ opacity: 0.8 }}> · {t('正在执行…')}</span>}
+            : <span style={{ opacity: 0.8 }}> · running…</span>}
         </span>
       </div>
     )}
@@ -51,9 +49,9 @@ export function ChatRunStatus({
         {streamingThinking ? (
           <>
             <style>{'@keyframes cc-think-glow{0%,100%{opacity:.4}50%{opacity:1}}'}</style>
-            <span style={{ animation: 'cc-think-glow 1.4s ease-in-out infinite' }}>{t('思考中…')}</span>
+            <span style={{ animation: 'cc-think-glow 1.4s ease-in-out infinite' }}>Thinking…</span>
           </>
-        ) : <>{t(thinkingPhrase(phraseSeed))}…</>}
+        ) : <>{thinkingPhrase(phraseSeed)}…</>}
         <ElapsedTimer startedAt={startedAt} />
       </div>
     )}

@@ -25,7 +25,8 @@ export const verifySourceMetadataMigration = async (): Promise<void> => {
     ...hostileItem,
     id: 'clip_valid',
     name: 'Valid',
-    sourceFilename: '/Users/editor/采访/interview.final.mov',
+    // '\u91c7\u8bbf' = "interviews" - non-ASCII directory in the source path
+    sourceFilename: '/Users/editor/\u91c7\u8bbf/interview.final.mov',
     originalFilePath: privatePath,
     sourceContentHash: 'AB'.repeat(32),
   };
@@ -93,7 +94,8 @@ export const verifySourceMetadataMigration = async (): Promise<void> => {
             micRole: 'camera',
             offsetFrames: 0,
             confidence: 1,
-            source: { ...validItem, sourceFilename: '\\\\server\\share\\机位.最终版.001.mov' },
+            // '\u673a\u4f4d.\u6700\u7ec8\u7248' = "camera angle.final cut" - Chinese basename with extra dots
+            source: { ...validItem, sourceFilename: '\\\\server\\share\\\u673a\u4f4d.\u6700\u7ec8\u7248.001.mov' },
           },
         ],
         evidence: [
@@ -113,7 +115,7 @@ export const verifySourceMetadataMigration = async (): Promise<void> => {
   assert.equal(migrated.timelines[0]?.items[0]?.sourceFilename, undefined);
   assert.equal(migrated.timelines[0]?.items[1]?.sourceFilename, 'interview.final.mov', 'item POSIX path becomes a basename');
   assert.equal(migrated.timelines[0]?.multicamGroups?.[0]?.angles[0]?.source.sourceFilename, undefined);
-  assert.equal(migrated.timelines[0]?.multicamGroups?.[0]?.angles[1]?.source.sourceFilename, '机位.最终版.001.mov',
+  assert.equal(migrated.timelines[0]?.multicamGroups?.[0]?.angles[1]?.source.sourceFilename, '\u673a\u4f4d.\u6700\u7ec8\u7248.001.mov',
     'multicam UNC path becomes a basename without losing Chinese or multiple dots');
   assert.equal(migrated.assets[0]?.originalFilePath, privatePath, 'local migration retains desktop source paths');
   assert.equal(migrated.assets[0]?.sourceContentHash, undefined);

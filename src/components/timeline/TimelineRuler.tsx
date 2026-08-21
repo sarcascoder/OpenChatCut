@@ -5,7 +5,6 @@ import { type RefObject } from 'react';
 import { theme } from '../../theme';
 import { MARKER_HEX, type Marker, type TimelineState } from '../../editor/types';
 import type { TimelinePickDrag } from '../../agent/selection-refs';
-import { useT } from '../../i18n/locale';
 import {
   HEADER_W, RULER_H, fmtClock, fmtRuler, framePointInWindow, intersectFrameRange,
   rulerTickWindow, type TimelineFrameWindow,
@@ -37,7 +36,6 @@ export function TimelineRuler({
   pickMode, startPick, seekTo, rulerTimecodeRef, playheadFrame, zoneIn, zoneOut,
   markers, onEditMarker, pinnedMarkerId,
 }: TimelineRulerProps) {
-  const t = useT();
   const tickWindow = rulerTickWindow(visibleWindow, rulerEndFrame, majorFrames, minorTicksPerMajor);
   const visibleMarkers = markers.filter((marker) => marker.scope === 'project' && (
     marker.id === pinnedMarkerId
@@ -106,7 +104,7 @@ export function TimelineRuler({
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
             {zoneRange && (
               <div
-                title={t('入出点区间')}
+                title="In/out range"
                 style={{
                   position: 'absolute', left: zoneRange.startFrame * px, top: 0, bottom: 0,
                   width: (zoneRange.endFrame - zoneRange.startFrame) * px,
@@ -117,7 +115,7 @@ export function TimelineRuler({
               />
             )}
             {zoneIn != null && framePointInWindow(zoneIn, visibleWindow) && (
-              <div title={t('入点 (I)')} style={{
+              <div title="In point (I)" style={{
                 position: 'absolute', left: zoneIn * px, top: 2, transform: 'translateX(-50%)',
                 width: 0, height: 0,
                 // impeccable-disable-next-line side-tab -- CSS triangular flag (entry mark), non-card colored edge
@@ -126,7 +124,7 @@ export function TimelineRuler({
               }} />
             )}
             {zoneOut != null && framePointInWindow(zoneOut, visibleWindow) && (
-              <div title={t('出点 (O)')} style={{
+              <div title="Out point (O)" style={{
                 position: 'absolute', left: zoneOut * px, top: 2, transform: 'translateX(-50%)',
                 width: 0, height: 0,
                 // impeccable-disable-next-line side-tab -- CSS triangular flag (point mark), non-card colored edge
@@ -154,7 +152,7 @@ export function TimelineRuler({
               )}
               {showPin && (
                 <button onPointerDown={(e) => e.stopPropagation()} onClick={() => onEditMarker(marker.id)}
-                  title={marker.note || t('标记')}
+                  title={marker.note || 'Marker'}
                   style={{ pointerEvents: 'auto', position: 'absolute', left: 0, top: -1, transform: 'translateX(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0 }}>
                   <svg width="13" height="15" viewBox="0 0 24 24" fill={MARKER_HEX[marker.color]}
                     stroke="rgba(0,0,0,0.9)" strokeWidth="1.6" style={{ display: 'block' }}>

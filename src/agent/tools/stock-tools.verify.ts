@@ -78,12 +78,13 @@ try {
 
   const pushed = await execStockTool('push_asset', {
     filePath: 'https://cdn.example.test/fallback/private%2F%E6%B5%B7%E6%8A%A5%2001.png?token=secret',
-    name: '宣传图显示名',
+    name: 'Promo Image Display Name',
   }, context) as { succeeded: number; results: Array<{ assetId: string }> };
   assert.equal(pushed.succeeded, 1);
   const pushedAsset = draft.getDoc().assets.find((asset) => asset.id === pushed.results[0]?.assetId);
-  assert.equal(pushedAsset?.sourceFilename, '海报 01.png', 'remote fallback keeps only the decoded URL basename');
-  assert.equal(pushedAsset?.name, '宣传图显示名');
+  // '\u6d77\u62a5' = "poster" - decoded from the percent-encoded URL above
+  assert.equal(pushedAsset?.sourceFilename, '\u6d77\u62a5 01.png', 'remote fallback keeps only the decoded URL basename');
+  assert.equal(pushedAsset?.name, 'Promo Image Display Name');
   assert.equal(pushedAsset?.originalFilePath, undefined);
 
   const legacy = await execStockTool('import_url_asset', {

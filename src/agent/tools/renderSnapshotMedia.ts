@@ -35,7 +35,7 @@ async function cleanupUploadedSources(
 }
 
 function defaultFetcher(): typeof fetch {
-  if (typeof globalThis.fetch !== 'function') throw new Error('当前环境不支持素材预览上传');
+  if (typeof globalThis.fetch !== 'function') throw new Error('this environment does not support media preview upload');
   return globalThis.fetch.bind(globalThis);
 }
 

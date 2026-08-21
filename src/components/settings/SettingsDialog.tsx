@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { theme, themeAlpha } from '../../theme';
-import { t, useT } from '../../i18n/locale';
 import { Icon } from '../icons';
 import { VendorIcon } from './vendorIcons';
 import { applyLiveCaps, applyLiveKeyStatus, applyLiveModels } from '../../agent/capabilities';
@@ -64,7 +63,7 @@ function useKeyStatus(): {
     fetch('/api/keys')
       .then((r) => r.json() as Promise<KeyStatusResponse>)
       .then((d) => { if (alive) setStatus(d); })
-      .catch(() => { if (alive) setLoadError(t('无法读取配置（dev 服务未就绪？）')); });
+      .catch(() => { if (alive) setLoadError('Could not load config (dev server not ready?)'); });
     return () => { alive = false; };
   }, []);
   return { status, setStatus, loadError };
@@ -106,18 +105,18 @@ function useSaveKeys(values: Values, onSaved: (next: KeyStatusResponse) => void)
   const [error, setError] = useState<string | null>(null);
   const save = async (): Promise<void> => {
     const patch = buildPatch(values);
-    if (Object.keys(patch).length === 0) { setMsg(t('没有改动')); return; }
+    if (Object.keys(patch).length === 0) { setMsg('No changes'); return; }
     setSaving(true); setError(null); setMsg(null);
     try {
       const res = await fetch('/api/keys', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
       });
       const body = await res.json().catch(() => ({})) as Partial<KeyStatusResponse> & { error?: string };
-      if (!res.ok) throw new Error(body.error || t('保存失败 ({n})', { n: res.status }));
+      if (!res.ok) throw new Error(body.error || `Save failed (${res.status})`);
       onSaved(body as KeyStatusResponse);
       // A storage-folder change is copied immediately but only used on the next
       // launch, so saying "saved" alone would look like nothing happened.
-      setMsg(body.restartRequired ? t('已保存 · 重启应用后新的工程存储目录才会生效') : savedMessage());
+      setMsg(body.restartRequired ? 'Saved · the new project storage folder takes effect after a restart' : savedMessage());
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -136,7 +135,7 @@ function useCloseGuard(dirty: boolean, onClose: () => void): { requestClose: () 
   const requestClose = (): void => {
     if (!dirty || Date.now() - armedAt.current < CLOSE_CONFIRM_MS) { onClose(); return; }
     armedAt.current = Date.now();
-    setWarn(t('有未保存改动，再按一次关闭将丢弃'));
+    setWarn('Unsaved changes — close again to discard them');
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => { setWarn(null); armedAt.current = 0; }, CLOSE_CONFIRM_MS);
   };
@@ -227,7 +226,6 @@ function useFieldContext(
 }
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
-  const t = useT();
   const updateState = useSyncExternalStore(
     subscribeUpstreamUpdate,
     getUpstreamUpdateState,
@@ -271,16 +269,16 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
         <header style={head}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: theme.accent, display: 'inline-flex' }}><Icon name="sliders" size={15} /></span>
-            <b style={{ fontSize: 14 }}>{t('设置 · API 密钥')}</b>
+            <b style={{ fontSize: 14 }}>Settings · API Keys</b>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <SettingsVersionControl
-              versionLabel={t('当前版本号：{version}', { version: formatDisplayVersion(CURRENT_APP_VERSION) })}
+              versionLabel={`Current version: ${formatDisplayVersion(CURRENT_APP_VERSION)}`}
               actionLabel={updateAction.label}
               disabled={updateAction.disabled}
               onAction={() => { runUpstreamUpdateCommand(updateAction.command); }}
             />
-            <button type="button" onClick={requestClose} title={t('关闭')} style={iconBtn}><Icon name="x" size={15} /></button>
+            <button type="button" onClick={requestClose} title="Close" style={iconBtn}><Icon name="x" size={15} /></button>
           </div>
         </header>
         <div style={bodyRow}>
@@ -301,7 +299,6 @@ function CapabilityTree({ status, codexStatus, activeGroup, onSelect }: {
   status: KeyStatusResponse | null; codexStatus: CodexAgentStatus | null;
   activeGroup: string; onSelect: (key: string) => void;
 }) {
-  const t = useT();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const toggle = (key: string): void =>
     setCollapsed((prev) => {
@@ -319,7 +316,7 @@ function CapabilityTree({ status, codexStatus, activeGroup, onSelect }: {
         ))}
       </div>
       <p style={sidebarNote}>
-        {t('密钥仅存本机')} <code style={code}>.env.local</code>{t('（已 gitignore），经服务端注入，')}<b>{t('不进浏览器。')}</b>
+        Keys are stored only in your local <code style={code}>.env.local</code>{' (gitignored), injected by the server — '}<b>never sent to the browser.</b>
       </p>
     </nav>
   );
@@ -331,16 +328,15 @@ interface TreeCategoryProps {
 }
 
 function TreeCategory({ category, status, codexStatus, open, activeGroup, onToggle, onSelect }: TreeCategoryProps) {
-  const t = useT();
   const { done, total } = categoryGroupStats(status, category, codexStatus);
   return (
     <div>
-      <button type="button" onClick={onToggle} title={open ? t('收起') : t('展开')} style={catRow}>
+      <button type="button" onClick={onToggle} title={open ? 'Collapse' : 'Expand'} style={catRow}>
         <span style={{ ...chevronBox, transform: open ? 'none' : 'rotate(-90deg)' }}>
           <Icon name="chevronDown" size={12} />
         </span>
         <Icon name={category.icon} size={13} />
-        <span style={navLabel}>{t(category.title)}</span>
+        <span style={navLabel}>{category.title}</span>
         <span style={{ fontSize: 10, fontWeight: 400, color: done === total && total > 0 ? ON : theme.textDim }}>
           {done}/{total}
         </span>
@@ -356,13 +352,12 @@ function TreeCategory({ category, status, codexStatus, open, activeGroup, onTogg
 function GroupRow({ title, on, active, onSelect }: {
   title: string; on: boolean; active: boolean; onSelect: () => void;
 }) {
-  const t = useT();
   const [hovered, hoverProps] = useHover();
   return (
     <button type="button" onClick={onSelect} {...hoverProps}
       style={{ ...navRowStyle(active, hovered), paddingLeft: 19 }}>
       <span style={dot(on)} />
-      <span style={navLabel}>{t(title)}</span>
+      <span style={navLabel}>{title}</span>
     </button>
   );
 }
@@ -386,12 +381,11 @@ function VendorList({ group, activeVendor, onSelectVendor, ctx }: {
 function VendorRow({ page, on, active, onSelect }: {
   page: SettingsVendorPage; on: boolean; active: boolean; onSelect: () => void;
 }) {
-  const t = useT();
   const [hovered, hoverProps] = useHover();
   return (
     <button type="button" onClick={onSelect} {...hoverProps} style={navRowStyle(active, hovered)}>
       {page.icon ? <Icon name={page.icon} size={15} /> : <VendorIcon vendor={page.vendor} size={15} />}
-      <span style={navLabel}>{t(page.title)}</span>
+      <span style={navLabel}>{page.title}</span>
       <span style={dot(on)} />
     </button>
   );
@@ -403,22 +397,21 @@ interface FooterBarProps {
 }
 
 function FooterBar({ reveal, onReveal, message, dirty, saving, onClose, onSave }: FooterBarProps) {
-  const t = useT();
   const disabled = saving || !dirty;
   return (
     <footer style={foot}>
       <label style={revealLabel}>
         <input type="checkbox" checked={reveal} onChange={(e) => onReveal(e.target.checked)} />
-        {t('显示明文')}
+        Show values
       </label>
       <a href="/fonts/LICENSES.md" target="_blank" rel="noopener noreferrer" style={licenseLink}>
-        {t('第三方字体许可')}
+        Third-party font licenses
       </a>
       <div style={{ ...footMsg, color: message?.color ?? ON }}>{message?.text ?? ''}</div>
-      <button type="button" onClick={onClose} style={btnGhost}>{t('关闭')}</button>
+      <button type="button" onClick={onClose} style={btnGhost}>Close</button>
       <button type="button" onClick={onSave} disabled={disabled}
         style={{ ...btnPrimary, opacity: disabled ? 0.5 : 1, cursor: disabled ? 'default' : 'pointer' }}>
-        {saving ? t('保存中…') : t('保存')}
+        {saving ? 'Saving…' : 'Save'}
       </button>
     </footer>
   );

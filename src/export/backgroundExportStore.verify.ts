@@ -147,7 +147,6 @@ function startArtifactExport(
         options,
         setBusy: setters.setBusy,
         setProgress: setters.setProgress,
-        t: (key) => key,
       });
       const idle = async () => undefined;
       const operations: WorkflowOperations = {
@@ -165,7 +164,6 @@ function startArtifactExport(
         progress: null,
         signal,
         targetPath: `Exports/lifecycle-${tab}`,
-        t: (key) => key,
         ...setters,
       });
       try {
@@ -289,7 +287,6 @@ async function verifyRunnerChecksAbortBeforeCompletion(): Promise<void> {
     progress: null,
     signal: controller.signal,
     targetPath: 'Exports/lifecycle-mg',
-    t: (key) => key,
     setBusy: () => undefined,
     setClock: () => undefined,
     setError: () => undefined,
@@ -334,7 +331,6 @@ async function verifyCommittedTargetWinsLateAbort(): Promise<void> {
     progress: null,
     signal: controller.signal,
     targetPath: 'Exports/lifecycle-mg',
-    t: (key) => key,
     setBusy: () => undefined,
     setClock: () => undefined,
     setError: () => undefined,

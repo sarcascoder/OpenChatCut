@@ -19,7 +19,6 @@ import {
 import { resumePersistedServerExports } from '../export/serverExportOperation';
 import { useEditorPanelLayout, type EditorPanelLayout } from '../hooks/useEditorPanelLayout';
 import { usePersistedState } from '../hooks/usePersistedState';
-import type { t as translate } from '../i18n/locale';
 import { useAutomaticVersions } from '../persist/useAutomaticVersions';
 import { useEditorActions } from '../shortcuts/useEditorActions';
 import type { TimelineShortcutApi } from '../shortcuts/timelineApi';
@@ -132,7 +131,6 @@ interface EditorWorkspaceExportActionsInput {
   docRef: RefObject<ProjectDoc>;
   fps: number;
   projectId: string;
-  t: typeof translate;
   shortcutApiRef: RefObject<TimelineShortcutApi | null>;
   setShowDesign: Dispatch<SetStateAction<boolean>>;
   setShowVersions: Dispatch<SetStateAction<boolean>>;
@@ -141,7 +139,7 @@ interface EditorWorkspaceExportActionsInput {
   selectAllTimelineContent: () => void;
 }
 
-function useExportJobs(projectId: string, t: typeof translate): [ExportJobStore, number] {
+function useExportJobs(projectId: string): [ExportJobStore, number] {
   const exportJobs = useMemo(() => createExportJobStore(), []);
   const activeExportJobs = useSyncExternalStore(
     exportJobs.subscribeActive,
@@ -149,10 +147,10 @@ function useExportJobs(projectId: string, t: typeof translate): [ExportJobStore,
     exportJobs.getActiveCount,
   );
   useEffect(() => {
-    void resumePersistedServerExports({ exportJobs, projectId, t }).catch((error) => {
+    void resumePersistedServerExports({ exportJobs, projectId }).catch((error) => {
       console.warn('[export] failed to restore interrupted server exports', error);
     });
-  }, [exportJobs, projectId, t]);
+  }, [exportJobs, projectId]);
   return [exportJobs, activeExportJobs];
 }
 
@@ -180,7 +178,7 @@ function relinkedAsset(current: MediaAsset, next: MediaAssetRelinkPatch): MediaA
 export function useEditorWorkspaceExportActions(
   input: EditorWorkspaceExportActionsInput,
 ): EditorWorkspaceExportActions {
-  const [exportJobs, activeExportJobs] = useExportJobs(input.projectId, input.t);
+  const [exportJobs, activeExportJobs] = useExportJobs(input.projectId);
   const [exportOpen, setExportOpen] = useState(false);
   const onExport = useCallback(() => setExportOpen(true), []);
   useEditorActions({

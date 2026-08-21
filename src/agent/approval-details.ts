@@ -37,18 +37,18 @@ function add(
 
 function runCodeDetails(args: Readonly<Record<string, unknown>>): ApprovalDetail[] {
   const details: ApprovalDetail[] = [];
-  add(details, 'command', '命令', args.command);
+  add(details, 'command', 'Command', args.command);
   if (Array.isArray(args.files)) {
     for (const file of args.files) {
       if (!file || typeof file !== 'object' || Array.isArray(file)) continue;
       const input = file as Record<string, unknown>;
-      add(details, 'path', '输入路径', input.path);
-      add(details, 'url', '输入网址', input.url);
+      add(details, 'path', 'Input path', input.path);
+      add(details, 'url', 'Input URL', input.url);
     }
   }
   if (Array.isArray(args.outputs)) {
     for (const output of args.outputs) {
-      add(details, 'output', '输出目标', output);
+      add(details, 'output', 'Output target', output);
     }
   }
   return details;
@@ -56,45 +56,45 @@ function runCodeDetails(args: Readonly<Record<string, unknown>>): ApprovalDetail
 
 function designDetails(args: Readonly<Record<string, unknown>>): ApprovalDetail[] {
   const details: ApprovalDetail[] = [];
-  add(details, 'action', '操作', args.action);
-  add(details, 'target', '样式 ID', args.presetId);
-  add(details, 'target', '样式名称', args.name ?? args.rename);
+  add(details, 'action', 'Action', args.action);
+  add(details, 'target', 'Style ID', args.presetId);
+  add(details, 'target', 'Style name', args.name ?? args.rename);
   return details;
 }
 
 const FIELD_DETAILS: ReadonlyArray<readonly [string, ApprovalDetailKind, string]> = [
-  ['action', 'action', '操作'],
-  ['command', 'command', '命令'],
-  ['url', 'url', '网址'],
-  ['urls', 'url', '网址'],
-  ['sourceUrl', 'url', '源网址'],
-  ['filePath', 'path', '文件路径'],
-  ['inputPath', 'path', '输入路径'],
-  ['targetPath', 'path', '目标路径'],
-  ['destinationPath', 'output', '输出目标'],
-  ['path', 'path', '路径'],
-  ['outputPath', 'output', '输出目标'],
-  ['outputs', 'output', '输出目标'],
-  ['destination', 'output', '输出目标'],
-  ['output', 'output', '输出目标'],
-  ['filename', 'output', '输出名称'],
-  ['outputTarget', 'output', '输出目标'],
-  ['name', 'output', '输出名称'],
-  ['repo', 'target', '仓库'],
-  ['slug', 'target', '安装目录'],
-  ['provider', 'parameter', '服务商'],
-  ['track', 'target', '轨道'],
-  ['skill', 'target', '技能'],
-  ['assetId', 'target', '资源 ID'],
-  ['projectId', 'target', '工程 ID'],
-  ['skillId', 'target', '技能 ID'],
-  ['templateId', 'target', '模板 ID'],
-  ['versionId', 'target', '版本 ID'],
-  ['model', 'parameter', '模型'],
-  ['prompt', 'parameter', '请求内容'],
-  ['format', 'parameter', '格式'],
-  ['codec', 'parameter', '编码'],
-  ['resolution', 'parameter', '分辨率'],
+  ['action', 'action', 'Action'],
+  ['command', 'command', 'Command'],
+  ['url', 'url', 'URL'],
+  ['urls', 'url', 'URL'],
+  ['sourceUrl', 'url', 'Source URL'],
+  ['filePath', 'path', 'File path'],
+  ['inputPath', 'path', 'Input path'],
+  ['targetPath', 'path', 'Target path'],
+  ['destinationPath', 'output', 'Output target'],
+  ['path', 'path', 'Path'],
+  ['outputPath', 'output', 'Output target'],
+  ['outputs', 'output', 'Output target'],
+  ['destination', 'output', 'Output target'],
+  ['output', 'output', 'Output target'],
+  ['filename', 'output', 'Output name'],
+  ['outputTarget', 'output', 'Output target'],
+  ['name', 'output', 'Output name'],
+  ['repo', 'target', 'Repository'],
+  ['slug', 'target', 'Install directory'],
+  ['provider', 'parameter', 'Provider'],
+  ['track', 'target', 'Track'],
+  ['skill', 'target', 'Skills'],
+  ['assetId', 'target', 'Asset ID'],
+  ['projectId', 'target', 'Project ID'],
+  ['skillId', 'target', 'Skill ID'],
+  ['templateId', 'target', 'Template ID'],
+  ['versionId', 'target', 'Version ID'],
+  ['model', 'parameter', 'Model'],
+  ['prompt', 'parameter', 'Prompt'],
+  ['format', 'parameter', 'Format'],
+  ['codec', 'parameter', 'Codec'],
+  ['resolution', 'parameter', 'Resolution'],
 ];
 
 function genericDetails(args: Readonly<Record<string, unknown>>): ApprovalDetail[] {
@@ -120,6 +120,6 @@ export function formatToolApprovalDetails(
     : tool === 'manage_design_style'
       ? designDetails(args)
       : genericDetails(args);
-  if (tool === 'download_media') add(details, 'output', '输出目录', '/media/uploads/');
+  if (tool === 'download_media') add(details, 'output', 'Output directory', '/media/uploads/');
   return approvalPresentationFromDetails(tool, details);
 }

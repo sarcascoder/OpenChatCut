@@ -133,20 +133,20 @@ function rationalTime(frames: number, fps: number): string {
 
 function validateState(state: TimelineState): void {
   if (!state || !Array.isArray(state.items)) {
-    throw new Error('timelineToFcpxml: state.items 必须是数组');
+    throw new Error('timelineToFcpxml: state.items must be an array');
   }
   if (!Number.isFinite(state.fps) || state.fps <= 0) {
-    throw new Error('timelineToFcpxml: state.fps 必须是正数');
+    throw new Error('timelineToFcpxml: state.fps must be a positive number');
   }
   if (!Number.isInteger(state.width) || state.width <= 0 || !Number.isInteger(state.height) || state.height <= 0) {
-    throw new Error('timelineToFcpxml: state.width/height 必须是正整数');
+    throw new Error('timelineToFcpxml: state.width/height must be positive integers');
   }
   for (const item of state.items) {
     if (!Number.isInteger(item.startFrame) || item.startFrame < 0) {
-      throw new Error(`timelineToFcpxml: item ${item.id} 的 startFrame 非法`);
+      throw new Error(`timelineToFcpxml: item ${item.id} has an invalid startFrame`);
     }
     if (!Number.isInteger(item.durationInFrames) || item.durationInFrames <= 0) {
-      throw new Error(`timelineToFcpxml: item ${item.id} 的 durationInFrames 非法`);
+      throw new Error(`timelineToFcpxml: item ${item.id} has an invalid durationInFrames`);
     }
   }
 }

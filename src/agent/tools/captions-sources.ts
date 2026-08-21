@@ -48,11 +48,11 @@ function selectorToEntry(sel: Record<string, unknown>, s: TimelineState): Captio
   const vKind = str(variantObj?.variantKind ?? sel.variantKind);
   const vLang = str(variantObj?.languageCode ?? sel.languageCode);
   if (vKind || vLang) {
-    if (vKind && vKind !== 'translation') return { error: `variantKind "${vKind}" 不支持(仅 translation)` };
-    if (!vLang) return { error: 'variant 需要 languageCode(翻译目标语言)' };
+    if (vKind && vKind !== 'translation') return { error: `variantKind "${vKind}" is not supported (only translation)` };
+    if (!vLang) return { error: 'variant requires languageCode (the translation target language)' };
     const item = s.items.find((it) => it.id === itemId);
     if (!item?.variants || !findVariantByLang(item.variants, vLang, 'translation')) {
-      return { error: `item ${itemId.slice(0, 8)} 上没有 "${vLang}" 翻译变体 — 先 manage_transcript translation_ensure` };
+      return { error: `item ${itemId.slice(0, 8)} has no "${vLang}" translation variant — run manage_transcript translation_ensure first` };
     }
     entry.variant = { variantKind: 'translation', languageCode: vLang };
   }
@@ -92,7 +92,7 @@ export function sourceList(c: CaptionsData, s: TimelineState): Result {
       itemId: it.id, track: trackAlias(s, it.track), name: it.name,
       translations: (it.variants ?? []).filter((v) => v.kind === 'translation').map((v) => v.lang),
     })),
-    note: 'auto-stack 里 sources 自上而下按列表序渲染(第一个在最上);per-source 摆位/样式用 positions / source_update。',
+    note: 'in auto-stack, sources render top to bottom in list order (the first one is on top); use positions / source_update for per-source placement and styling.',
   };
 }
 
@@ -100,7 +100,7 @@ export function sourceList(c: CaptionsData, s: TimelineState): Result {
 export function sourceSet(json: Record<string, unknown>, c: CaptionsData, ctx: AgentContext, s: TimelineState): Result {
   if (json.sourceScope === null || json.mode === 'clear') {
     ctx.commands.updateCaptions({ sources: undefined, sourceEntries: undefined, layoutPolicy: undefined, perSource: undefined, sourceMode: 'item' });
-    return { ok: true, sourceMode: 'item', sources: null, note: 'cleared — 回到单源 sourceItemId' };
+    return { ok: true, sourceMode: 'item', sources: null, note: 'cleared — back to the single-source sourceItemId' };
   }
   if (str(json.mode) === 'timeline') {
     ctx.commands.updateCaptions({ sourceMode: 'timeline', sources: undefined, sourceEntries: undefined });
@@ -120,7 +120,7 @@ export function sourceSet(json: Record<string, unknown>, c: CaptionsData, ctx: A
   return {
     ok: true, sources: normalized.map((e, i) => entryRow(e, i, s)),
     wordCount: resolveCaptionWords({ ...c, ...patch }, s.items, s.fps).length,
-    note: 'auto-stack:列表第一个渲染在最上。',
+    note: 'auto-stack: the first item in the list renders on top.',
   };
 }
 

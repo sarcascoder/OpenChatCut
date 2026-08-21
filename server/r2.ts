@@ -451,7 +451,7 @@ export async function r2Probe(get: Get): Promise<Response> {
     const status = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
     const name = (err as { name?: string }).name ?? '';
     if (typeof status === 'number' && status > 0) {
-      const note = status === 404 ? `bucket「${cfg.bucket}」不存在` : name;
+      const note = status === 404 ? `bucket "${cfg.bucket}" does not exist` : name;
       return new Response(note, { status });
     }
     throw err; // Network layer (DNS/timeouts/proxy) → runProbe's networkMessage

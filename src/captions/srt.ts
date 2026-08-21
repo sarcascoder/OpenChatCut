@@ -48,6 +48,6 @@ export function parseSrt(source: string): TranscriptWord[] {
     const end = milliseconds(match[5]!, match[6]!, match[7]!, match[8]!);
     if (end > start) cues.push({ text, start, end });
   }
-  if (!cues.length) throw new Error('SRT 文件中没有有效字幕。');
+  if (!cues.length) throw new Error('No valid captions were found in the SRT file.');
   return cues.sort((a, b) => a.start - b.start || a.end - b.end);
 }

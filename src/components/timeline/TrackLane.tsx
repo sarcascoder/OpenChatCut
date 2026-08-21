@@ -18,7 +18,6 @@ import type { EditorCommands } from '../../editor/store';
 import { hasLibraryDrag, parseLibraryDrag, type LibraryDragPayload } from '../../library/drag';
 import { ALL_FX, FX_EFFECTS, LUT_EFFECTS } from '../../gl/fx/effects';
 import { ZOOM_SHAPE_LABELS } from '../../editor/types';
-import { useT } from '../../i18n/locale';
 import { hasOperationalTranscript } from '../../transcript/types';
 import {
   CLIP_COLOR, fmt, intersectFrameRange, visibleTimelineItems, waveformPath,
@@ -43,15 +42,14 @@ function ClipEffectBadges({
   item: TimelineItem;
   inTransition: TransitionItem | null;
 }) {
-  const t = useT();
   const chips: { key: string; label: string; title: string; className: string }[] = [];
   const effects = item.effects ?? [];
   const fxNames = effects
     .filter((e) => e.assetId in FX_EFFECTS)
-    .map((e) => t(FX_EFFECTS[e.assetId]?.name ?? e.assetId));
+    .map((e) => FX_EFFECTS[e.assetId]?.name ?? e.assetId);
   const lutNames = effects
     .filter((e) => e.assetId in LUT_EFFECTS)
-    .map((e) => t(LUT_EFFECTS[e.assetId]?.name ?? e.assetId));
+    .map((e) => LUT_EFFECTS[e.assetId]?.name ?? e.assetId);
   // custom / uncategorized shaders
   const otherFx = effects.filter((e) => !(e.assetId in FX_EFFECTS) && !(e.assetId in LUT_EFFECTS));
 
@@ -59,8 +57,8 @@ function ClipEffectBadges({
     const n = fxNames.length + otherFx.length;
     chips.push({
       key: 'fx',
-      label: n > 1 ? t('特效×{n}', { n }) : (fxNames[0] ?? t(ALL_FX[otherFx[0]?.assetId]?.name ?? '特效')),
-      title: [...fxNames, ...otherFx.map((e) => t(ALL_FX[e.assetId]?.name ?? e.assetId))].join(' · '),
+      label: n > 1 ? `FX ×${n}` : (fxNames[0] ?? ALL_FX[otherFx[0]?.assetId]?.name ?? 'Effects'),
+      title: [...fxNames, ...otherFx.map((e) => ALL_FX[e.assetId]?.name ?? e.assetId)].join(' · '),
       className: 'fx',
     });
   }
@@ -75,20 +73,20 @@ function ClipEffectBadges({
   if (item.zoom?.shape || item.zoom?.envelope || (item.zoom?.reframeCurve?.keyframes.length ?? 0) > 0) {
     const shape = item.zoom?.shape;
     // The plugin envelope curve has no shape, use the built-in label (plugin data, not entered into the dictionary)
-    const name = shape ? t(ZOOM_SHAPE_LABELS[shape] ?? shape) : item.zoom?.label;
+    const name = shape ? ZOOM_SHAPE_LABELS[shape] ?? shape : item.zoom?.label;
     chips.push({
       key: 'zoom',
-      label: name ?? t('缩放'),
-      title: name ? t('缩放 · {name}', { name }) : t('关键帧缩放'),
+      label: name ?? 'Zoom',
+      title: name ? `Zoom · ${name}` : 'Keyframe zoom',
       className: 'zoom',
     });
   }
   if (item.denoisedSrc) {
-    chips.push({ key: 'iso', label: t('人声'), title: t('已应用人声隔离'), className: 'iso' });
+    chips.push({ key: 'iso', label: 'Voice', title: 'Voice isolation applied', className: 'iso' });
   }
   if (inTransition) {
-    const trName = t(TRANSITION_LABELS[inTransition.type] ?? inTransition.type);
-    chips.push({ key: 'tr', label: trName, title: t('入场转场 · {name}', { name: trName }), className: 'tr' });
+    const trName = TRANSITION_LABELS[inTransition.type] ?? inTransition.type;
+    chips.push({ key: 'tr', label: trName, title: `Incoming transition · ${trName}`, className: 'tr' });
   }
   if (!chips.length) return null;
   return (
@@ -136,7 +134,6 @@ export function TrackLane({
   applyLibraryToClip, applyLibraryToTrack, rippleOnDrop, overwriteOnDrop,
   frameFromClientX, onContextMenu, onTransitionContextMenu, onTrackContextMenu, scrollRef, onDropExternalFiles,
 }: TrackLaneProps) {
-  const t = useT();
   const { drag, penDrag, setPenDrag, startDrag, startPick, startMarquee } = pointer;
   const trackIds = timelineTrackIds(state);
   const items = indexes.itemsByTrack.get(trackId) ?? [];
@@ -284,8 +281,8 @@ export function TrackLane({
         const itemIndex = itemIndexById.get(it.id) ?? 0;
         const overlapSpans = topClipOverlapSpans(start, dur, items.slice(0, itemIndex));
         let clipTitle = it.name;
-        if (editMode === 'slip' && !canSlip) clipTitle = t('此类型没有可滑移的源区间');
-        else if (audioMuted) clipTitle = `${it.name} · ${t('轨道已静音')}`;
+        if (editMode === 'slip' && !canSlip) clipTitle = 'This type has no slip-able source range';
+        else if (audioMuted) clipTitle = `${it.name} · ${'Track muted'}`;
         return (
           <div
             key={it.id}
@@ -391,7 +388,7 @@ export function TrackLane({
               />
             ))}
             {audioMuted && (
-              <span className="cc-clip-muted-indicator" title={t('轨道已静音')} aria-label={t('轨道已静音')}>
+              <span className="cc-clip-muted-indicator" title="Track muted" aria-label="Track muted">
                 <Icon name="volumeOff" size={11} />
               </span>
             )}
@@ -430,7 +427,7 @@ export function TrackLane({
                   {kfs.map((k) => (
                     <div
                       key={k.frame}
-                      title={t(prop === 'volume' ? '音量 {pct}% @ {sec}s — 拖动改帧/值 · 右键删除' : '透明度 {pct}% @ {sec}s — 拖动改帧/值 · 右键删除', { pct: Math.round(k.value * 100), sec: (k.frame / state.fps).toFixed(2) })}
+                      title={(prop === 'volume' ? `Volume ${Math.round(k.value * 100)}% @ ${(k.frame / state.fps).toFixed(2)}s — drag to change frame/value · right-click to delete` : `Opacity ${Math.round(k.value * 100)}% @ ${(k.frame / state.fps).toFixed(2)}s — drag to change frame/value · right-click to delete`)}
                       onPointerDown={(e) => {
                         e.stopPropagation();
                         if (e.button !== 0 || locked) return;
@@ -466,7 +463,7 @@ export function TrackLane({
       {visibleTransitions.map((tn) => {
         const inItem = indexes.itemById.get(tn.incomingItemId);
         if (!inItem) return null;
-        const label = t(TRANSITION_LABELS[tn.type as TransitionType] ?? tn.type);
+        const label = TRANSITION_LABELS[tn.type as TransitionType] ?? tn.type;
         return (
           <div key={tn.id} title={`${label} · ${(tn.durationInFrames / state.fps).toFixed(1)}s`}
             onClick={() => commands.selectItem(tn.incomingItemId)}

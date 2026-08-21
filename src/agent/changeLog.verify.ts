@@ -19,8 +19,8 @@ const doc = (width: number): ProjectDoc => ({
 const before = doc(1920);
 const after = doc(1080);
 const session = createAgentChangeSession(
-  '改成竖屏',
-  [{ action: '改画面比例', target: '9:16', impact: '1 处改动' }],
+  'Make it vertical',
+  [{ action: 'Change aspect ratio', target: '9:16', impact: '1 change' }],
   before,
   after,
 );

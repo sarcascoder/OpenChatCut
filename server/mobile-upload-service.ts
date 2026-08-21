@@ -45,13 +45,11 @@ export interface MobileUploadSessionSnapshot {
 
 interface MobileUploadSession extends MobileUploadSessionSnapshot {
   token: string;
-  locale: MobilePageLocale;
   closing: boolean;
   timer: NodeJS.Timeout;
   activeUploads: Set<Promise<void>>;
 }
 
-type MobilePageLocale = 'zh' | 'en';
 
 interface MobileUploadServiceOptions {
   bindHost?: string;
@@ -151,22 +149,16 @@ async function validateMediaSignature(path: string, mime: string): Promise<boole
   }
 }
 
-function mobilePage(locale: MobilePageLocale): string {
-  const en = locale === 'en';
-  const copy = en ? {
+function mobilePage(): string {
+  const copy = {
     pageTitle: 'Upload from phone', title: 'Send media to OpenChatCut',
     hint: 'Choose video, images, or audio from your phone. Keep both devices on the same local network.',
     choose: 'Choose media', multiple: 'Multiple files supported. Keep this page open until all uploads finish.',
     waiting: 'Waiting to upload', sent: 'Sent', failed: 'Upload failed', interrupted: 'Network interrupted',
-  } : {
-    pageTitle: '手机传素材', title: '发送素材到 OpenChatCut',
-    hint: '选择手机里的视频、图片或音频。电脑和手机需连接同一局域网。',
-    choose: '选择素材', multiple: '支持多选，页面保持打开直到全部完成',
-    waiting: '等待上传', sent: '已发送', failed: '上传失败', interrupted: '网络中断',
   };
   const scriptCopy = JSON.stringify({ waiting: copy.waiting, sent: copy.sent, failed: copy.failed, interrupted: copy.interrupted });
   return `<!doctype html>
-<html lang="${en ? 'en' : 'zh-CN'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>OpenChatCut · ${copy.pageTitle}</title><style>
 :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0b0c;color:#f5f5f5}
 body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;box-sizing:border-box}.card{width:min(460px,100%);background:#171719;border:1px solid #303034;border-radius:18px;padding:24px;box-sizing:border-box;box-shadow:0 24px 80px #0008}h1{font-size:23px;margin:0 0 8px}.hint{color:#aaa;margin:0 0 20px;line-height:1.5}.drop{display:grid;place-items:center;min-height:160px;border:1px dashed #555;border-radius:14px;background:#111;padding:18px;text-align:center}.pick{display:inline-block;background:#f26a2e;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:700}input{display:none}.status{display:grid;gap:8px;margin-top:16px}.row{background:#202024;border-radius:9px;padding:10px 12px;overflow-wrap:anywhere}.ok{color:#65d6a3}.bad{color:#ff7b72}small{color:#888}</style></head>
@@ -212,7 +204,7 @@ export class MobileUploadService {
     };
   }
 
-  async createSession(locale: MobilePageLocale = 'zh'): Promise<MobileUploadSessionSnapshot> {
+  async createSession(): Promise<MobileUploadSessionSnapshot> {
     const addresses = this.options.addresses();
     if (addresses.length === 0) throw new Error('no LAN IPv4 address available');
     await this.ensureServer();
@@ -222,7 +214,7 @@ export class MobileUploadService {
     const urls = addresses.map((address) => `http://${address}:${this.port}/s/${token}`);
     const timer = setTimeout(() => { void this.closeSession(id); }, this.options.sessionTtlMs);
     timer.unref();
-    const session: MobileUploadSession = { id, token, locale, urls, expiresAt, files: [], closing: false, timer, activeUploads: new Set() };
+    const session: MobileUploadSession = { id, token, urls, expiresAt, files: [], closing: false, timer, activeUploads: new Set() };
     this.sessions.set(id, session);
     return this.snapshot(session);
   }
@@ -297,7 +289,7 @@ export class MobileUploadService {
       if (!match) { sendNotFound(res); return; }
       const session = this.sessionByToken(match[1]!);
       if (!session) { sendNotFound(res); return; }
-      if (!match[2] && req.method === 'GET') { this.sendPage(res, session.locale); return; }
+      if (!match[2] && req.method === 'GET') { this.sendPage(res); return; }
       if (match[2] && req.method === 'POST') {
         const upload = this.receiveUpload(session, url, req, res);
         session.activeUploads.add(upload);
@@ -311,13 +303,13 @@ export class MobileUploadService {
     }
   }
 
-  private sendPage(res: ServerResponse, locale: MobilePageLocale): void {
+  private sendPage(res: ServerResponse): void {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'");
-    res.end(mobilePage(locale));
+    res.end(mobilePage());
   }
 
   private async receiveUpload(

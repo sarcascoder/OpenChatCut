@@ -1,10 +1,9 @@
-// Settings → 转写 → 本地模型：模型选择 + 按需下载管理。
+// Settings → Transcription → Local models: model selection + on-demand download management.
 // Models are NOT bundled — users pick and download them on demand through the
 // local hf-proxy (multi-source accelerated download into the disk cache).
 // Whisper is OpenAI's open-source model, so the official OpenAI mark is used.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { theme } from '../../theme';
-import { useT } from '../../i18n/locale';
 import { warmUpLocalAsr } from '../../transcript/local-asr';
 import { asrBackendPreference } from '../../transcript/deviceProfile';
 import { VendorIcon } from './vendorIcons';
@@ -44,7 +43,6 @@ function modelSizeText(bytes: number): string {
 }
 
 export function LocalAsrPane({ fields, ctx }: { fields: readonly SettingsField[]; ctx: FieldCtx }) {
-  const t = useT();
   const [models, setModels] = useState<AsrModelState[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -152,18 +150,18 @@ export function LocalAsrPane({ fields, ctx }: { fields: readonly SettingsField[]
       const pct = (task.filesTotal ?? 0) > 0
         ? Math.min(100, Math.round((task.filesDone ?? 0) / (task.filesTotal ?? 1) * 100))
         : 0;
-      return { text: t('下载中 {pct}%', { pct }), color: theme.accent };
+      return { text: `Downloading ${pct}%`, color: theme.accent };
     }
-    if (task?.status === 'error') return { text: t('下载失败'), color: theme.danger };
-    if (m.downloaded) return { text: t('已下载'), color: theme.success };
-    return { text: t('未下载'), color: theme.textDim };
+    if (task?.status === 'error') return { text: 'Download failed', color: theme.danger };
+    if (m.downloaded) return { text: 'Downloaded', color: theme.success };
+    return { text: 'Not downloaded', color: theme.textDim };
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <VendorIcon vendor="openai" size={16} />
-        <span style={{ fontSize: 12, fontWeight: 600 }}>{t('默认模型')}</span>
+        <span style={{ fontSize: 12, fontWeight: 600 }}>Default model</span>
       </div>
       {fields.map((field) => <FieldRow key={field.name} field={field} ctx={ctx} />)}
       {hasDesktopInference && desktopInferenceSupported && (
@@ -178,9 +176,9 @@ export function LocalAsrPane({ fields, ctx }: { fields: readonly SettingsField[]
             style={{ marginTop: 2 }}
           />
           <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>{t('桌面原生推理加速')}</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Native desktop inference acceleration</span>
             <span style={{ fontSize: 11, color: theme.textDim, lineHeight: 1.45 }}>
-              {t('启用后，转写使用 macOS Metal 或原生 CPU；画面语义、节拍与音乐语义模型自动选择 Windows DirectML、Linux CUDA、macOS CoreML 或浏览器 WebGPU；失败时回退 CPU 或浏览器引擎。')}
+              When enabled, transcription uses macOS Metal or native CPU. Visual-semantic, rhythm, and music-semantic models select Windows DirectML, Linux CUDA, macOS CoreML, or browser WebGPU. Failures fall back to CPU or the browser engine.
             </span>
           </span>
         </label>
@@ -196,15 +194,15 @@ export function LocalAsrPane({ fields, ctx }: { fields: readonly SettingsField[]
           style={{ marginTop: 2 }}
         />
         <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <span style={{ fontSize: 12, fontWeight: 600 }}>{t('WebGPU 转写加速')}</span>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>WebGPU transcription acceleration</span>
         </span>
       </label>
       <div style={{ fontSize: 11.5, color: theme.textDim }}>
-        {t('模型按需下载到本机，不随应用打包。首次使用或下载模型时自动加速下载。')}
+        Models are downloaded to this machine on demand — they are not bundled with the app. Downloads use the accelerated pipeline automatically.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-        {loadError && <div style={{ fontSize: 11.5, color: theme.danger }}>{t('无法读取模型列表：{err}', { err: loadError })}</div>}
-        {!loadError && !models && <div style={{ fontSize: 11.5, color: theme.textDim }}>{t('读取中…')}</div>}
+        {loadError && <div style={{ fontSize: 11.5, color: theme.danger }}>{`Cannot load the model list: ${loadError}`}</div>}
+        {!loadError && !models && <div style={{ fontSize: 11.5, color: theme.textDim }}>Loading…</div>}
         {(models ?? []).map((m) => {
           const status = statusLabel(m);
           const downloading = m.task?.status === 'downloading';
@@ -227,10 +225,10 @@ export function LocalAsrPane({ fields, ctx }: { fields: readonly SettingsField[]
                 <span style={{ fontSize: 11, color: theme.textDim }}>…</span>
               ) : m.downloaded ? (
                 <button type="button" disabled={busy} onClick={() => void deleteModel(m.id)}
-                  style={smallBtn}>{t('删除')}</button>
+                  style={smallBtn}>Delete</button>
               ) : (
                 <button type="button" disabled={busy} onClick={() => void startDownload(m.id)}
-                  style={{ ...smallBtn, ...primaryBtn }}>{t('下载')}</button>
+                  style={{ ...smallBtn, ...primaryBtn }}>Download</button>
               )}
             </div>
           );

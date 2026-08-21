@@ -2,7 +2,6 @@ import type { DirectoryImportedFile } from '../../shared/directory-import';
 import { normalizeSha256Hash } from '../../shared/content-hash';
 import { createMediaSourceRevision } from '../editor/mediaSourceRevision';
 import type { MediaAsset, MediaAssetKind } from '../editor/types';
-import { t } from '../i18n/locale';
 
 const FALLBACK_SECONDS = 5;
 
@@ -23,7 +22,7 @@ function durationInProjectFrames(file: DirectoryImportedFile, projectFps: number
 function assertPublishedVideoIsReady(file: DirectoryImportedFile): void {
   if (file.kind !== 'video' || file.proxyKind === 'alpha-webm') return;
   if (file.compatibilityNormalized !== true) {
-    throw new Error(t('监听目录中的视频尚未完成兼容性处理'));
+    throw new Error('A watched video was published before compatibility processing completed.');
   }
 }
 

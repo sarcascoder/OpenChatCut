@@ -1,6 +1,5 @@
 import type { AgentRuntimeModule, LLMMessage } from './runtime';
 import type { AgentReference } from './context';
-import { getLocale } from '../i18n/locale';
 
 export interface AgentRetryOptions {
   readonly askOnly?: boolean;
@@ -69,10 +68,9 @@ export async function enhanceAgentPrompt(draft: string): Promise<string> {
   try {
     // Deliberate lazy boundary: the prompt enhancer must not load provider SDKs before first use.
     const { generateAgentText } = await import('./client');
-    const language = getLocale() === 'zh' ? 'Chinese' : 'English';
     const output = (await generateAgentText({
       maxOutputTokens: 400,
-      system: `You improve rough or conversational video-editing requests into one clear, specific, directly executable instruction. Write the instruction in ${language}, matching the selected interface language. Output only the rewritten instruction without explanation, quotation marks, or line breaks.`,
+      system: `You improve rough or conversational video-editing requests into one clear, specific, directly executable instruction. Write the instruction in English. Output only the rewritten instruction without explanation, quotation marks, or line breaks.`,
       prompt: trimmed,
     })).trim();
     return output || draft;
@@ -86,7 +84,7 @@ export function appendRejectedProposal(messages: readonly LLMMessage[]): LLMMess
     role: 'user',
     content: [
       'User clicked Deny and rejected this generation task. They may want adjustments; do not retry automatically.',
-      '（用户拒绝了上述提案，未应用任何改动。不要自动重试生成。）',
+      '(The user rejected the proposal above; no changes were applied. Do not retry the generation automatically.)',
     ].join('\n'),
   }];
 }

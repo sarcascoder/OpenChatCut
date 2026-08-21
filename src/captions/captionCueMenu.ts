@@ -4,8 +4,8 @@ import { updateManualCue } from './manualCaptions';
 
 export const CAPTION_CUE_TRANSLATION_LANGS = [
   { label: 'English', flag: '🇺🇸' },
-  { label: '日本語', flag: '🇯🇵' },
-  { label: '한국어', flag: '🇰🇷' },
+  { label: '\u65e5\u672c\u8a9e', flag: '🇯🇵' }, // "Japanese" — endonym label, kept as code points
+  { label: '\ud55c\uad6d\uc5b4', flag: '🇰🇷' },
   { label: 'Español', flag: '🇪🇸' },
   { label: 'Français', flag: '🇫🇷' },
   { label: 'Deutsch', flag: '🇩🇪' },

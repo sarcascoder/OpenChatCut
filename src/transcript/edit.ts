@@ -324,10 +324,11 @@ export function splitClipTranscript(
 }
 
 // Fixed filler tokens clean_script strips ("mechanical clean" — no LLM).
-const FILLER = new Set(['um', 'umm', 'uh', 'uhh', 'uhm', 'er', 'erm', 'ah', 'hmm', 'mmm', '嗯', '呃', '啊', '唔', '额']);
+// Trailing five are Chinese filler particles: "en", "e", "a", "wu", "e" — CJK filler detection.
+const FILLER = new Set(['um', 'umm', 'uh', 'uhh', 'uhm', 'er', 'erm', 'ah', 'hmm', 'mmm', '\u55ef', '\u5443', '\u554a', '\u5514', '\u989d']);
 
 export function isFiller(text: string): boolean {
-  const t = text.toLowerCase().replace(/[^a-z一-鿿]/g, '');
+  const t = text.toLowerCase().replace(/[^a-z\u4e00-\u9fff]/g, '');
   return t.length > 0 && FILLER.has(t);
 }
 

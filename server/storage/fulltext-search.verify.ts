@@ -26,90 +26,99 @@ async function main(): Promise<void> {
     const { segmentForIndex } = await import('./search-tokenizer.ts');
 
     // ── tokenizer: Chinese 2-char words and mixed text ──
-    assert.equal(segmentForIndex('字幕'), '字幕', 'a 2-char word must stay whole');
-    assert.ok(segmentForIndex('把背景音乐的音量降低').includes('背景音乐'), 'domain words must segment');
-    assert.ok(segmentForIndex('导出4K视频').includes('4K'), 'latin runs must stay intact');
+    // CJK below stays as escapes: jieba segmentation is the behaviour under test.
+    // "subtitle" / "turn down the background music volume" ("background music") / "export 4K video"
+    assert.equal(segmentForIndex('\u5b57\u5e55'), '\u5b57\u5e55', 'a 2-char word must stay whole');
+    assert.ok(segmentForIndex('\u628a\u80cc\u666f\u97f3\u4e50\u7684\u97f3\u91cf\u964d\u4f4e').includes('\u80cc\u666f\u97f3\u4e50'), 'domain words must segment');
+    assert.ok(segmentForIndex('\u5bfc\u51fa4K\u89c6\u9891').includes('4K'), 'latin runs must stay intact');
 
     // ── chat indexing: per-message rows ──
+    // "turn down the background music volume a bit" / "sure, make the caption
+    // style gold too" (thinking: "adjusting the style"); query "background music volume"
     indexStoreKey('chat:project-a', {
       messages: [
-        { role: 'user', text: '把背景音乐的音量降低一点' },
-        { role: 'assistant', text: '好的，字幕样式也改成金色', thinking: '调整样式' },
+        { role: 'user', text: '\u628a\u80cc\u666f\u97f3\u4e50\u7684\u97f3\u91cf\u964d\u4f4e\u4e00\u70b9' },
+        { role: 'assistant', text: '\u597d\u7684\uff0c\u5b57\u5e55\u6837\u5f0f\u4e5f\u6539\u6210\u91d1\u8272', thinking: '\u8c03\u6574\u6837\u5f0f' },
         { role: 'tool', text: '', tool: { name: 'set_item_volume' } },
       ],
     });
-    const chatHits = searchContent('背景音乐音量');
+    const chatHits = searchContent('\u80cc\u666f\u97f3\u4e50\u97f3\u91cf');
     assert.ok(chatHits.some((hit) => hit.kind === 'chat' && hit.ref.startsWith('chat:project-a:')),
       'chat text must be searchable by segmented words');
-    const assistantHits = searchContent('字幕样式');
+    const assistantHits = searchContent('\u5b57\u5e55\u6837\u5f0f'); // "caption style"
     assert.ok(assistantHits.some((hit) => hit.ref.endsWith(':1')), 'assistant message must match');
 
     // ── project indexing: captions (cue text) + transcript words ──
+    // cue "the seaside at dusk"; transcript words "transition", "subtitle"
     indexStoreKey('project:project-a', {
       timelines: [{
         tracks: {
           C1: {
             captions: {
               enabled: true,
-              cues: [{ startFrame: 0, text: '黄昏的海边' }],
+              cues: [{ startFrame: 0, text: '\u9ec4\u660f\u7684\u6d77\u8fb9' }],
             },
           },
         },
       }],
       assets: [{
         id: 'asset-1',
-        transcript: { words: [{ text: '转场' }, { text: '字幕' }] },
+        transcript: { words: [{ text: '\u8f6c\u573a' }, { text: '\u5b57\u5e55' }] },
       }],
     });
-    const captionHits = searchContent('黄昏');
+    const captionHits = searchContent('\u9ec4\u660f'); // "dusk"
     assert.ok(captionHits.some((hit) => hit.kind === 'caption' && hit.projectId === 'project-a'),
       'caption cue text must be searchable');
-    const transcriptHits = searchContent('转场');
+    const transcriptHits = searchContent('\u8f6c\u573a'); // "transition"
     assert.ok(transcriptHits.some((hit) => hit.kind === 'transcript'),
       'transcript words must be searchable');
 
     // ── project scoping ──
-    const scoped = searchContent('字幕', { projectId: 'project-b' });
+    const scoped = searchContent('\u5b57\u5e55', { projectId: 'project-b' }); // "subtitle"
     assert.equal(scoped.length, 0, 'another project must not see the hits');
 
     // ── bm25 ranking: exact multi-token match ranks above partial ──
+    // "turn the background music volume down a bit more" vs "a completely
+    // unrelated topic of discussion"; query "background music" + "volume"
     indexStoreKey('chat:project-b', {
       messages: [
-        { role: 'user', text: '背景音乐音量再低一点' },
-        { role: 'user', text: '完全无关的话题讨论' },
+        { role: 'user', text: '\u80cc\u666f\u97f3\u4e50\u97f3\u91cf\u518d\u4f4e\u4e00\u70b9' },
+        { role: 'user', text: '\u5b8c\u5168\u65e0\u5173\u7684\u8bdd\u9898\u8ba8\u8bba' },
       ],
     });
-    const ranked = searchContent('背景音乐 音量');
+    const ranked = searchContent('\u80cc\u666f\u97f3\u4e50 \u97f3\u91cf');
     assert.ok(ranked.length > 0);
     assert.ok(ranked[0]!.score >= ranked[ranked.length - 1]!.score, 'scores must descend');
 
     // ── hash-gated refresh: same content does not duplicate rows ──
     indexStoreKey('chat:project-b', {
-      messages: [{ role: 'user', text: '背景音乐音量再低一点' }],
+      messages: [{ role: 'user', text: '\u80cc\u666f\u97f3\u4e50\u97f3\u91cf\u518d\u4f4e\u4e00\u70b9' }],
     });
-    const afterRefresh = searchContent('背景音乐音量', { projectId: 'project-b' });
+    const afterRefresh = searchContent('\u80cc\u666f\u97f3\u4e50\u97f3\u91cf', { projectId: 'project-b' });
     assert.equal(afterRefresh.length, 1, 'unchanged content must not re-index');
 
     // ── deletion sync ──
     removeStoreKey('chat:project-b');
-    assert.equal(searchContent('背景音乐音量', { projectId: 'project-b' }).length, 0,
+    assert.equal(searchContent('\u80cc\u666f\u97f3\u4e50\u97f3\u91cf', { projectId: 'project-b' }).length, 0,
       'deleted key must drop its rows');
 
     // ── rebuild (post-migration backfill) ──
     // Seed a kv row first: rebuild scans the kv table (created by store writes).
     const { sqliteWriteEntry } = await import('./sqlite-store.ts');
     await sqliteWriteEntry('chat:rebuild-src', {
-      messages: [{ role: 'user', text: '重建索引测试文本' }],
+      // "rebuild-index test text"; query below is "rebuild index"
+      messages: [{ role: 'user', text: '\u91cd\u5efa\u7d22\u5f15\u6d4b\u8bd5\u6587\u672c' }],
     });
     const rebuilt = rebuildSearchIndex();
     assert.ok(rebuilt.indexed >= 1, 'rebuild must scan chat/project keys');
-    assert.ok(searchContent('重建索引').some((hit) => hit.ref.startsWith('chat:rebuild-src:')),
+    assert.ok(searchContent('\u91cd\u5efa\u7d22\u5f15').some((hit) => hit.ref.startsWith('chat:rebuild-src:')),
       'rebuild must restore hits');
 
     // ── search unavailable without SQLite enabled ──
     process.env[SQLITE_STORE_ENV] = '0';
     resetSearchForTests();
-    assert.equal(searchContent('字幕').length, 0, 'search must be a no-op without the SQLite store');
+    // "subtitle"
+    assert.equal(searchContent('\u5b57\u5e55').length, 0, 'search must be a no-op without the SQLite store');
 
     console.log('✓ fulltext-search verify: tokenizer/index/search/ranking/scoping/delete-sync/rebuild all passed');
   } finally {

@@ -6,17 +6,19 @@ const word = (text: string, start: number, end: number) => ({ text, start, end }
 
 // Continuous speech stays in one paragraph.
 assert.deepEqual(
-  transcriptParagraphs([word('你', 0, 200), word('好', 200, 400), word('啊', 400, 600)]),
-  [{ start: 0, text: '你好啊' }],
+  // "you" + "good" + "ah" — CJK words join with no separator
+  transcriptParagraphs([word('\u4f60', 0, 200), word('\u597d', 200, 400), word('\u554a', 400, 600)]),
+  [{ start: 0, text: '\u4f60\u597d\u554a' }],
   'no gap keeps one paragraph',
 );
 
 // A gap > 0.8s opens a new paragraph carrying its own start time.
 assert.deepEqual(
-  transcriptParagraphs([word('第一句', 0, 800), word('第二句', 2500, 3100)]),
+  // "first sentence", "second sentence" — CJK paragraph split
+  transcriptParagraphs([word('\u7b2c\u4e00\u53e5', 0, 800), word('\u7b2c\u4e8c\u53e5', 2500, 3100)]),
   [
-    { start: 0, text: '第一句' },
-    { start: 2500, text: '第二句' },
+    { start: 0, text: '\u7b2c\u4e00\u53e5' },
+    { start: 2500, text: '\u7b2c\u4e8c\u53e5' },
   ],
   'gap > 800ms splits paragraphs',
 );
@@ -33,8 +35,9 @@ assert.deepEqual(transcriptParagraphs([]), [], 'empty transcript');
 
 // Chinese text concatenates without spaces; mixed text preserves word text.
 assert.equal(
-  transcriptParagraphs([word('我', 0, 300), word('们', 300, 600)])[0]?.text,
-  '我们',
+  // "I" + "plural" → "we" — CJK concatenation without spaces
+  transcriptParagraphs([word('\u6211', 0, 300), word('\u4eec', 300, 600)])[0]?.text,
+  '\u6211\u4eec',
   'concatenation is verbatim',
 );
 

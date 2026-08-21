@@ -3,8 +3,9 @@ import { joinTranscriptWords, packTranscriptPhrases } from './phrases';
 import type { TranscriptWord } from './types';
 
 assert.equal(
-  joinTranscriptWords([{ text: '你好' }, { text: '，' }, { text: '世界' }, { text: '！' }]),
-  '你好，世界！',
+  // "hello", fullwidth comma, "world", fullwidth bang — CJK words join with no spaces
+  joinTranscriptWords([{ text: '\u4f60\u597d' }, { text: '\uff0c' }, { text: '\u4e16\u754c' }, { text: '\uff01' }]),
+  '\u4f60\u597d\uff0c\u4e16\u754c\uff01',
 );
 assert.equal(
   joinTranscriptWords([{ text: 'Hello' }, { text: ',' }, { text: 'world' }, { text: '!' }]),

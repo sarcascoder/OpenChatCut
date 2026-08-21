@@ -42,10 +42,10 @@ try {
     const url = await mediaDataUrl(`/media/uploads/${name}`);
     assert.ok(
       url.startsWith(`data:${mime};base64,`),
-      `.${ext} 应标成 ${mime},实得 ${url.slice(0, url.indexOf(';base64'))}`,
+      `.${ext} should be labelled ${mime}, got ${url.slice(0, url.indexOf(';base64'))}`,
     );
   }
-  console.log(`reference-mime.verify: ok (${CASES.length} 种扩展名都标了真实类型,没有兜底成 image/jpeg)`);
+  console.log(`reference-mime.verify: ok (all ${CASES.length} extensions carry their real type, none fell back to image/jpeg)`);
 } finally {
   await Promise.all(written.map((file) => rm(file, { force: true })));
 }

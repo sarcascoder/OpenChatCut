@@ -1,5 +1,4 @@
 import { useRef, useState, useSyncExternalStore } from 'react';
-import { useT } from '../i18n/locale';
 import { loadExportAutoQaPreference, saveExportAutoQaPreference } from './autoQa';
 import { createArtifactExporters } from './artifactExportOperations';
 import {
@@ -31,7 +30,6 @@ import type {
   ExportProgress,
   ExportQaUiState,
   RenderEngine,
-  Translate,
   UseExportWorkflowOptions,
   WorkflowOperations,
 } from './exportWorkflowTypes';
@@ -60,19 +58,17 @@ function createWorkflowOperations(
   destination: ExportDestination,
   setters: BackgroundExportJobSetters,
   targetPath: string,
-  t: Translate,
 ): WorkflowOperations {
-  const verifyCompletedExport = createExportVerifier({ fps: options.fps, state: options.state, t, ...setters });
+  const verifyCompletedExport = createExportVerifier({ fps: options.fps, state: options.state, ...setters });
   const exportServer = createServerExporter({
     autoQaEnabled,
     destination,
     options,
     targetPath,
-    t,
     verifyCompletedExport,
     ...setters,
   });
-  const artifacts = createArtifactExporters({ destination, options, t, ...setters });
+  const artifacts = createArtifactExporters({ destination, options, ...setters });
   const exportVideo = createVideoExporter({
     autoQaEnabled,
     browserAbortRef,
@@ -80,7 +76,6 @@ function createWorkflowOperations(
     exportServerVideo: (signal) => exportServer('video', signal),
     options,
     verifyCompletedExport,
-    t,
     ...setters,
   });
   return {
@@ -144,7 +139,6 @@ function recoveredServerRenderId(jobId: string | null): string | null {
 }
 
 export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs: ExportJobStore) {
-  const t = useT();
   const initialJobs = exportJobs.getSnapshot().jobs;
   const [viewedJobId, setViewedJobId] = useState<string | null>(() => initialJobs.at(-1)?.id ?? null);
   const [setupError, setSetupError] = useState<string | null>(null);
@@ -166,11 +160,11 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
       try {
         const retired = await retirePersistedServerExport(retainedRenderId);
         if (!retired) {
-          setSetupError(t('此导出正在由另一个窗口恢复，请稍后重试'));
+          setSetupError('This export is being recovered in another window. Please try again shortly.');
           return;
         }
       } catch (error) {
-        setSetupError(exportDestinationErrorMessage(error, t));
+        setSetupError(exportDestinationErrorMessage(error));
         return;
       }
     }
@@ -179,7 +173,7 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
     try {
       targetPath = exportDestinationTargetPath(destinationState.destination, filename);
     } catch (error) {
-      setSetupError(exportDestinationErrorMessage(error, t));
+      setSetupError(exportDestinationErrorMessage(error));
       return;
     }
     setSetupError(null);
@@ -195,7 +189,7 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
     try {
       capturedOptions = await materializeBlobMedia(capturedOptions, { mediaPlanSnapshot });
     } catch (error) {
-      setSetupError(exportDestinationErrorMessage(error, t));
+      setSetupError(exportDestinationErrorMessage(error));
       return;
     }
     const capturedDestination = destinationState.destination;
@@ -210,7 +204,6 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
           capturedDestination,
           setters,
           targetPath,
-          t,
         );
         const execute = createExportRunner({
           busy: null,
@@ -220,7 +213,6 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
           progress: null,
           signal,
           targetPath,
-          t,
           ...setters,
         });
         await execute();
@@ -239,12 +231,11 @@ export function useExportWorkflow(options: UseExportWorkflowOptions, exportJobs:
         destination: selected,
         exportJobs,
         renderId,
-        t,
         targetPath,
       });
       setViewedJobId(jobId);
     } catch (reason) {
-      setSetupError(exportDestinationErrorMessage(reason, t));
+      setSetupError(exportDestinationErrorMessage(reason));
     }
   };
   const toggleAutoQa = (enabled: boolean) => {

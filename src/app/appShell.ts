@@ -144,7 +144,7 @@ const projectStartupSource: ProjectStartupSource = {
   list: listProjects,
   hasHistory: hasProjectHistory,
   canSeedDemo: () => kvRemoteMode() === 'local' || projectStoreWriteCredential(),
-  createDemo: async () => createProject('示例工程', await seedDoc()),
+  createDemo: async () => createProject('Demo Project', await seedDoc()),
 };
 
 export async function loadInitialProjects(

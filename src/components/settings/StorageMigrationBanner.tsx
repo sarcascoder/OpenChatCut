@@ -2,7 +2,6 @@
 // Shown only while the store is still on JSON files, hidden on failure, and
 // dismissible (localStorage) — never blocks the dashboard.
 import { useEffect, useState } from 'react';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 import { loadMigrationStatus, STORAGE_BANNER_DISMISS_KEY, STORAGE_MIGRATED_EVENT } from './storageMigration';
 
@@ -23,7 +22,6 @@ const dismissBtn: React.CSSProperties = {
 };
 
 export function StorageMigrationBanner({ onOpenDialog }: { onOpenDialog: () => void }) {
-  const t = useT();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -55,10 +53,10 @@ export function StorageMigrationBanner({ onOpenDialog }: { onOpenDialog: () => v
   return (
     <div style={bannerStyle} role="status">
       <span style={bannerText}>
-        {t('可将工程数据迁移到 SQLite：写入更可靠、加载更快、支持全文搜索。原始 JSON 文件只读保留，随时可回滚。')}
+        Migrate project data to SQLite: more reliable writes, faster loading, full-text search. Original JSON files stay read-only, so you can always roll back.
       </span>
-      <button type="button" style={primaryBtn} onClick={onOpenDialog}>{t('迁移到 SQLite')}</button>
-      <button type="button" style={dismissBtn} onClick={dismiss}>{t('忽略')}</button>
+      <button type="button" style={primaryBtn} onClick={onOpenDialog}>Migrate to SQLite</button>
+      <button type="button" style={dismissBtn} onClick={dismiss}>Dismiss</button>
     </div>
   );
 }

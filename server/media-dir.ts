@@ -311,7 +311,7 @@ export async function syncUploadDirectories(
       throw err;
     }
   }
-  if (copied > 0) log(`[media-dir] 已迁移 ${copied} 个素材:${source} → ${target}`);
+  if (copied > 0) log(`[media-dir] migrated ${copied} assets: ${source} → ${target}`);
   return copied;
 }
 
@@ -324,7 +324,7 @@ export async function syncLegacyUploads(
   try {
     await syncUploadDirectories(profile.mediaDir, uploadDir(profile), log);
   } catch (err) {
-    log(`[media-dir] 老素材同步失败:${err instanceof Error ? err.message : String(err)}`);
+    log(`[media-dir] legacy asset sync failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -346,26 +346,26 @@ export async function checkMediaDir(
   profile: RuntimeProfile = runtimeProfile(),
 ): Promise<DirProbeBody> {
   if (isIsolatedDevProfile(profile)) {
-    return { ok: false, error: '隔离开发配置固定使用独立素材目录，不能修改 MEDIA_DIR' };
+    return { ok: false, error: 'The isolated dev profile is pinned to its own media directory; MEDIA_DIR cannot be changed' };
   }
-  if (!raw.trim()) return { ok: true, note: `未设置 · 使用默认目录 ${profile.mediaDir}` };
+  if (!raw.trim()) return { ok: true, note: `Not set · using the default directory ${profile.mediaDir}` };
   const dir = expandMediaDir(raw);
-  if (!dir) return { ok: false, error: '必须是绝对路径（可用 ~/ 开头）' };
+  if (!dir) return { ok: false, error: 'Must be an absolute path (may start with ~/)' };
   try {
     await mkdir(dir, { recursive: true });
     const probe = join(dir, `.cc-dir-probe-${process.pid}`);
     await writeFile(probe, 'ok');
     await unlink(probe);
-    return { ok: true, note: `目录可写 · ${dir}` };
+    return { ok: true, note: `Directory is writable · ${dir}` };
   } catch (err) {
-    return { ok: false, error: `目录不可写 · ${err instanceof Error ? err.message : String(err)}` };
+    return { ok: false, error: `Directory is not writable · ${err instanceof Error ? err.message : String(err)}` };
   }
 }
 
 export function mediaDirPostCheck(bodyText: string): string | null {
   try {
     const body = JSON.parse(bodyText) as DirProbeBody;
-    return body.ok ? null : (body.error ?? '目录检查失败');
+    return body.ok ? null : (body.error ?? 'Directory check failed');
   } catch {
     return null;
   }

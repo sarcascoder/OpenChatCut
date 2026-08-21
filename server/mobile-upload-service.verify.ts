@@ -76,7 +76,7 @@ try {
   });
   assert.equal(heic.status, 200);
 
-  const englishSession = await service.createSession('en');
+  const englishSession = await service.createSession();
   assert.match(await (await fetch(englishSession.urls[0]!)).text(), /Send media to OpenChatCut/);
 
   const tooLarge = await fetch(`${session.urls[0]}/upload?name=large.mp4`, {

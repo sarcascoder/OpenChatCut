@@ -74,7 +74,7 @@ export function execLayoutTool(name: string, args: Args, ctx: AgentContext): unk
   }));
   ctx.commands.batch(
     placed.map(({ itemId, transform }) => ({ type: 'setTransform' as const, id: itemId, patch: transform })),
-    `应用布局 ${layout}`,
+    `Apply layout ${layout}`,
   );
 
   const notes: string[] = [];

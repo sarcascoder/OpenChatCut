@@ -30,7 +30,7 @@ const state: TimelineState = {
 };
 
 assert.deepEqual(inspectorMixedValue([a, b], (entry) => entry.transform?.scale ?? 1), { mixed: true, value: undefined });
-assert.deepEqual(inspectorMixedValue([a, b], (entry) => entry.volume ?? 1), { mixed: false, value: 1 }, 'undefined 默认值与显式默认值不应假 mixed');
+assert.deepEqual(inspectorMixedValue([a, b], (entry) => entry.volume ?? 1), { mixed: false, value: 1 }, 'an undefined default and an explicit default must not read as mixed');
 
 const transformPlan = planInspectorBatch(
   state,
@@ -41,15 +41,15 @@ const transformPlan = planInspectorBatch(
 assert.equal(transformPlan.ok, true);
 const transformed = transformPlan.actions.reduce(reduce, state);
 assert.deepEqual(transformed.items.map((entry) => entry.transform?.x), [42, 42]);
-assert.deepEqual(transformed.items.map((entry) => entry.transform?.scale), [1, 2], '未显式修改的 mixed scale 不能被写平');
-assert.deepEqual(transformed.items.map((entry) => entry.filters?.brightness), [0.8, 1.2], '其他 mixed 字段完全不应进入 patch');
+assert.deepEqual(transformed.items.map((entry) => entry.transform?.scale), [1, 2], 'a mixed scale that was not explicitly edited must not be flattened');
+assert.deepEqual(transformed.items.map((entry) => entry.filters?.brightness), [0.8, 1.2], 'other mixed fields must never enter the patch at all');
 
 const timeline = { ...state, id: 'tl1', name: 'main', order: 0 };
 const doc: ProjectDoc = { version: CURRENT_PROJECT_VERSION, assets: [], mediaFolders: [], timelines: [timeline], activeTimelineId: 'tl1' };
 const committed = historyReduce({ past: [], present: doc, future: [] }, {
   type: 'batch', label: 'Inspector multi-edit', actions: transformPlan.actions,
 });
-assert.equal(committed.past.length, 1, '多选编辑只占一个 undo step');
+assert.equal(committed.past.length, 1, 'a multi-select edit takes only one undo step');
 assert.deepEqual(historyReduce(committed, { type: 'undo' }).present, doc);
 
 // Real preflight failure: one selected target is locked. No actions are released, so the unlocked target cannot publish alone.
@@ -62,7 +62,7 @@ const lockedPlan = planInspectorBatch(lockedState, ['a', 'b'], (entry) => ({
 }));
 assert.deepEqual(lockedPlan, { ok: false, actions: [], reason: 'locked-track' });
 const afterRejected = lockedPlan.ok ? lockedPlan.actions.reduce(reduce, lockedState) : lockedState;
-assert.strictEqual(afterRejected, lockedState, '失败必须回滚到原 snapshot，不能发布第一个 item 的修改');
+assert.strictEqual(afterRejected, lockedState, 'a failure must roll back to the original snapshot and must not publish the first item\'s change');
 assert.equal(afterRejected.items[0]?.filters?.brightness, 0.8);
 
 // Planner exceptions are also all-or-nothing: an earlier planned target is discarded when a later one fails.
@@ -72,4 +72,4 @@ const throwingPlan = planInspectorBatch(state, ['a', 'b'], (entry) => {
 });
 assert.deepEqual(throwingPlan, { ok: false, actions: [], reason: 'planning-failed' });
 
-console.log('inspectorBatch.verify: ok (mixed/default/显式 patch/atomic batch/locked+exception rollback)');
+console.log('inspectorBatch.verify: ok (mixed/default/explicit patch/atomic batch/locked+exception rollback)');

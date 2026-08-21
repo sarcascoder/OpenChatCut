@@ -1,20 +1,18 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons';
-import { useT } from '../i18n/locale';
 import { installFromText, installFromUrl, type InstallResult } from '../plugins/install';
 import type { InstalledPack } from '../plugins/store';
 import { theme } from '../theme';
 import { secondaryButton } from './ExtensionCenterModel';
 
 export function SourceLabel({ pack }: { pack: InstalledPack }) {
-  const t = useT();
   const label = pack.source?.kind === 'registry'
-    ? t('扩展中心')
+    ? 'Extension Center'
     : pack.source?.kind === 'url'
-      ? t('URL 安装')
+      ? 'URL install'
       : pack.source?.kind === 'file'
-        ? t('本地文件')
-        : t('旧版迁移');
+        ? 'Local file'
+        : 'Legacy migration';
   return <span>{label}</span>;
 }
 
@@ -27,13 +25,12 @@ export function ExtensionToggle({
   disabled: boolean;
   onChange: () => void;
 }) {
-  const t = useT();
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={checked ? t('停用扩展') : t('启用扩展')}
+      aria-label={checked ? 'Disable extension' : 'Enable extension'}
       disabled={disabled}
       onClick={onChange}
       style={{
@@ -115,7 +112,6 @@ function UrlInstallRow({ busy, onInstall }: {
   busy: boolean;
   onInstall: (task: Promise<InstallResult>) => void;
 }) {
-  const t = useT();
   const [url, setUrl] = useState('');
   const submit = () => onInstall(installFromUrl(url.trim()));
   return (
@@ -124,11 +120,11 @@ function UrlInstallRow({ busy, onInstall }: {
         value={url}
         onChange={(event) => setUrl(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter' && url.trim() && !busy) submit(); }}
-        placeholder={t('扩展包 JSON URL…')}
+        placeholder="Extension pack JSON URL…"
         style={INSTALL_INPUT_STYLE}
       />
       <button type="button" disabled={busy || !url.trim()} onClick={submit} style={secondaryButton(busy || !url.trim())}>
-        {t('从 URL 安装')}
+        Install from URL
       </button>
     </>
   );
@@ -138,14 +134,13 @@ function FileInstallButton({ busy, onInstall }: {
   busy: boolean;
   onInstall: (task: Promise<InstallResult>) => void;
 }) {
-  const t = useT();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const select = (file?: File) => {
     if (file) onInstall(file.text().then((text) => installFromText(text, { source: { kind: 'file' } })));
   };
   return (
     <>
-      <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} style={secondaryButton(busy)}>{t('选择文件')}</button>
+      <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} style={secondaryButton(busy)}>Choose file</button>
       <input
         ref={fileRef}
         type="file"
@@ -167,7 +162,6 @@ export function InstallPanel({
   busy: boolean;
   onInstall: (task: Promise<InstallResult>) => void;
 }) {
-  const t = useT();
   return (
     <div style={{
       display: 'flex',
@@ -178,9 +172,9 @@ export function InstallPanel({
       padding: 10,
       borderRadius: 5,
     }}>
-      <div style={{ fontSize: 11.5, color: theme.text, fontWeight: 650 }}>{t('安装')}</div>
+      <div style={{ fontSize: 11.5, color: theme.text, fontWeight: 650 }}>Install</div>
       <div style={{ fontSize: 10.5, color: theme.textDim }}>
-        {t('仅安装你信任的扩展包；安装前会校验格式并真实编译其中的 MG 与 Shader。')}
+        Only install extension packs you trust. OpenChatCut validates the format and compiles MG and shaders before installing.
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
         <UrlInstallRow busy={busy} onInstall={onInstall} />

@@ -7,72 +7,68 @@
 import type { CapabilityKey } from '../capabilities';
 import { currentCaps } from '../capabilities';
 import type { SkillDefinition } from './skill-types';
-
 export type SkillDependencyKind = CapabilityKey | 'runtime' | 'ffmpeg';
-
 export interface SkillDependency {
   kind: SkillDependencyKind;
   service: string;
   keyword: string;
   hits: number;
 }
-
 interface Rule {
   kind: SkillDependencyKind;
   service: string;
   keywords: string[];
 }
-
 const RULES: Rule[] = [
   {
     kind: 'image',
-    service: 'image generation (still keyframes / 图片生成)',
+    service: 'image generation (still keyframes)',
     keywords: [
       'dall-e', 'dalle', 'midjourney', 'stable diffusion', 'sdxl', 'flux',
-      'image generation', 'imagegen', 'text-to-image', '文生图', '生图', '图像生成', '图片生成',
-      'keyframe', 'keyframes', '关键帧画面',
+      'image generation', 'imagegen', 'text-to-image', 'Image', 'Image generation', 'Image generation',
+      'keyframe', 'keyframes'
     ],
   },
   {
     kind: 'video',
-    service: 'video generation (视频生成)',
+    service: 'video generation',
     keywords: [
-      'sora', 'kling', '可灵', 'seedance', 'runway', 'hailuo', '海螺', 'veo',
-      'gemini omni', 'text-to-video', '文生视频', '视频生成',
+      'sora', 'kling', 'Kling', 'seedance', 'runway', 'hailuo', 'veo',
+      'gemini omni', 'text-to-video', 'Video generation'
     ],
   },
   {
     kind: 'voice',
-    service: 'voice / TTS (配音/语音合成)',
+    service: 'voice / TTS (voiceover / speech synthesis)',
     keywords: [
       'elevenlabs', 'doubao tts', 'minimax tts', 'inworld tts', 'fish audio tts',
       'speechify tts', 'openai tts', 'gemini tts', 'mistral tts', 'cartesia tts',
-      'text-to-speech', 'tts ', '配音', '语音合成', 'voiceover', 'voice clone',
-      '语音克隆', 'indextts', 'narration voice',
+      'text-to-speech', 'tts ', 'Voice', 'voiceover', 'voice clone',
+      'indextts', 'narration voice'
     ],
   },
   {
     kind: 'music',
-    service: 'music generation (音乐生成)',
-    keywords: ['suno', 'music generation', '作曲', '音乐生成', 'bgm generation'],
+    service: 'music generation',
+    keywords: ['suno', 'music generation', 'Music', 'bgm generation'],
   },
   {
     kind: 'sound',
-    service: 'sound effects (音效)',
-    keywords: ['sound effects', 'sfx', '音效'],
+    service: 'sound effects',
+    keywords: ['sound effects', 'sfx', 'Sound Effects'],
   },
   {
     kind: 'transcription',
-    service: 'transcription via the configured provider (语音转写)',
+    service: 'transcription via the configured provider',
     keywords: [
       'assemblyai', 'whisper', 'openai transcription', 'deepgram', 'groq transcription',
-      'elevenlabs scribe', 'cartesia ink', 'transcription', '转写',
+      'elevenlabs scribe', 'cartesia ink', 'transcription', 'Transcript'
     ],
   },
   {
     kind: 'web',
-    service: 'web extraction (网页抓取/搜索)',
-    keywords: ['firecrawl', 'web search', '网页搜索', 'web scraper', '爬取', 'web_browser'],
+    service: 'web extraction (scraping / search)',
+    keywords: ['firecrawl', 'web search', 'web scraper', 'web_browser'],
   },
   {
     kind: 'sandbox',
@@ -88,9 +84,8 @@ const RULES: Rule[] = [
     kind: 'ffmpeg',
     service: 'ffmpeg / ffprobe',
     keywords: ['ffmpeg', 'ffprobe'],
-  },
+  }
 ];
-
 /** Scan a skill's text (SKILL.md body + description) for service dependencies. */
 export function detectSkillDependencies(text: string): SkillDependency[] {
   const lower = text.toLowerCase();
@@ -109,7 +104,6 @@ export function detectSkillDependencies(text: string): SkillDependency[] {
   }
   return found.sort((a, b) => b.hits - a.hits);
 }
-
 const CAP_LABEL: Record<CapabilityKey, string> = {
   image: 'image generation (submit_image)',
   voice: 'voice/TTS (submit_voice)',
@@ -121,7 +115,6 @@ const CAP_LABEL: Record<CapabilityKey, string> = {
   sandbox: 'sandbox (run_code)',
   web: 'web extraction (web_browser)',
 };
-
 /**
  * Adaptation block for the agent: which declared dependencies map onto
  * configured local capabilities (use them), which are missing (do not call
@@ -133,7 +126,7 @@ const CAP_LABEL: Record<CapabilityKey, string> = {
 export function skillDependencyPrompt(
   skill: SkillDefinition,
   text: string,
-  caps: Record<CapabilityKey, boolean> = currentCaps(),
+  caps: Record<CapabilityKey, boolean> = currentCaps()
 ): string {
   if (skill.source !== 'custom') return '';
   const deps = detectSkillDependencies(text);
@@ -150,7 +143,7 @@ export function skillDependencyPrompt(
         `- ${dep.service}: this skill was written for that environment (found "${dep.keyword}"). `
         + 'You are the OpenChatCut built-in agent: run the same deterministic steps with THIS environment\'s tools '
         + '(editor tools for timeline/media, run_skill_script for the skill\'s own scripts/… locally, run_code sandbox for generic code). '
-        + 'Do not pretend an external agent exists; adapt paths like ~/.codex/skills/… to the skill\'s installed location.',
+        + 'Do not pretend an external agent exists; adapt paths like ~/.codex/skills/… to the skill\'s installed location.'
       );
       continue;
     }
@@ -174,6 +167,6 @@ export function skillDependencyPrompt(
       ? 'Before starting, tell the user in one sentence which services are missing and ask them to configure them (Settings → the matching capability page), or to approve an alternative path you propose.'
       : 'Before starting, tell the user in one sentence that their foreign services are substituted with this app\'s configured equivalents.',
     'Never claim you used a service that is not configured here.',
-    '</selected_skill_adaptation>',
+    '</selected_skill_adaptation>'
   ].join('\n');
 }

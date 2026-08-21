@@ -326,7 +326,7 @@ export function validateAuthoredAdd(
         : {}),
     };
   }
-  const text = typeof entry.text === 'string' && entry.text.trim() ? entry.text.trim() : '文字';
+  const text = typeof entry.text === 'string' && entry.text.trim() ? entry.text.trim() : 'Text';
   const color = isHexColor(entry.color) ? entry.color.trim() : '#ffffff';
   const fontSize = finiteNum(entry.fontSize);
   const fontWeight = finiteNum(entry.fontWeight);

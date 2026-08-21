@@ -5,9 +5,7 @@ import { GENERATE_WORKFLOW } from './generate-workflow';
 import { timelineTrackIds, trackAlias, trackKind, type DesignStyle } from '../editor/types';
 import type { SkillDefinition } from './skills/skill-types';
 import type { AgentContext } from './context';
-import type { Locale } from '../i18n/locale';
 import { capabilitiesPrompt, currentCaps, type ApprovalMode } from './capabilities';
-import { getLocale } from '../i18n/locale';
 import { findSkill } from './skills/skills-catalog';
 import { skillDependencyPrompt } from './skills/skill-deps';
 import { buildPluginSkillsIndex } from './skills/plugin-skills';
@@ -36,9 +34,8 @@ export function assembleSystemPrompt(stable: readonly string[], volatilePart: st
   return stable.join('') + volatilePart;
 }
 
-export function agentLanguagePrompt(locale: Locale): string {
-  const language = locale === 'zh' ? 'Chinese' : 'English';
-  return `\n\n# Response Language\nThe interface language is ${language}. Write all user-facing responses, questions, summaries, and generated editing instructions in ${language}.`;
+export function agentLanguagePrompt(): string {
+  return '\n\n# Response Language\nWrite all user-facing responses, questions, summaries, and generated editing instructions in English.';
 }
 
 export function editorStatePrompt(ctx: AgentContext): string {
@@ -50,7 +47,7 @@ export function editorStatePrompt(ctx: AgentContext): string {
     .join(' ');
   const sorted = [...s.items].sort((a, b) => a.startFrame - b.startFrame || a.track.localeCompare(b.track));
   const lines = sorted.slice(0, EDITOR_STATE_MAX_ITEMS).map((it) => (
-    `[${it.id.slice(0, 8)}] ${trackAlias(s, it.track)} ${it.kind}「${it.name}」@${it.startFrame} +${it.durationInFrames}`
+    `[${it.id.slice(0, 8)}] ${trackAlias(s, it.track)} ${it.kind}"${it.name}"@${it.startFrame} +${it.durationInFrames}`
   ));
   const more = sorted.length > EDITOR_STATE_MAX_ITEMS
     ? `\n…${sorted.length - EDITOR_STATE_MAX_ITEMS} more clips (use read_timeline for the full list)`
@@ -238,7 +235,7 @@ export function buildAgentSystemPrompt(
   const mode = ctx.getApprovalMode?.() ?? (agentAutoApply() ? 'auto' : 'manual');
   return assembleSystemPrompt([
     SYSTEM_PROMPT,
-    agentLanguagePrompt(getLocale()),
+    agentLanguagePrompt(),
     capabilitiesPrompt(currentCaps(), mode),
     buildPluginSkillsIndex({ toolsAvailable: options.toolsAvailable }).prompt,
     agentSettingsPrompt(options.settings),

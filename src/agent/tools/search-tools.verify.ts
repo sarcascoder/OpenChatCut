@@ -27,19 +27,20 @@ async function main(): Promise<void> {
       { kind: 'caption', projectId: 'p-2', ref: 'project:p-2:captions', score: -1.2 },
     ],
   }));
-  const result = await execSearchTool('search_content', { query: '背景音乐音量' });
+  // "background music volume" — non-ASCII query must survive percent-encoding
+  const result = await execSearchTool('search_content', { query: '\u80cc\u666f\u97f3\u4e50\u97f3\u91cf' });
   const hits = (result as { hits: Array<{ kind: string; where: string; score: number }> }).hits;
   assert.equal(hits.length, 2);
   assert.ok(calls[0]!.url.includes('/api/project-store/search?q='), 'must hit the search endpoint');
-  assert.ok(calls[0]!.url.includes(encodeURIComponent('背景音乐音量')), 'query must be encoded');
+  assert.ok(calls[0]!.url.includes(encodeURIComponent('\u80cc\u666f\u97f3\u4e50\u97f3\u91cf')), 'query must be encoded');
   assert.equal(hits[0]!.kind, 'chat');
-  assert.equal(hits[0]!.where, '工程 p-1 第 3 条消息', 'chat ref must map to a message position');
-  assert.equal(hits[1]!.where, '工程 p-2 的字幕');
+  assert.equal(hits[0]!.where, 'project p-1 message #3', 'chat ref must map to a message position');
+  assert.equal(hits[1]!.where, 'captions of project p-2');
   assert.ok(hits[0]!.score >= hits[1]!.score, 'scores must descend');
 
   // ── project scoping + limit ──
   installFetch(() => ({ hits: [] }));
-  await execSearchTool('search_content', { query: '转场', projectId: 'p-9', limit: 5 });
+  await execSearchTool('search_content', { query: 'transition', projectId: 'p-9', limit: 5 });
   assert.ok(calls[0]!.url.includes('project=p-9'), 'projectId must be appended');
   assert.ok(calls[0]!.url.includes('limit=5'), 'limit must be appended');
 
@@ -53,7 +54,7 @@ async function main(): Promise<void> {
   (globalThis as Record<string, unknown>).fetch = async () => {
     throw new Error('network down');
   };
-  const failed = await execSearchTool('search_content', { query: '字幕' });
+  const failed = await execSearchTool('search_content', { query: 'captions' });
   assert.equal((failed as { error: string }).error, 'network down');
 
   console.log('✓ search_content tool verify: URL/hits/errors all passed');

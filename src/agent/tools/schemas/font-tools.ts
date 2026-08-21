@@ -8,8 +8,10 @@ export const FONT_TOOL_SCHEMAS: AgentToolSchema[] = [
       '+ locally bundled Chinese foundry faces, source:"bundled"). Use when export reports unsupported',
       'fonts or when picking fontFamily for motion-graphic items / captions. Returns canonical family',
       'names to use verbatim. Substring-matches family AND native-name aliases',
-      '(case/punctuation-insensitive) — e.g. "inter", "playfair", "noto sc", "思源黑体", "得意黑",',
-      '"抖音美好体". loadable=false means catalogued only; prefer a loadable alternative or',
+      // Native-name aliases (e.g. the Chinese names of the bundled foundry faces) also match,
+      // so saved projects keep resolving; the examples here stay in English.
+      '(case/punctuation-insensitive) — e.g. "inter", "playfair", "noto sc", "source han sans", "smiley sans",',
+      '"douyin sans". loadable=false means catalogued only; prefer a loadable alternative or',
       'confirmFontFallback on export.',
     ].join(' '),
     input_schema: {

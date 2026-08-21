@@ -26,7 +26,6 @@ import type {
   ExportQaUiState,
   RenderEngine,
   StateSetter,
-  Translate,
   UseExportWorkflowOptions,
 } from './exportWorkflowTypes';
 
@@ -45,7 +44,6 @@ export interface VideoExportContext {
   setProgress: StateSetter<ExportProgress | null>;
   setQa: StateSetter<ExportQaUiState | null>;
   setRenderEngine: StateSetter<RenderEngine>;
-  t: Translate;
   verifyCompletedExport: (completed: ExportJobResult, signal?: AbortSignal) => Promise<void>;
 }
 
@@ -65,14 +63,14 @@ function browserProgress(context: VideoExportContext): NonNullable<BrowserExport
   return (snapshot) => {
     context.setRenderEngine('browser');
     const percent = Math.min(98, Math.max(1, Math.round(snapshot.progress * 98)));
-    context.setBusy(context.t('浏览器渲染中…'));
+    context.setBusy('Rendering in browser…');
     context.setProgress((current) => current ? {
       ...current,
       phase: 'rendering',
       percent: Math.max(current.percent, percent),
       processedFrames: snapshot.encodedFrames,
       totalFrames: Math.max(1, exportDuration(context.options)),
-      detail: context.t('WebCodecs 浏览器加速'),
+      detail: 'WebCodecs browser acceleration',
     } : current);
   };
 }
@@ -96,21 +94,21 @@ function setPlannedRoute(context: VideoExportContext, plan: ExportRoutePlan): vo
   context.setRenderEngine(plan.route === 'browser' ? 'browser' : 'server');
   context.setEngineInfo(plan.engine);
   context.setEngineReason(plan.reason);
-  context.setProgress((current) => current ? { ...current, detail: context.t(plan.reason) } : current);
+  context.setProgress((current) => current ? { ...current, detail: plan.reason } : current);
 }
 
 function switchToServer(context: VideoExportContext, engine: ExportEngineInfo, reason: string): void {
   context.setRenderEngine('server');
   context.setEngineInfo(engine);
   context.setEngineReason(reason);
-  context.setBusy(context.t('切换兼容渲染…'));
+  context.setBusy('Switching to compatibility renderer…');
   context.setProgress((current) => current ? {
     ...current,
     phase: 'preparing',
     percent: 0,
     processedFrames: undefined,
     totalFrames: undefined,
-    detail: context.t('浏览器快导不可用：{reason}，已切换兼容渲染', { reason: context.t(reason) }),
+    detail: `Browser fast export unavailable: ${reason}. Switched to compatibility rendering.`,
   } : current);
 }
 
@@ -118,14 +116,14 @@ function switchToBrowser(context: VideoExportContext, engine: ExportEngineInfo, 
   context.setRenderEngine('browser');
   context.setEngineInfo(engine);
   context.setEngineReason(reason);
-  context.setBusy(context.t('切换 WebCodecs…'));
+  context.setBusy('Switching to WebCodecs…');
   context.setProgress((current) => current ? {
     ...current,
     phase: 'preparing',
     percent: 0,
     processedFrames: undefined,
     totalFrames: undefined,
-    detail: context.t('本机渲染失败：{reason}，已切换 WebCodecs', { reason }),
+    detail: `Local rendering failed: ${reason}. Switched to WebCodecs.`,
   } : current);
 }
 
@@ -189,13 +187,13 @@ export async function saveBrowserResult(
   const filename = `${base}.${codec === 'vp8' ? 'webm' : 'mp4'}`;
   await verifyBrowserResult(context, attempt.blob, filename, engine, signal);
   signal?.throwIfAborted();
-  context.setBusy(context.t('正在保存…'));
+  context.setBusy('Saving…');
   context.setProgress((current) => current ? {
     ...current,
     phase: 'downloading',
     percent: 99,
     outputSize: attempt.blob.size,
-    detail: context.t('正在写入所选位置'),
+    detail: 'Writing to the selected destination',
   } : current);
   signal?.throwIfAborted();
   context.beginTargetCommit();
@@ -249,7 +247,7 @@ async function runBrowserThenServer(
     attempt = await runBrowserRoute(context, controller, plan.browserEngine);
   } catch (error) {
     if (isAbortError(error)) throw error;
-    switchToServer(context, plan.serverEngine, error instanceof Error ? error.message : '浏览器快导失败');
+    switchToServer(context, plan.serverEngine, error instanceof Error ? error.message : 'Browser fast export failed');
     await context.exportServerVideo(controller.signal);
     return;
   }
@@ -272,7 +270,7 @@ async function runServerThenBrowser(
   } catch (error) {
     if (isAbortError(error)) throw error;
     if (!isServerRenderError(error) || plan.browser.status !== 'supported') throw error;
-    const reason = error.message || '本机渲染失败';
+    const reason = error.message || 'Local render failed';
     switchToBrowser(context, plan.browserEngine, reason);
   }
   const startedAt = performance.now();

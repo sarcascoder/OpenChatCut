@@ -40,7 +40,6 @@ import {
 } from './serverExportRenderOperation';
 import type {
   ExportJobResult,
-  Translate,
   UseExportWorkflowOptions,
 } from './exportWorkflowTypes';
 export { isServerRenderError, ServerRenderError } from './serverExportRenderOperation';
@@ -69,7 +68,7 @@ async function writeCompletedWithLease(
     renewing = true;
     void renewServerExportDelivery(renderId, claim)
       .then((active) => {
-        if (!active) controller.abort(new Error('导出恢复所有权已失效'));
+        if (!active) controller.abort(new Error('Export recovery ownership expired'));
       })
       .catch((error: unknown) => controller.abort(error))
       .finally(() => { renewing = false; });
@@ -92,16 +91,16 @@ async function saveCompleted(
   signal?: AbortSignal,
 ): Promise<boolean> {
   signal?.throwIfAborted();
-  context.setBusy(context.t('正在保存…'));
+  context.setBusy('Saving…');
   context.setProgress((current) => current ? {
     ...current,
     phase: 'downloading',
     percent: 99,
-    detail: context.t('正在写入所选位置'),
+    detail: 'Writing to the selected destination',
   } : current);
   const renewed = await renewServerExportDelivery(renderId, claim);
   if (!renewed || !await checkServerExportDelivery(renderId, renewed)) {
-    throw new ExportDestinationError('导出恢复所有权已失效，请重试');
+    throw new ExportDestinationError('Export recovery ownership expired. Try again.');
   }
   signal?.throwIfAborted();
   const ext = format === 'audio' ? 'mp3' : codec === 'vp8' ? 'webm' : 'mp4';
@@ -112,7 +111,7 @@ async function saveCompleted(
   try {
     if (ambiguousDownload) await markServerExportDeliveryAmbiguous(renderId, renewed);
     if (!await checkServerExportDelivery(renderId, renewed)) {
-      throw new ExportDestinationError('导出恢复所有权已失效，请重试');
+      throw new ExportDestinationError('Export recovery ownership expired. Try again.');
     }
     await writeCompletedWithLease(
       context,
@@ -176,7 +175,7 @@ async function exportMedia(
       signal?.throwIfAborted();
     }
     claim = await claimServerExportDelivery(renderId);
-    if (!claim) throw new ExportDestinationError('此导出正在由另一个窗口恢复，请稍后重试');
+    if (!claim) throw new ExportDestinationError('This export is being recovered in another window. Please try again shortly.');
     targetCommitted = await saveCompleted(context, format, codec, completed, renderId, claim, signal);
     if (format === 'video') recordServerPerformance(context, completed, startedAt);
     return completed;
@@ -195,16 +194,14 @@ export function createServerExporter(context: ServerExportContext) {
 interface ResumePersistedServerExportsOptions {
   exportJobs: ExportJobStore;
   projectId: string;
-  t: Translate;
 }
 
-const RESELECT_RECOVERY_DESTINATION = '导出目标授权已失效，请重新选择导出位置后重试';
+const RESELECT_RECOVERY_DESTINATION = 'Access to the export destination expired. Choose the export location again and retry.';
 
 function recoveredContext(
   record: PersistedServerExportJob,
   destination: ExportDestination,
   setters: BackgroundExportJobSetters,
-  t: Translate,
 ): ServerExportContext {
   const options: UseExportWorkflowOptions = {
     state: record.state,
@@ -227,11 +224,9 @@ function recoveredContext(
     destination,
     options,
     targetPath: record.targetPath,
-    t,
     verifyCompletedExport: createExportVerifier({
       fps: record.fps,
       state: record.state,
-      t,
       ...setters,
     }),
     ...setters,
@@ -242,13 +237,12 @@ async function runRecoveredServerExport(
   record: PersistedServerExportJob,
   setters: BackgroundExportJobSetters,
   signal: AbortSignal,
-  t: Translate,
   initialClaim: ServerExportDeliveryClaim | null = null,
 ): Promise<void> {
   let claim = initialClaim;
   let targetCommitted = record.stage === 'target-committed';
   setters.setClock(Date.now());
-  setters.setBusy(t('正在恢复导出…'));
+  setters.setBusy('Resuming export…');
   setters.setRenderEngine(record.format === 'video' ? 'server' : 'idle');
   try {
     if (targetCommitted) {
@@ -260,7 +254,7 @@ async function runRecoveredServerExport(
       if (!hasServerExportDestinationAuthority(record.destination)) {
         throw new ExportDestinationError(RESELECT_RECOVERY_DESTINATION);
       }
-      const context = recoveredContext(record, record.destination, setters, t);
+      const context = recoveredContext(record, record.destination, setters);
       const startedAt = performance.now();
       signal.throwIfAborted();
       await ensureExportDestinationWritable(record.destination).catch((error: unknown) => {
@@ -278,7 +272,7 @@ async function runRecoveredServerExport(
         signal.throwIfAborted();
       }
       claim ??= await claimServerExportDelivery(record.renderId);
-      if (!claim) throw new ExportDestinationError('此导出正在由另一个窗口恢复，请稍后重试');
+      if (!claim) throw new ExportDestinationError('This export is being recovered in another window. Please try again shortly.');
       targetCommitted = await saveCompleted(
         context,
         record.format,
@@ -301,14 +295,14 @@ async function runRecoveredServerExport(
   } catch (reason) {
     const cancelled = isAbortError(reason);
     const existing = exportFailureFrom(reason);
-    const message = exportDestinationErrorMessage(reason, t);
+    const message = exportDestinationErrorMessage(reason);
     const failure = existing ?? createExportFailure({
       stage: cancelled ? 'cancel' : reason instanceof ExportDestinationError ? 'destination' : 'render',
       code: cancelled ? 'export_cancelled'
         : reason instanceof ExportDestinationError ? 'export_destination_failed' : 'export_failed',
       retryable: !cancelled,
       targetPath: record.targetPath,
-      message: cancelled ? t('已取消导出') : message,
+      message: cancelled ? 'Export cancelled' : message,
     });
     setters.setFailure(failure);
     setters.setError(failure.message);
@@ -330,7 +324,6 @@ async function runRecoveredServerExport(
 export async function resumePersistedServerExports({
   exportJobs,
   projectId,
-  t,
 }: ResumePersistedServerExportsOptions): Promise<void> {
   const records = await listServerExportJobs(projectId);
   for (const record of records) {
@@ -339,7 +332,7 @@ export async function resumePersistedServerExports({
       label: record.label,
       targetPath: record.targetPath,
       createdAt: record.createdAt,
-      execute: ({ signal, setters }) => runRecoveredServerExport(record, setters, signal, t),
+      execute: ({ signal, setters }) => runRecoveredServerExport(record, setters, signal),
     });
   }
 }
@@ -348,7 +341,6 @@ interface RebindPersistedServerExportOptions {
   destination: ExportDestination;
   exportJobs: ExportJobStore;
   renderId: string;
-  t: Translate;
   targetPath: string;
 }
 
@@ -356,11 +348,10 @@ export async function rebindAndResumePersistedServerExport({
   destination,
   exportJobs,
   renderId,
-  t,
   targetPath,
 }: RebindPersistedServerExportOptions): Promise<string> {
   const claim = await claimServerExportDelivery(renderId);
-  if (!claim) throw new ExportDestinationError('此导出正在由另一个窗口恢复，请稍后重试');
+  if (!claim) throw new ExportDestinationError('This export is being recovered in another window. Please try again shortly.');
   let rebound: PersistedServerExportJob;
   try {
     rebound = await rebindServerExportJob(renderId, destination, targetPath, claim);
@@ -371,7 +362,7 @@ export async function rebindAndResumePersistedServerExport({
   return exportJobs.start({
     label: rebound.label,
     targetPath,
-    execute: ({ signal, setters }) => runRecoveredServerExport(rebound, setters, signal, t, claim),
+    execute: ({ signal, setters }) => runRecoveredServerExport(rebound, setters, signal, claim),
   });
 }
 

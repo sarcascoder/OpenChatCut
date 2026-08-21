@@ -71,8 +71,9 @@ function normalizeOptions(options: unknown): NormalizedOption[] {
 function isOtherOption(option: NormalizedOption): boolean {
   const value = option.value.toLowerCase();
   const display = option.display.toLowerCase();
+  // '\u5176\u4ed6' = "other" — a Chinese-labelled option still counts as the free-text escape hatch
   return value === '__other__' || value === 'other' || value === 'custom'
-    || display.startsWith('其他') || display.startsWith('other');
+    || display.startsWith('\u5176\u4ed6') || display.startsWith('other');
 }
 
 function attrs(values: Record<string, string | boolean | undefined>): string {

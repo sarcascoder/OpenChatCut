@@ -228,7 +228,7 @@ function mixToMono(buffer: AudioBuffer): Float32Array {
 /** Pull source → offline decoding → mix mono → beat analysis (source seconds). Browser only. */
 export async function analyzeAssetBeats(src: string): Promise<BeatAnalysis> {
   const res = await fetch(src);
-  if (!res.ok) throw new Error(`加载音频失败: ${src} (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`failed to load audio: ${src} (HTTP ${res.status})`);
   const arrayBuffer = await res.arrayBuffer();
   const ctx = new OfflineAudioContext(1, 1, 44100);
   const audioBuffer = await ctx.decodeAudioData(arrayBuffer);

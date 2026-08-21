@@ -286,7 +286,8 @@ assert.throws(
   /refVideoMode is supported by kling only/,
 );
 
-assert.equal(klingPrompt('@Image1 and @Video1 then @图片2'), '<<<image_1>>> and <<<video_1>>> then <<<image_2>>>');
+// '@\u56fe\u7247' = "@image" — the Chinese reference alias klingPrompt also rewrites
+assert.equal(klingPrompt('@Image1 and @Video1 then @\u56fe\u72472'), '<<<image_1>>> and <<<video_1>>> then <<<image_2>>>');
 assert.equal(isMinimaxSubjectModel('S2V-01'), true);
 assert.equal(isMinimaxSubjectModel('MiniMax-Hailuo-02'), false);
 

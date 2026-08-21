@@ -51,7 +51,7 @@ const up = await execUploadProgress({ action: 'status', target: 'upload', assetI
   { ok: boolean; target: string; assets?: { assetId: string; status: string }[] };
 assert.equal(up.ok, true, 'upload target answers ok');
 assert.equal(up.assets?.[0]?.assetId, 'asset_up1', 'prefix resolves to the pool asset');
-// 新占位语义:/media/uploads/ 需探测可达性;check 无服务器 → 诚实报 running(字节未落)
+// New placeholder semantics: /media/uploads/ must be probed for reachability; with no server the check honestly reports running (bytes not landed)
 assert.equal(up.assets?.[0]?.status, 'running', 'unreachable upload src reports running (bytes not landed)');
 assert.equal(up.assets?.[1]?.status, 'not_found', 'unknown id reported not_found');
 const lib = await execUploadProgress({ action: 'status', target: 'upload', assetIds: 'asset_lib' }, ctx) as

@@ -13,7 +13,6 @@ import { isPluginAssetId } from '../../plugins/types';
 import { customTransitionUniforms, getCustomTransition } from '../../gl/customTransitions';
 import { ALL_FX, serializableDefsFor } from '../../gl/fx/effects';
 import { TEMPLATES } from '../../editor/initial';
-import { t } from '../../i18n/locale';
 import { isIsolateAudioFxId, strengthFromAudioFxId } from '../../audio/isolateVoice';
 import { showAppToast } from '../../ui/appToast';
 
@@ -30,7 +29,7 @@ export function applyLibraryToClip({ state, commands, notice, getState, getAsset
   if (payload.kind === 'fx' || payload.kind === 'lut') {
     // GIF does not enter the GL pipeline (MediaFill/ClipFx only textures video/image), and will not be rendered if accepted - honest rejection
     if (item.kind !== 'video' && item.kind !== 'image') {
-      notice(t('{kind}只能用在视频 / 图片片段上（GIF/MG 不走 GL 特效管线）', { kind: payload.kind === 'lut' ? 'LUT' : t('特效') }));
+      notice(`${payload.kind === 'lut' ? 'LUT' : 'Effects'} can only be applied to video / image clips (GIF/MG skip the GL effects pipeline)`);
       return false;
     }
     if (!(payload.id in ALL_FX)) return false;
@@ -44,7 +43,7 @@ export function applyLibraryToClip({ state, commands, notice, getState, getAsset
     return true;
   }
   if (payload.kind === 'zoom') {
-    if (!visual) { notice(t('缩放只能用在画面片段上')); return false; }
+    if (!visual) { notice('Zoom can only be applied to visual clips'); return false; }
     // plugin curve: envelope follows payload.data (used after shape verification)
     const pluginZoom = payload.data ? asPluginZoom(payload.data) : null;
     commands.setItemZoom(item.id, pluginZoom ?? { shape: payload.id as ZoomShape, magnification: 1.5, envelope: undefined, label: undefined });
@@ -53,21 +52,21 @@ export function applyLibraryToClip({ state, commands, notice, getState, getAsset
   }
   if (payload.kind === 'audio-fx') {
     if (item.kind !== 'video' && item.kind !== 'audio') {
-      notice(t('人声隔离只能用在视频 / 音频片段上'));
+      notice('Voice isolation only works on video / audio clips');
       return false;
     }
     if (!item.src?.startsWith('/media/uploads/')) {
-      notice(t('需先上传到媒体池（/media/uploads）'));
+      notice('Upload to the media pool first (/media/uploads)');
       return false;
     }
     if (!isIsolateAudioFxId(payload.id)) {
-      notice(t('未知音频效果：{id}', { id: payload.id }));
+      notice(`Unknown audio effect: ${payload.id}`);
       return false;
     }
     const strength = strengthFromAudioFxId(payload.id);
     commands.selectItem(item.id);
     // Async denoise — accept drop immediately; toast progress / result.
-    showAppToast(t('人声隔离处理中…'), { ms: 60_000 });
+    showAppToast('Isolating voice…', { ms: 60_000 });
     void applyLibraryDropIsolation(item, strength, {
       getState,
       getAssets,
@@ -77,15 +76,15 @@ export function applyLibraryToClip({ state, commands, notice, getState, getAsset
     })
       .then((result) => {
         if (result.status === 'stale') {
-          const msg = t('源素材已变化，旧的人声隔离结果已丢弃。请重试。');
+          const msg = 'Source media changed; the previous voice isolation result was discarded. Retry.';
           showAppToast(msg, { error: true });
           notice(msg);
           return;
         }
-        showAppToast(t('人声隔离已应用'));
+        showAppToast('Voice isolation applied');
       })
       .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : t('人声隔离失败');
+        const msg = err instanceof Error ? err.message : 'Voice isolation failed';
         showAppToast(msg, { error: true });
         notice(msg);
       });
@@ -97,20 +96,20 @@ export function applyLibraryToClip({ state, commands, notice, getState, getAsset
       x.id !== item.id && x.track === item.track
       && Math.abs((x.startFrame + x.durationInFrames) - item.startFrame) <= 2);
     if (!prior) {
-      notice(t('转场挂在两段的接缝上：请拖到「后一个」片段，它前面要有相邻同轨片段'));
+      notice('A transition sits on the seam between two clips: drop it on the LATER clip, which needs an adjacent clip before it on the same track');
       return false;
     }
     // GLSL exclusive transitions only have full effect on video/picture pairs; DOM fragments (MG/text/GIF...) will degenerate into dissolves - apply as usual but click broken
     const glCapable = (k: TimelineItem['kind']) => k === 'video' || k === 'image';
     const isPlugin = isPluginAssetId(payload.id);
-    const displayName = isPlugin ? payload.name : t(TRANSITION_LABELS[payload.id as TransitionType] ?? payload.id);
+    const displayName = isPlugin ? payload.name : TRANSITION_LABELS[payload.id as TransitionType] ?? payload.id;
     if (!CSS_TRANSITION_TYPES.has(payload.id) && !(glCapable(prior.kind) && glCapable(item.kind))) {
-      notice(t('「{name}」只在视频/图片片段间有完整效果，MG/文字等片段上会显示为叠化', { name: displayName }));
+      notice(`"${displayName}" only takes full effect between video/image clips; on MG/text clips it falls back to a cross dissolve`);
     }
     if (isPlugin) {
       // plugin transition: the registry takes a frag snapshot into TransitionItem (same mechanism as submit_shader)
       const def = getCustomTransition(payload.id);
-      if (!def) { notice(t('插件转场「{name}」未安装或已卸载', { name: payload.name })); return false; }
+      if (!def) { notice(`Plugin transition "${payload.name}" is not installed or was removed`); return false; }
       commands.addTransition(item.id, 'custom-shader', undefined, { frag: def.frag, uniforms: customTransitionUniforms(def), label: def.label });
     } else {
       commands.addTransition(item.id, payload.id as TransitionType);

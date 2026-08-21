@@ -1,6 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react';
 import type { DesignStyle } from '../../editor/types';
-import { useT } from '../../i18n/locale';
 import { sanitizeFileName } from '../../media/fileName';
 import {
   buildDesignStyleRecipe,
@@ -20,33 +19,32 @@ interface DesignStyleTransferButtonsProps {
 }
 
 export function DesignStyleTransferButtons(props: DesignStyleTransferButtonsProps) {
-  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
 
   const exportRecipe = () => {
     try {
-      const recipe = buildDesignStyleRecipe(props.name || t('编辑配方'), props.style, {
+      const recipe = buildDesignStyleRecipe(props.name || 'Editing recipe', props.style, {
         scenarios: props.scenarios,
         thumbnailUrl: props.thumbnailUrl,
       });
       downloadRecipe(recipe.name, JSON.stringify(recipe, null, 2));
       setError('');
     } catch (cause) {
-      setError(t(messageOf(cause, '配方导出失败')));
+      setError(messageOf(cause, 'Could not export recipe'));
     }
   };
 
   const importRecipe = async (file: File | undefined) => {
     if (!file) return;
     try {
-      if (file.size > MAX_FILE_BYTES) throw new Error(t('配方文件过大'));
+      if (file.size > MAX_FILE_BYTES) throw new Error('Recipe file is too large');
       const recipe = parseDesignStyleRecipe(await file.text());
       const saved = await saveOwnedStyle(recipe.name, recipe.style, recipe);
       props.onImported(saved);
       setError('');
     } catch (cause) {
-      setError(t(messageOf(cause, '配方导入失败')));
+      setError(messageOf(cause, 'Could not import recipe'));
     } finally {
       if (inputRef.current) inputRef.current.value = '';
     }
@@ -56,8 +54,8 @@ export function DesignStyleTransferButtons(props: DesignStyleTransferButtonsProp
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <input ref={inputRef} type="file" accept=".json,application/json" hidden
         onChange={(event) => void importRecipe(event.target.files?.[0])} />
-      <button type="button" onClick={() => inputRef.current?.click()} style={button}>{t('导入配方')}</button>
-      <button type="button" onClick={exportRecipe} style={button}>{t('导出配方')}</button>
+      <button type="button" onClick={() => inputRef.current?.click()} style={button}>Import recipe</button>
+      <button type="button" onClick={exportRecipe} style={button}>Export recipe</button>
       {error && <span role="alert" title={error} style={errorText}>{error}</span>}
     </div>
   );

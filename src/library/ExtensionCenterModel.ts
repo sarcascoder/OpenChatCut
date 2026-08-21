@@ -2,8 +2,8 @@ import type { CSSProperties } from 'react';
 import type { InstalledPack } from '../plugins/store';
 import { theme } from '../theme';
 
-export type CenterTab = '发现' | '已安装';
-export type Category = '全部' | 'MG' | '转场' | '特效' | 'LUT' | '缩放';
+export type CenterTab = 'Discover' | 'Installed';
+export type Category = 'All' | 'MG' | 'Transitions' | 'Effects' | 'LUT' | 'Zoom';
 
 export interface RegistryEntry {
   id: string;
@@ -17,26 +17,29 @@ export interface RegistryEntry {
   categories: Category[];
 }
 
-export const CENTER_TABS: CenterTab[] = ['发现', '已安装'];
-export const EXTENSION_CATEGORIES: Category[] = ['全部', 'MG', '转场', '特效', 'LUT', '缩放'];
+export const CENTER_TABS: CenterTab[] = ['Discover', 'Installed'];
+export const EXTENSION_CATEGORIES: Category[] = ['All', 'MG', 'Transitions', 'Effects', 'LUT', 'Zoom'];
 export const EXTENSION_TYPE_LABEL: Record<string, string> = {
   'mg-template': 'MG',
-  transition: '转场',
-  fx: '特效',
+  transition: 'Transitions',
+  fx: 'Effects',
   lut: 'LUT',
-  zoom: '缩放',
+  zoom: 'Zoom',
 };
-const REGISTRY_CATEGORY_LABEL: Record<string, Exclude<Category, '全部'>> = {
+// Keys are the raw `categories` strings the community registry publishes, which include
+// both English slugs and the original Chinese labels. Both must keep resolving, or packs
+// tagged in Chinese silently drop out of Discover.
+const REGISTRY_CATEGORY_LABEL: Record<string, Exclude<Category, 'All'>> = {
   mg: 'MG',
   MG: 'MG',
-  transition: '转场',
-  转场: '转场',
-  fx: '特效',
-  特效: '特效',
+  transition: 'Transitions',
+  '\u8f6c\u573a': 'Transitions', // "transition" — Chinese registry category label
+  fx: 'Effects',
+  '\u7279\u6548': 'Effects', // "effects" — Chinese registry category label
   lut: 'LUT',
   LUT: 'LUT',
-  zoom: '缩放',
-  缩放: '缩放',
+  zoom: 'Zoom',
+  '\u7f29\u653e': 'Zoom', // "zoom" — Chinese registry category label
 };
 
 export function parseRegistry(value: unknown): RegistryEntry[] {

@@ -2,9 +2,10 @@
 //
 // jieba-wasm provides dictionary-based segmentation with no native bindings
 // (WASM). Indexed/query text is split into space-separated tokens so the
-// plain unicode61 FTS5 tokenizer can match 2-char Chinese words ("字幕",
-// "转场") — which trigram cannot. Domain terms (project/asset names) can be
-// injected via addDomainWords and survive in the shared dictionary.
+// plain unicode61 FTS5 tokenizer can match 2-character Chinese words (for
+// example the words for "caption" and "transition") — which trigram cannot.
+// Domain terms (project/asset names) can be injected via addDomainWords and
+// survive in the shared dictionary.
 import { cut, add_word } from 'jieba-wasm';
 
 let initialized = false;

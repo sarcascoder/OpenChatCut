@@ -1,7 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react';
 import type { PlayerRef } from '@remotion/player';
 import type { TimelineItem, TrackId } from '../editor/types';
-import { useT } from '../i18n/locale';
 import { trackTitle, type TranscriptTrackOption } from '../transcript/trackOptions';
 import { msToFrame } from '../transcript/types';
 import { CaptionsControls } from './CaptionsControls';
@@ -39,12 +38,11 @@ export function CaptionsPanel(props: Props) {
 }
 
 function CaptionTrackBar({ options, track, onChange }: { options: Props['captionTracks']; track: TrackId | null; onChange: (track: TrackId) => void }) {
-  const t = useT();
   return (
     <div className="cc-captions-sourcebar">
-      <label htmlFor="cc-caption-track">{t('字幕轨道')}</label>
+      <label htmlFor="cc-caption-track">Caption track</label>
       <select id="cc-caption-track" className="cc-cap-select" value={track ?? ''} disabled={!options.length} onChange={(event) => onChange(event.target.value)}>
-        {!options.length && <option value="">{t('请先新建字幕轨道')}</option>}
+        {!options.length && <option value="">Create a caption track first</option>}
         {options.map((option) => <option key={option.id} value={option.id}>{trackTitle(option)}</option>)}
       </select>
     </div>

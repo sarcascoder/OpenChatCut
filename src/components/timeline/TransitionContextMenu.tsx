@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from '../icons';
-import { useT } from '../../i18n/locale';
 import {
   TRANSITION_DURATION_PRESETS,
   activeTransitionPreset,
@@ -51,7 +50,6 @@ const Separator = () => <div className="cc-caption-cue-menu-separator" role="sep
 export function TransitionContextMenu({
   label, durationInFrames, fps, locked, x, y, onSetDuration, onRemove, onClose,
 }: TransitionContextMenuProps) {
-  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
   const run = (action: () => void) => () => { action(); onClose(); };
@@ -84,7 +82,7 @@ export function TransitionContextMenu({
       ref={ref}
       className="cc-caption-cue-menu cc-track-context-menu"
       role="menu"
-      aria-label={t('转场菜单')}
+      aria-label="Transition menu"
       style={{ left: pos.left, top: pos.top }}
       onPointerDown={(event) => event.stopPropagation()}
     >
@@ -93,7 +91,7 @@ export function TransitionContextMenu({
       {TRANSITION_DURATION_PRESETS.map((seconds) => (
         <MenuItem
           key={seconds}
-          label={t('{n} 秒', { n: seconds })}
+          label={`${seconds}s`}
           icon="clock"
           checked={active === seconds}
           disabled={locked}
@@ -101,7 +99,7 @@ export function TransitionContextMenu({
         />
       ))}
       <Separator />
-      <MenuItem label={t('删除转场')} icon="trash" danger disabled={locked} onClick={run(onRemove)} />
+      <MenuItem label="Remove transition" icon="trash" danger disabled={locked} onClick={run(onRemove)} />
     </div>
   );
 }

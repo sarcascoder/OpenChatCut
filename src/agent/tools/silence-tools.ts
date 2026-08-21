@@ -31,7 +31,7 @@ export async function execSilenceTool(name: string, args: Args, ctx: AgentContex
     return {
       ok: true,
       edited: [],
-      note: 'VAD 静音删除功能未启用；为避免把音乐、噪声或低声讲话当静音，未执行删除。',
+      note: 'VAD silence removal is not enabled; nothing was deleted, to avoid mistaking music, noise, or quiet speech for silence.',
     };
   }
   const params = {
@@ -95,18 +95,18 @@ export async function execSilenceTool(name: string, args: Args, ctx: AgentContex
         })),
       });
     } catch (e) {
-      skipped.push({ itemId: item.id, note: `分析失败: ${e instanceof Error ? e.message : String(e)}` });
+      skipped.push({ itemId: item.id, note: `analysis failed: ${e instanceof Error ? e.message : String(e)}` });
     }
   }
 
   if (args.dryRun === true) {
     return { ok: true, dryRun: true, wouldEdit: edited, ...(skipped.length ? { skipped } : {}) };
   }
-  if (allActions.length) ctx.commands.batch(allActions, '删除静音');
+  if (allActions.length) ctx.commands.batch(allActions, 'Remove silence');
   return {
     ok: true,
     edited,
     ...(skipped.length ? { skipped } : {}),
-    ...(edited.length ? {} : { note: '未发现可删的死气段(阈值内没有足够长的静音)' }),
+    ...(edited.length ? {} : { note: 'no dead air worth removing was found (no silence long enough within the threshold)' }),
   };
 }

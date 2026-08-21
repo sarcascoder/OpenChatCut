@@ -30,7 +30,7 @@ export type ServerRunRecoveryPreparation =
 
 function validateCursor(metadata: ServerRunMetadata, cursor: number): void {
   if (typeof metadata.firstEventId === 'number' && cursor < metadata.firstEventId - 1) {
-    throw permanentServerRunRecoveryError('服务端任务事件已超出可恢复窗口。');
+    throw permanentServerRunRecoveryError('Server run events are past the recoverable window.');
   }
 }
 

@@ -1,6 +1,6 @@
-// 内容感知分段引擎断言:①中文标点优先断 ②语气词不落行首 ③「的」不拆
-// ④孤词惩罚 ⑤英文句末优先断 ⑥无 opts 时 paginate 与旧版逐字节一致(回归)。
-// 期望值均按 segmenter.ts 规则手推;跑法:npx tsx src/captions/segmenter.check.ts
+// Content-aware segmenter assertions: ①CJK punctuation breaks first ②particles never start a line ③ the structural particle "de" (U+7684) stays attached
+// ④orphan penalty ⑤Latin sentence-end breaks first ⑥with no opts, paginate matches the old output byte for byte (regression).
+// Expected values are hand-derived from the segmenter.ts rules; run: npx tsx src/captions/segmenter.check.ts
 import assert from 'node:assert/strict';
 import { scoreLatinBreaks, segmentWords } from './segmenter';
 import type { CaptionPage } from './types';
@@ -12,100 +12,108 @@ const W = (texts: string[], gapMs = 10, durMs = 90): TranscriptWord[] =>
   texts.map((text, i) => ({ text, start: i * (durMs + gapMs), end: i * (durMs + gapMs) + durMs }));
 const pageTexts = (pages: CaptionPage[]) => pages.map((p) => p.words.map((w) => w.text).join(''));
 
-// ── ① 中文句号/逗号处优先断(oHe: 。→100 / ，→80 抢过预算触顶位) ──────────────
+// ── ① CJK ideographic period / fullwidth comma break first (oHe: U+3002 →100 / U+FF0C →80 outrank the budget-overflow spot) ─────
 {
-  const words = S(['今天', '天气', '真好。', '我们', '一起', '去', '公园']);
-  // 字符预算在「一起」处触顶,回退选句号断点 → 断在 真好。 之后
+  // "today", "weather", "really nice.", "we", "together", "go", "park" — CJK segmentation input
+  const words = S(['\u4eca\u5929', '\u5929\u6c14', '\u771f\u597d\u3002', '\u6211\u4eec', '\u4e00\u8d77', '\u53bb', '\u516c\u56ed']);
+  // The char budget tops out at "together" (U+4E00 U+8D77), so it falls back to the period break → after "really nice." (U+771F U+597D U+3002)
   assert.deepEqual(segmentWords(words, { wordsPerPage: 50, maxCharsPerLine: 20 }), [0, 3]);
 
-  const comma = S(['我说，', '大家', '都', '要', '来', '我家', '吃饭']);
+  // "I said," (fullwidth comma), "everyone", "all", "want", "come", "my home", "eat" — CJK comma-break input
+  const comma = S(['\u6211\u8bf4\uff0c', '\u5927\u5bb6', '\u90fd', '\u8981', '\u6765', '\u6211\u5bb6', '\u5403\u996d']);
   assert.deepEqual(segmentWords(comma, { wordsPerPage: 50, maxCharsPerLine: 20 }), [0, 1]);
 }
 
-// ── ② 语气词「呢/吗/啊」不落行首 ─────────────────────────────────────────────
+// ── ② Modal particles "ne"/"ma"/"a" (U+5462 / U+5417 / U+554A) never start a line ────────────────────────
 {
-  // 呢:aHe 语气词断点(60)让页在「呢」后断,而非预算触顶处
-  const ne = S(['你', '在', '想', '什么', '呢', '明天', '我们', '出发']);
+  // "ne" (U+5462): the aHe particle break (60) ends the page after that particle, not at the budget cap
+  // "you", "at", "thinking", "what", "ne" (modal particle), "tomorrow", "we", "set off"
+  const ne = S(['\u4f60', '\u5728', '\u60f3', '\u4ec0\u4e48', '\u5462', '\u660e\u5929', '\u6211\u4eec', '\u51fa\u53d1']);
   const starts = segmentWords(ne, { wordsPerPage: 50, maxCharsPerLine: 20 });
-  assert.deepEqual(starts, [0, 5]); // 页2 从「明天」起,「呢」收在页1 末尾
-  // 吗:mA 孤词降权(吗/了 ∈ Q9)让相邻断点全部落选
-  const ma = S(['你', '吃', '了', '吗', '我们', '走']);
+  assert.deepEqual(starts, [0, 5]); // page 2 opens at "tomorrow" (U+660E U+5929); "ne" stays at the end of page 1
+  // "ma" (U+5417): the mA orphan demotion ("ma"/"le", U+5417 / U+4E86 ∈ Q9) knocks out every adjacent break
+  // "you", "eat", "le" (aspect particle), "ma" (question particle), "we", "go"
+  const ma = S(['\u4f60', '\u5403', '\u4e86', '\u5417', '\u6211\u4eec', '\u8d70']);
   const maStarts = segmentWords(ma, { wordsPerPage: 50, maxCharsPerLine: 8 });
-  assert.ok(!maStarts.includes(2) && !maStarts.includes(3), '「了」「吗」不得为页首');
-  for (const st of maStarts) assert.ok(!['了', '吗', '呢', '啊'].includes(Array.from(ma[st].text)[0]), '语气词页首');
-  for (const st of starts) assert.ok(!['了', '吗', '呢', '啊'].includes(Array.from(ne[st].text)[0]), '语气词页首');
-  // FHe 行首助词回拉:页2 首词「了解」以 G9e 字「了」开头 → 把上一页尾词 fine 拉入本页
-  const pull = S(['OK', 'fine', '了解', '一下', '吧']);
+  assert.ok(!maStarts.includes(2) && !maStarts.includes(3), '\u300c\u4e86\u300d/\u300c\u5417\u300d must not start a page');
+  for (const st of maStarts) assert.ok(!['\u4e86', '\u5417', '\u5462', '\u554a'].includes(Array.from(ma[st].text)[0]), 'particle at page start');
+  for (const st of starts) assert.ok(!['\u4e86', '\u5417', '\u5462', '\u554a'].includes(Array.from(ne[st].text)[0]), 'particle at page start');
+  // FHe line-start particle pull-back: page 2 opens with "understand" (U+4E86 U+89E3), a G9e-initial "le" (U+4E86) → pull the previous page's last word fine in
+  // 'OK', 'fine', "understand", "a bit", "ba" (modal particle)
+  const pull = S(['OK', 'fine', '\u4e86\u89e3', '\u4e00\u4e0b', '\u5427']);
   assert.deepEqual(segmentWords(pull, { wordsPerPage: 50, maxCharsPerLine: 15 }), [0, 1]);
 }
 
-// ── ③ 结构助词「的」不与前词分离(mA: 的 ∈ Q9 → 两侧断点均降权 30) ──────────
+// ── ③ Structural particle "de" (U+7684) never splits from its head (mA: U+7684 ∈ Q9 → both breaks −30) ──
 {
-  const words = S(['我', '买', '的', '苹果', '很', '好吃', '非常', '新鲜']);
+  // "I", "bought", "de" (structural particle), "apple", "very", "tasty", "extremely", "fresh"
+  const words = S(['\u6211', '\u4e70', '\u7684', '\u82f9\u679c', '\u5f88', '\u597d\u5403', '\u975e\u5e38', '\u65b0\u9c9c']);
   const starts = segmentWords(words, { wordsPerPage: 50, maxCharsPerLine: 10 });
   assert.deepEqual(starts, [0, 4, 7]);
-  assert.ok(!starts.includes(2), '「的」不得为页首(买|的 不拆)');
-  assert.ok(!starts.includes(3), '「的」不得悬在页尾(的|苹果 不拆)');
+  assert.ok(!starts.includes(2), '\u300c\u7684\u300d must not start a page (\u4e70|\u7684 stays joined)');
+  assert.ok(!starts.includes(3), '\u300c\u7684\u300d must not dangle at a page end (\u7684|\u82f9\u679c stays joined)');
 }
 
-// ── ④ 孤词惩罚:结尾不留 1-2 个功能词孤行(U9e quantifier-of/trailing + cP 降权) ──
+// ── ④ Orphan penalty: no 1-2 function-word orphan line at the end (U9e quantifier-of/trailing + cP demotion) ──
 {
   const words = S(['We', 'learned', 'quite', 'a', 'lot', 'of', 'things', 'today']);
   const starts = segmentWords(words, { wordsPerPage: 50, maxCharsPerLine: 30 });
-  // 触顶在 things;a/lot/of 侧断点全带孤词风险 → 回退断在 quite 之后
+  // Budget tops out at things; breaks beside a/lot/of all risk an orphan → fall back to after quite
   assert.deepEqual(starts, [0, 3]);
   const pages = [words.slice(0, 3), words.slice(3)].map((ws) => ws.map((w) => w.text));
   assert.equal(pages[0].join(' '), 'We learned quite');
   assert.equal(pages[1].join(' '), 'a lot of things today');
   for (let i = 0; i < starts.length; i++) {
     const end = (starts[i + 1] ?? words.length) - 1;
-    assert.notEqual(words[end].text, 'of', '页尾不得悬空 of');
+    assert.notEqual(words[end].text, 'of', 'no dangling of at a page end');
   }
 }
 
-// ── ⑤ 纯英文句末 . 优先断(z9e 100 + 句末 +30 = 130) ─────────────────────────
+// ── ⑤ Latin-only sentence-final . breaks first (z9e 100 + sentence-end +30 = 130) ──────────
 {
   const words = S(['I', 'like', 'it.', 'Because', 'it', 'works', 'well', 'today']);
   assert.deepEqual(segmentWords(words, { wordsPerPage: 50, maxCharsPerLine: 30 }), [0, 3]);
-  // 词数预算触顶同样走打分回退(任务规格,见 segmenter.ts 头注偏差 2)
+  // A word-count budget overflow falls back to scoring too (spec; see segmenter.ts header, deviation 2)
   assert.deepEqual(segmentWords(S(['I', 'like', 'it.', 'Because', 'it', 'works']), { wordsPerPage: 4 }), [0, 3]);
-  // H9e 打分器本体:句末词得 100+30
+  // H9e scorer itself: a sentence-final word scores 100+30
   const top = scoreLatinBreaks('We had fun. So it goes')[0];
   assert.equal(top.score, 130);
   assert.equal(top.position, 'We had fun.'.length);
 }
 
-// ── 杂项语义:标点词不开页 / M1e CJK 忽略词数预算 / 边界 ───────────────────────
+// ── Misc semantics: a punctuation word never opens a page / M1e CJK ignores the word budget / edges ──
 {
   const starts = segmentWords(S(['Hello', 'world', '!', 'again', 'now', 'yes', 'more']), { wordsPerPage: 2 });
-  assert.deepEqual(starts, [0, 3, 5]); // 「!」跟随 world 收在页1,不开页
-  // M1e 语义:CJK 主导 + 给了字符预算 → wordsPerPage 置空
-  assert.deepEqual(segmentWords(S(['一二', '三四', '五六', '七八']), { wordsPerPage: 2, maxCharsPerLine: 100 }), [0]);
+  assert.deepEqual(starts, [0, 3, 5]); // '!' stays with world on page 1; it never opens a page
+  // M1e semantics: CJK-dominant + a char budget was given → wordsPerPage is cleared
+  // "one two", "three four", "five six", "seven eight" — CJK-dominant word list
+  assert.deepEqual(segmentWords(S(['\u4e00\u4e8c', '\u4e09\u56db', '\u4e94\u516d', '\u4e03\u516b']), { wordsPerPage: 2, maxCharsPerLine: 100 }), [0]);
   assert.deepEqual(segmentWords(S(['aa', 'bb', 'cc', 'dd']), { wordsPerPage: 2, maxCharsPerLine: 100 }), [0, 2]);
   assert.deepEqual(segmentWords([], { wordsPerPage: 6 }), []);
   assert.deepEqual(segmentWords(S(['hi']), { wordsPerPage: 1, maxCharsPerLine: 1 }), [0]);
 }
 
-// ── paginate 接入:maxCharsPerLine 走 segmenter(预算 × 可视行数);forceBreak 仍最高优先 ──
+// ── paginate wiring: maxCharsPerLine goes through the segmenter (budget × visual lines); forceBreak still wins ──
 {
-  const cn = W(['今天', '天气', '真好。', '我们', '一起', '去', '公园']);
+  // "today", "weather", "really nice.", "we", "together", "go", "park"
+  const cn = W(['\u4eca\u5929', '\u5929\u6c14', '\u771f\u597d\u3002', '\u6211\u4eec', '\u4e00\u8d77', '\u53bb', '\u516c\u56ed']);
   // 20 chars/line × CAPTION_MAX_VISUAL_LINES(2) = 40 chars — the 12-char sentence fits one page.
-  assert.deepEqual(pageTexts(paginate(cn, 'phrase', 50, undefined, 20)), ['今天天气真好。我们一起去公园']);
+  assert.deepEqual(pageTexts(paginate(cn, 'phrase', 50, undefined, 20)), ['\u4eca\u5929\u5929\u6c14\u771f\u597d\u3002\u6211\u4eec\u4e00\u8d77\u53bb\u516c\u56ed']);
   const forced = paginate(cn, 'phrase', 50, new Set([5]), 20);
-  assert.deepEqual(pageTexts(forced), ['今天天气真好。我们一起', '去公园']);
-  assert.equal(forced[1].words[0].text, '去'); // 强制断点处必开新页
-  // word pacing 不受 maxCharsPerLine 影响
+  assert.deepEqual(pageTexts(forced), ['\u4eca\u5929\u5929\u6c14\u771f\u597d\u3002\u6211\u4eec\u4e00\u8d77', '\u53bb\u516c\u56ed']);
+  assert.equal(forced[1].words[0].text, '\u53bb'); // a forced break always opens a new page
+  // word pacing is unaffected by maxCharsPerLine
   assert.equal(paginate(cn, 'word', 6, undefined, 20).length, cn.length);
 }
 
-// ── ⑥ 回归:无 maxCharsPerLine 时 paginate 行为与旧版一致 ────────────────────
+// ── ⑥ Regression: with no maxCharsPerLine, paginate behaves exactly as before ──────────
 {
-  // 6 词满页 flush
+  // a full page of 6 words flushes
   const plain = W(['aa', 'bb', 'cc', 'dd', 'ee', 'ff', 'gg', 'hh']);
   assert.deepEqual(paginate(plain, 'phrase').map((p) => p.words.length), [6, 2]);
-  // 不满页时 content-aware 分段不再按句末标点硬切(单页容纳)
+  // Below a full page, content-aware segmentation no longer hard-cuts at sentence punctuation (one page holds it)
   assert.deepEqual(paginate(W(['Hi', 'there.', 'Big', 'day']), 'phrase').map((p) => p.words.length), [4]);
-  // 长停顿是高优先断点,但只在预算触顶切分时被选用(4 词小句不触顶 → 单页)
+  // A long pause is a high-priority break, but is only used when the budget forces a split (4 words don't → one page)
   const gap: TranscriptWord[] = [
     { text: 'a', start: 0, end: 100 }, { text: 'b', start: 110, end: 200 },
     { text: 'c', start: 1000, end: 1100 }, { text: 'd', start: 1110, end: 1200 },
@@ -113,7 +121,7 @@ const pageTexts = (pages: CaptionPage[]) => pages.map((p) => p.words.map((w) => 
   assert.deepEqual(paginate(gap, 'phrase').map((p) => p.words.length), [4]);
   // forceBreak
   assert.deepEqual(paginate(W(['aa', 'bb', 'cc', 'dd']), 'phrase', 6, new Set([2])).map((p) => p.words.length), [2, 2]);
-  // 页面时间戳字段
+  // page timestamp fields
   const pages = paginate(plain, 'phrase');
   assert.equal(pages[0].start, plain[0].start);
   assert.equal(pages[0].end, plain[5].end);

@@ -1,6 +1,5 @@
 import { getPluginSkill } from './plugin-skills';
 import type { SkillDefinition } from './skill-types';
-
 interface CreativeSkillMetadata {
   id: string;
   slug: string;
@@ -9,14 +8,13 @@ interface CreativeSkillMetadata {
   summary: string;
   scenarios: string[];
 }
-
 export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
   {
     id: '11111111-1240-4000-8000-000000000004',
     slug: 'long-video-to-shorts',
     name: 'Long Video to Shorts',
-    nameZh: '长视频转短视频',
-    summary: '把一条长播客、访谈、课程或直播剪成适合社媒发布的短视频和高光。',
+    nameZh: 'Long Video to Shorts',
+    summary: 'Cut one long podcast, interview, course, or livestream into social-ready shorts and highlights.',
     scenarios: [
       'long-video-to-shorts',
       'reels',
@@ -30,8 +28,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000012',
     slug: 'multi-clips-to-reels',
     name: 'Multi Clips to Reels',
-    nameZh: '多素材剪 Reels',
-    summary: '把产品、活动、旅行或游戏素材剪成适合社媒发布的 Reels。',
+    nameZh: 'Multi Clips to Reels',
+    summary: 'Turn product, event, travel, or gameplay footage into social-ready reels.',
     scenarios: [
       'multi-clips-to-reels',
       'multi-clips-to-shorts',
@@ -45,8 +43,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000005',
     slug: 'ai-cinematic-short-film',
     name: 'AI Cinematic Short Film',
-    nameZh: 'AI 电影感短片',
-    summary: '规划并制作 AI 电影感短片，覆盖故事、镜头、提示词、连续性和最终检查。',
+    nameZh: 'AI Cinematic Short Film',
+    summary: 'Plan and produce AI cinematic shorts — story, shots, prompts, continuity, and final checks.',
     scenarios: [
       'ai-film',
       'cinematic',
@@ -60,8 +58,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000006',
     slug: 'product-ad-video-script',
     name: 'Product Ad Video Script',
-    nameZh: '产品广告脚本',
-    summary: '把产品或页面转成广告角度、开头钩子、分镜、字幕、CTA 和视觉方向。',
+    nameZh: 'Product Ad Video Script',
+    summary: 'Turn a product or page into ad angles, hooks, storyboards, captions, CTAs, and visual direction.',
     scenarios: [
       'ad',
       'e-commerce',
@@ -75,8 +73,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000011',
     slug: 'explainer-video',
     name: 'Explainer Video',
-    nameZh: '解说视频制作',
-    summary: '把主题、脚本、配音、产品逻辑或数据做成完整解说视频。',
+    nameZh: 'Explainer Video',
+    summary: 'Turn a topic, script, voiceover, product logic, or data into a complete explainer video.',
     scenarios: [
       'concept',
       'course',
@@ -90,8 +88,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000008',
     slug: 'motion-graphic-placement',
     name: 'Motion Graphic Placement',
-    nameZh: '动效点缀指南',
-    summary: '在合适时机添加动效，强化表达且不遮挡内容。',
+    nameZh: 'Motion Graphic Placement',
+    summary: 'Add motion graphics at the right moments — reinforcing the message without blocking content.',
     scenarios: [
       'creator-video',
       'interview',
@@ -105,8 +103,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000009',
     slug: 'storyboard-shot-breakdown',
     name: 'Storyboard Shot Breakdown',
-    nameZh: '拉片分镜图',
-    summary: '逐镜拆解镜头语言，并生成分镜参考图。',
+    nameZh: 'Storyboard Shot Breakdown',
+    summary: 'Break down shot language shot by shot and generate storyboard reference images.',
     scenarios: [
       'cinematography',
       'director-logic',
@@ -120,8 +118,8 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000010',
     slug: 'video-thumbnail-generator',
     name: 'Video Thumbnail Generator',
-    nameZh: '视频封面生成',
-    summary: '基于视频内容和真实画面生成适合平台的封面图。',
+    nameZh: 'Video Thumbnail Generator',
+    summary: 'Generate platform-ready thumbnails from the video content and real frames.',
     scenarios: [
       'bilibili-cover',
       'cover-image',
@@ -135,13 +133,11 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000014',
     slug: 'news-rough-cut',
     name: 'News Rough Cut',
-    nameZh: '新闻智能粗剪',
-    summary: '把新闻素材粗剪为一条内容完整、逻辑清晰、节奏紧凑的新闻短视频，不加任何外部声音。',
+    nameZh: 'News Rough Cut',
+    summary: 'Rough-cut news footage into one short news video that is complete, logically clear, and tightly paced, with no external audio added.',
     scenarios: [
       'news-rough-cut',
       'news-cut',
-      '新闻剪辑',
-      '粗剪新闻',
       'news footage',
       'rough-cut-news'
     ]
@@ -150,21 +146,17 @@ export const CREATIVE_SKILL_METADATA: CreativeSkillMetadata[] = [
     id: '11111111-1240-4000-8000-000000000013',
     slug: 'skill-creator',
     name: 'Skill Creator',
-    nameZh: '技能创作器',
-    summary: '把重复流程或想法做成可复用的自定义技能（SKILL.md），并安装到本机技能目录。',
+    nameZh: 'Skill Creator',
+    summary: 'Turn a repeated process or idea into a reusable custom skill (SKILL.md) and install it into the local skills directory.',
     scenarios: [
       'create-skill',
       'skill-creator',
       'make-a-skill',
       'new-skill',
-      'workflow-capture',
-      '创建技能',
-      '写技能',
-      '把流程做成技能'
+      'workflow-capture'
     ]
   }
 ];
-
 export const CREATIVE_SKILLS: SkillDefinition[] = CREATIVE_SKILL_METADATA.flatMap((metadata) => {
   const file = getPluginSkill(metadata.slug);
   if (!file) {
@@ -181,17 +173,13 @@ export const CREATIVE_SKILLS: SkillDefinition[] = CREATIVE_SKILL_METADATA.flatMa
     source: 'builtin',
   }];
 });
-
 let customSkills: SkillDefinition[] = [];
-
 export function setCustomSkills(list: SkillDefinition[]): void {
   customSkills = list;
 }
-
 /** Built-in then custom skills shown in the Creative Mode picker. */
 export function allCreativeSkills(): SkillDefinition[] {
   return [...CREATIVE_SKILLS, ...customSkills];
 }
-
 export const findSkill = (id: string | null | undefined): SkillDefinition | undefined =>
   id ? (CREATIVE_SKILLS.find((skill) => skill.id === id) ?? customSkills.find((skill) => skill.id === id)) : undefined;

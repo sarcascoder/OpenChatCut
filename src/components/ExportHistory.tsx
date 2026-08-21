@@ -3,7 +3,6 @@ import { theme, themeAlpha } from '../theme';
 import { Icon } from './icons';
 import { TopBarIconButton } from './TopBarIconButton';
 import { listExportHistory, clearExportHistory, type ExportRecord } from '../persist/exportHistoryStore';
-import { t, useT } from '../i18n/locale';
 
 // Export history. Self-contained: renders its own topbar trigger
 // button AND the popover. GLOBAL history (single-user app) — loads straight from
@@ -13,11 +12,11 @@ import { t, useT } from '../i18n/locale';
 function relTime(ms: number): string {
   const diff = Math.max(0, Date.now() - ms);
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return t('刚刚');
-  if (min < 60) return t('{n} 分钟前', { n: min });
+  if (min < 1) return 'Just now';
+  if (min < 60) return `${min} min ago`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return t('{n} 小时前', { n: hr });
-  return t('{n} 天前', { n: Math.floor(hr / 24) });
+  if (hr < 24) return `${hr} hr ago`;
+  return `${Math.floor(hr / 24)} d ago`;
 }
 
 /** bytes → "1.2 MB" / "340 KB" / "12 B" */
@@ -34,7 +33,6 @@ function meta(r: ExportRecord): string {
 }
 
 export function ExportHistory() {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const [records, setRecords] = useState<ExportRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,22 +52,22 @@ export function ExportHistory() {
 
   return (
     <>
-      <TopBarIconButton icon="download" label={t('导出历史')} onClick={() => setOpen(true)} />
+      <TopBarIconButton icon="download" label="Export History" onClick={() => setOpen(true)} />
 
       {open && (
         <div onClick={() => setOpen(false)} style={backdrop}>
           <div onClick={(e) => e.stopPropagation()} style={card}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 16px', borderBottom: `0.5px solid ${theme.border}` }}>
               <span style={{ color: theme.accent, lineHeight: 0 }}><Icon name="download" size={17} /></span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{t('导出历史')}</span>
-              <button onClick={() => setOpen(false)} title={t('关闭')} style={iconBtn}><Icon name="x" size={15} /></button>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>Export History</span>
+              <button onClick={() => setOpen(false)} title="Close" style={iconBtn}><Icon name="x" size={15} /></button>
             </div>
 
             <div style={{ padding: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120 }}>
               {loading ? (
-                <div style={emptyState}>{t('加载中…')}</div>
+                <div style={emptyState}>Loading…</div>
               ) : records.length === 0 ? (
-                <div style={emptyState}>{t('还没有导出记录')}</div>
+                <div style={emptyState}>No exports yet</div>
               ) : (
                 records.map((r) => (
                   <div key={r.id} style={row}>
@@ -82,9 +80,9 @@ export function ExportHistory() {
                       <button type="button" onClick={() => {
                         void window.openChatCutDesktop?.revealExport(r.destinationId!, r.name).catch(() => undefined);
                       }}
-                        aria-label={t('打开文件夹')} title={t('打开文件夹')} style={folderBtn}>
+                        aria-label="Open Folder" title="Open Folder" style={folderBtn}>
                         <Icon name="folder" size={14} />
-                        <span>{t('打开文件夹')}</span>
+                        <span>Open Folder</span>
                       </button>
                     )}
                   </div>
@@ -94,7 +92,7 @@ export function ExportHistory() {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 16px', borderTop: `0.5px solid ${theme.border}` }}>
               <button onClick={handleClear} disabled={records.length === 0} style={{ ...ghostBtn, opacity: records.length === 0 ? 0.4 : 1, cursor: records.length === 0 ? 'default' : 'pointer' }}>
-                {t('清空历史')}
+                Clear History
               </button>
             </div>
           </div>

@@ -24,7 +24,6 @@ interface EditorAgentEnvironmentOptions {
   getUndoTarget: () => ProjectDoc | null;
   getRedoTarget: () => ProjectDoc | null;
   onRename: (name: string) => void;
-  translate: (text: string, params?: Record<string, string | number>) => string;
 }
 
 function useLiveRef<T>(value: T) {
@@ -75,7 +74,6 @@ function useAllTemplates() {
 function useApplyInspectorSelection(
   stateRef: MutableRefObject<TimelineState>,
   commands: EditorCommands,
-  translate: EditorAgentEnvironmentOptions['translate'],
 ) {
   return (
     makeActions: Parameters<typeof planInspectorBatch>[2],
@@ -88,7 +86,7 @@ function useApplyInspectorSelection(
       ? planInspectorBatch(snapshot, ids, makeActions, supports)
       : planInspectorBatch(snapshot, ids, makeActions);
     if (!plan.ok) {
-      showAppToast(translate('无法将此属性应用到全部选中片段。'));
+      showAppToast('Cannot apply this property to every selected clip.');
       return false;
     }
     commands.batch(plan.actions, label);
@@ -131,7 +129,7 @@ function useAgentContext(options: AgentContextOptions): AgentContext {
     audio: AUDIO_ASSETS,
     getProjectId: () => projectId,
     openProject: async (nextProjectId: string) => {
-      if (!(await flushBeforeLeaveRef.current())) return { ok: false, error: '当前工程保存失败，已阻止切换工程' };
+      if (!(await flushBeforeLeaveRef.current())) return { ok: false, error: 'Failed to save the current project, so switching projects was blocked' };
       if (nextProjectId === projectId) return { ok: true };
       window.location.hash = `#/editor/${nextProjectId}`;
       return { ok: true };
@@ -162,7 +160,7 @@ export function useEditorAgentEnvironment(options: EditorAgentEnvironmentOptions
     [projectId, selectedItemId, selectedTransitionId, clearPreviewStatuses],
   );
   const templates = useAllTemplates();
-  const applyInspectorSelection = useApplyInspectorSelection(stateRef, commands, options.translate);
+  const applyInspectorSelection = useApplyInspectorSelection(stateRef, commands);
   const agentCtx = useAgentContext({
     ...options, stateRef, docRef, flushBeforeLeaveRef, ...offlineMedia, ...creative, ...templates,
   });

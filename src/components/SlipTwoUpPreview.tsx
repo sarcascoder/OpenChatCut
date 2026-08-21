@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { SlipPreview } from '../editor/slip';
-import { useT } from '../i18n/locale';
 
 interface SourceFrameProps {
   src: string;
@@ -50,12 +49,11 @@ function SourceFrame({ src, frame, fps, label, audio }: SourceFrameProps) {
 }
 
 export function SlipTwoUpPreview({ preview }: { preview: SlipPreview }) {
-  const t = useT();
   const { plan } = preview;
   return (
-    <aside className="cc-slip-two-up" role="status" aria-live="off" aria-label={t('滑移预览')}>
+    <aside className="cc-slip-two-up" role="status" aria-live="off" aria-label="Slip preview">
       <div className="cc-slip-two-up-head">
-        <strong>{t('滑移')}</strong>
+        <strong>Slip</strong>
         <span title={preview.itemName}>{preview.itemName}</span>
         <b>{plan.appliedDeltaInFrames >= 0 ? '+' : ''}{plan.appliedDeltaInFrames.toFixed(2)}f</b>
       </div>
@@ -64,18 +62,18 @@ export function SlipTwoUpPreview({ preview }: { preview: SlipPreview }) {
           src={preview.src}
           frame={preview.sourceInFrame}
           fps={preview.fps}
-          label={t('源入点')}
+          label="Source in-point"
           audio={preview.kind === 'audio'}
         />
         <SourceFrame
           src={preview.src}
           frame={preview.sourceOutFrame}
           fps={preview.fps}
-          label={t('源出点')}
+          label="Source out-point"
           audio={preview.kind === 'audio'}
         />
       </div>
-      {plan.clamped && <div className="cc-slip-two-up-limit">{t('已到达源素材边界')}</div>}
+      {plan.clamped && <div className="cc-slip-two-up-limit">Reached the source media boundary</div>}
     </aside>
   );
 }

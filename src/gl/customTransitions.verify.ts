@@ -10,9 +10,9 @@ assert.equal(getCustomTransition('custom:tr-nope'), undefined, 'unknown id → u
 
 const def = {
   id: 'custom:tr-swirl-ab12cd34',
-  label: '漩涡转场',
+  label: 'Swirl Transition',
   frag: '#version 300 es\nprecision highp float;\nuniform sampler2D u_outgoing;\nuniform sampler2D u_incoming;\nuniform float u_progress;\nin vec2 v_texCoord; out vec4 fragColor;\nvoid main(){ fragColor = mix(texture(u_outgoing,v_texCoord), texture(u_incoming,v_texCoord), u_progress); }',
-  props: [{ key: 'swirl', label: '强度', default: 0.7, min: 0, max: 1, step: 0.01 }],
+  props: [{ key: 'swirl', label: 'Intensity', default: 0.7, min: 0, max: 1, step: 0.01 }],
 };
 registerCustomTransition(def);
 assert.deepEqual(getCustomTransition(def.id), def, 'registered def round-trips');
@@ -30,14 +30,14 @@ const base: TimelineState = {
   ] as TimelineItem[],
 };
 
-const custom = reduce(base, { type: 'addTransition', id: 'tr1', incomingItemId: 'b', transType: 'custom-shader', durationInFrames: 20, custom: { frag: 'FRAG_SRC', uniforms: { u_swirl: 0.7 }, label: '漩涡转场' } });
+const custom = reduce(base, { type: 'addTransition', id: 'tr1', incomingItemId: 'b', transType: 'custom-shader', durationInFrames: 20, custom: { frag: 'FRAG_SRC', uniforms: { u_swirl: 0.7 }, label: 'Swirl Transition' } });
 const tr = custom.transitions![0]!;
 assert.equal(tr.type, 'custom-shader');
 assert.equal(tr.outgoingItemId, 'a', 'resolves adjacent prior clip as outgoing');
 assert.equal(tr.incomingItemId, 'b');
 assert.equal(tr.customFrag, 'FRAG_SRC', 'GLSL carried onto the item (persists + renders after reload)');
 assert.deepEqual(tr.customUniforms, { u_swirl: 0.7 });
-assert.equal(tr.customLabel, '漩涡转场');
+assert.equal(tr.customLabel, 'Swirl Transition');
 
 // built-in transition → no custom fields
 const builtin = reduce(base, { type: 'addTransition', id: 'tr2', incomingItemId: 'b', transType: 'cross-dissolve', durationInFrames: 20 });

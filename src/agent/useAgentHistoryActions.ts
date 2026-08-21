@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react';
-import { t } from '../i18n/locale';
 import { flushChatWrites } from '../persist/projectStore';
 import { clearAgentSessionContext } from '../persist/agentRuntimeStore';
 import { loadProposalRecord } from '../persist/proposalStore';
@@ -19,7 +18,7 @@ export async function clearAgentHistory(state: AgentHookState, projectId: string
     // Do not fail silently: the user clicked clear and nothing happened.
     state.setMessages((current) => [...current, {
       role: 'error',
-      text: t('Agent 仍在运行中，无法清空对话。请先等待运行结束或停止当前运行，再试一次。'),
+      text: 'The Agent is still running and the chat cannot be cleared. Wait for the run to finish or stop it first, then try again.',
     }]);
     return;
   }
@@ -45,14 +44,11 @@ export async function clearAgentHistory(state: AgentHookState, projectId: string
     const runId = blocked.run?.runId;
     const status = blocked.run?.status;
     const detail = blocked.code === 'agent_session_clear_blocked' && runId
-      ? t('运行 {runId}（{status}）仍在进行。请先停止该运行，确认检查器中没有活动任务后再重试。', {
-        runId,
-        status: status ?? 'unknown',
-      })
-      : t('请确认没有其他 Agent 正在运行，并重试。');
+      ? `Run ${runId} (${status ?? 'unknown'}) is still active. Stop it, confirm the inspector has no active tasks, then retry.`
+      : 'Confirm no other Agent is running, then retry.';
     state.setMessages((current) => [...current, {
       role: 'error',
-      text: `${t('无法清空上下文与运行记录。')}${detail}`,
+      text: `${'Unable to clear context and run history.'}${detail}`,
     }]);
     return;
   }

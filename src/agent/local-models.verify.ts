@@ -41,7 +41,7 @@ const llmGroup = SETTINGS_CATEGORIES.flatMap((category) => category.groups)
 assert.ok(llmGroup);
 const ollamaPage = llmGroup.vendors.find((page) => page.vendor === 'ollama');
 assert.ok(ollamaPage);
-assert.equal(ollamaPage.fields.find((field) => field.kind === 'secret')?.label, 'API Key（可选）');
+assert.equal(ollamaPage.fields.find((field) => field.kind === 'secret')?.label, 'API Key (optional)');
 
 applyAgentModelStatus({}, {});
 assert.deepEqual(getAgentModelSnapshot(), { activeId: '', choices: [], loaded: true });

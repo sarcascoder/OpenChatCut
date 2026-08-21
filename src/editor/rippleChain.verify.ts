@@ -21,10 +21,10 @@ const starts = (s: TimelineState, track = 'V1') =>
 // ── Continuous chain: a section starting from the boundary and connecting end to end, the first gap is the end point ──
 {
   const items = [clip('a', 0), clip('b', 60), clip('c', 120), clip('gap', 300), clip('after', 360)];
-  assert.deepEqual([...contiguousFollowers(items, 'V1', 60)], ['b', 'c'], '空隙之后的不算在内');
+  assert.deepEqual([...contiguousFollowers(items, 'V1', 60)], ['b', 'c'], 'anything past a gap does not count');
   assert.deepEqual([...contiguousFollowers(items, 'V1', 360)], ['after']);
-  assert.deepEqual([...contiguousFollowers(items, 'V1', 420)], [], '边界之后没有片段');
-  assert.deepEqual([...contiguousFollowers(items, 'V2', 60)], [], '别的轨一个都不推');
+  assert.deepEqual([...contiguousFollowers(items, 'V1', 420)], [], 'no clips after the boundary');
+  assert.deepEqual([...contiguousFollowers(items, 'V2', 60)], [], 'not a single clip on another track gets pushed');
 }
 
 // ── Overlap is considered to be connected (overlapping placement is allowed on the same track), and the largest right edge is taken at the end of the chain ──
@@ -38,7 +38,7 @@ const starts = (s: TimelineState, track = 'V1') =>
   const before = stateOf([clip('a', 0, 60), clip('b', 60), clip('c', 120), clip('far', 300)]);
   const after = reduce(before, { type: 'setSpeed', id: 'a', rate: 2 });
   assert.equal(after.items.find((it) => it.id === 'a')!.durationInFrames, 30);
-  assert.deepEqual(starts(after), [0, 30, 90, 300], 'far 前面有空隙,不该被拖走');
+  assert.deepEqual(starts(after), [0, 30, 90, 300], 'there is a gap before far, so it must not be dragged along');
 }
 
 // ── Slow down and lengthen → The same chain moves backward, and the one behind the gap remains still ──
@@ -54,7 +54,7 @@ const starts = (s: TimelineState, track = 'V1') =>
   const before = stateOf([clip('a', 0, 60), clip('far', 200), clip('tail', 260)]);
   const after = reduce(before, { type: 'setSpeed', id: 'a', rate: 2 });
   assert.equal(after.items.find((it) => it.id === 'a')!.durationInFrames, 30);
-  assert.deepEqual(starts(after), [0, 200, 260], '空隙挡住波纹,后面整段都留在原地');
+  assert.deepEqual(starts(after), [0, 200, 260], 'the gap blocks the ripple, so everything after it stays put');
 }
 
 // ──No one moves when the speed remains unchanged (the duration does not change)──
@@ -63,4 +63,4 @@ const starts = (s: TimelineState, track = 'V1') =>
   assert.deepEqual(starts(reduce(before, { type: 'setSpeed', id: 'a', rate: 1 })), [0, 60]);
 }
 
-console.log('rippleChain.verify: ok (连续链/重叠算相接/跨轨隔离/真 reduce 加速·减速·空链不动)');
+console.log('rippleChain.verify: ok (contiguous chain / overlap counts as adjacent / cross-track isolation / real reduce speed-up, slow-down, empty chain stays put)');

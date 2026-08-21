@@ -10,7 +10,6 @@ import {
   type ModelCapabilities,
   type ModelCapabilityOverride,
 } from '../../../shared/model-capabilities';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 
 interface ModelCapabilityEditorProps {
@@ -39,15 +38,14 @@ function BooleanOverride({ label, resolved, onChange }: {
   readonly resolved: ModelCapabilities[CapabilityBoolean];
   readonly onChange: (value: boolean) => void;
 }) {
-  const t = useT();
   return (
     <label style={fieldStyle}>
-      <span>{t(label)}</span>
+      <span>{label}</span>
       <select value={String(resolved.value)}
         onChange={(event) => onChange(event.target.value === 'true')}
         style={inputStyle}>
-        <option value="true">{t('支持')}</option>
-        <option value="false">{t('不支持')}</option>
+        <option value="true">Supported</option>
+        <option value="false">Unsupported</option>
       </select>
     </label>
   );
@@ -60,10 +58,9 @@ function NumericOverride({ label, value, resolved, minimum, onCommit }: {
   readonly minimum: number;
   readonly onCommit: (value: number | undefined) => void;
 }) {
-  const t = useT();
   return (
     <label style={fieldStyle}>
-      <span>{t(label)}</span>
+      <span>{label}</span>
       <input key={`${label}:${value ?? `resolved-${resolved.value}`}`} type="number" min={minimum} max={4_000_000}
         defaultValue={value ?? resolved.value}
         onBlur={(event) => {
@@ -84,7 +81,6 @@ function NumericOverride({ label, value, resolved, minimum, onCommit }: {
 export function ModelCapabilityEditor({
   backend, provider, modelId, rawOverrides, onChange,
 }: ModelCapabilityEditorProps) {
-  const t = useT();
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState(false);
   const identity = { backend, provider, modelId: modelId.trim() } as const;
@@ -108,14 +104,11 @@ export function ModelCapabilityEditor({
     <section style={boxStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <b style={{ fontSize: 11.5 }}>{t('模型能力')}</b>
+          <b style={{ fontSize: 11.5 }}>Model capabilities</b>
           <div style={summaryStyle}>{modelId} · {resolvedSummary(resolved)}</div>
           {(resolved.contextWindowTokens.estimated || resolved.maxOutputTokens.estimated) && (
             <div style={{ fontSize: 10.5, lineHeight: 1.5, marginTop: 4, color: theme.textDim, maxWidth: 420 }}>
-              {t('该模型不在内置目录，以上数值为估算（上下文 {context} / 输出 {output}）。若与实际不符，点「展开」手动修改。', {
-                context: resolved.contextWindowTokens.value.toLocaleString(),
-                output: resolved.maxOutputTokens.value.toLocaleString(),
-              })}
+              {`This model is not in the built-in catalog, so these values are estimates (context ${resolved.contextWindowTokens.value.toLocaleString()} / output ${resolved.maxOutputTokens.value.toLocaleString()}). If they do not match the real model, expand and adjust them manually.`}
             </div>
           )}
         </div>
@@ -123,31 +116,31 @@ export function ModelCapabilityEditor({
           {override && <button type="button" onClick={() => update(Object.fromEntries(
             ['contextWindowTokens', 'maxInputTokens', 'maxOutputTokens', 'supportsTools', 'supportsImages', 'supportsReasoning', 'reasoningEfforts', 'defaultReasoningEffort']
               .map((field) => [field, undefined]),
-          ))} style={clearStyle}>{t('清除覆盖')}</button>}
+          ))} style={clearStyle}>Clear override</button>}
           <button type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}
-            style={clearStyle}>{t(expanded ? '收起' : '展开')}</button>
+            style={clearStyle}>{expanded ? 'Collapse' : 'Expand'}</button>
         </div>
       </div>
       {expanded && <>
         <div style={gridStyle}>
-          <NumericOverride label="上下文窗口（tokens）" value={override?.contextWindowTokens}
+          <NumericOverride label='Context window (tokens)' value={override?.contextWindowTokens}
             resolved={resolved.contextWindowTokens} minimum={4_096}
             onCommit={(value) => update({ contextWindowTokens: value })} />
-          <NumericOverride label="最大输入（tokens）" value={override?.maxInputTokens}
+          <NumericOverride label='Maximum input (tokens)' value={override?.maxInputTokens}
             resolved={resolved.maxInputTokens} minimum={1}
             onCommit={(value) => update({ maxInputTokens: value })} />
-          <NumericOverride label="最大输出（tokens）" value={override?.maxOutputTokens}
+          <NumericOverride label='Maximum output (tokens)' value={override?.maxOutputTokens}
             resolved={resolved.maxOutputTokens} minimum={1}
             onCommit={(value) => update({ maxOutputTokens: value })} />
-          <BooleanOverride label="工具调用" resolved={resolved.supportsTools}
+          <BooleanOverride label='Tool calling' resolved={resolved.supportsTools}
             onChange={booleanUpdate('supportsTools')} />
-          <BooleanOverride label="图片输入" resolved={resolved.supportsImages}
+          <BooleanOverride label='Image input' resolved={resolved.supportsImages}
             onChange={booleanUpdate('supportsImages')} />
-          <BooleanOverride label="推理能力" resolved={resolved.supportsReasoning}
+          <BooleanOverride label='Reasoning' resolved={resolved.supportsReasoning}
             onChange={booleanUpdate('supportsReasoning')} />
         </div>
-        {error && <div style={{ ...summaryStyle, color: theme.danger }}>{t(error)}</div>}
-        <div style={summaryStyle}>{t('留空会使用内置模型目录；未知模型使用保守回退值。')}</div>
+        {error && <div style={{ ...summaryStyle, color: theme.danger }}>{error}</div>}
+        <div style={summaryStyle}>Leave fields empty to use the bundled model catalog. Unknown models use conservative fallback values.</div>
       </>}
     </section>
   );

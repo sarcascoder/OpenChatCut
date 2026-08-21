@@ -41,7 +41,7 @@ assert.ok(md.includes(`script-stamp:${stamp}`), 'stamp comment');
   assert.strictEqual(d.takeActions().length, 0, 'no actions recorded');
 }
 
-// ── 2. word strike → deletion (删词=删视频) ──
+// ── 2. word strike → deletion (deleting a word deletes the video) ──
 {
   const d = makeDraft(doc(state));
   const edited = md.replace('[s1] Hello brave new world.', '[s1] Hello ~~brave new~~ world.');
@@ -73,7 +73,7 @@ assert.ok(md.includes(`script-stamp:${stamp}`), 'stamp comment');
   const r = applyScript(d.getState, d.commands, edited);
   const it = d.getState().items.find((x) => x.id === 'it_speech')!;
   assert.deepStrictEqual(it.deletedWordIdx ?? [], [], 'words restored');
-  assert.ok(r.changes.some((c) => c.includes('恢复')), 'restore audited');
+  assert.ok(r.changes.some((c) => c.includes('restored')), 'restore audited');
 }
 
 // ── 5. clip row deletion + gap close + repack ──
@@ -104,8 +104,8 @@ assert.ok(md.includes(`script-stamp:${stamp}`), 'stamp comment');
 {
   const d = makeDraft(doc(state));
   assert.throws(() => applyScript(d.getState, d.commands, md.replace(/script-stamp:\w+/, 'script-stamp:zzz')), /stale/, 'stale stamp rejected');
-  assert.throws(() => applyScript(d.getState, d.commands, md.replace('Keep this sentence.', 'Keep that sentence.')), /不匹配/, 'rewritten words rejected');
-  assert.throws(() => applyScript(d.getState, d.commands, md.replace('[s2] Keep', '[s2] Keep this sentence.\n[s2] Keep')), /重放|两次/, 'replay rejected');
+  assert.throws(() => applyScript(d.getState, d.commands, md.replace('Keep this sentence.', 'Keep that sentence.')), /does not match/, 'rewritten words rejected');
+  assert.throws(() => applyScript(d.getState, d.commands, md.replace('[s2] Keep', '[s2] Keep this sentence.\n[s2] Keep')), /twice|replay/, 'replay rejected');
   assert.strictEqual(d.takeActions().length, 0, 'failed applies dispatch nothing (atomic)');
 }
 

@@ -99,8 +99,8 @@ const existing: Marker[] = [{ id: 'mk_a', scope: 'project', fromFrame: 30, durat
   assert.ok((execMarkersTool('manage_markers', { action: 'delete', markerId: 'ghost' }, ctx) as { error?: string }).error);
 }
 
-// ── transcriptSegments(源):[sN] 段号建 marker,与 read_script 同一套编号 ──
-// A1: "hello world." + "nice day."(两段);V1: "hello again."(一段,startFrame 100)
+// ── transcriptSegments (source): create markers from [sN] segment numbers, same numbering as read_script ──
+// A1: "hello world." + "nice day." (two segments); V1: "hello again." (one segment, startFrame 100)
 {
   const schema = MARKERS_TOOL_SCHEMAS[0]!.input_schema as { properties: Record<string, unknown> };
   for (const f of ['transcriptSegments', 'transcriptTrack', 'notePrefix']) assert.ok(f in schema.properties, `schema has ${f}`);
@@ -122,18 +122,18 @@ const existing: Marker[] = [{ id: 'mk_a', scope: 'project', fromFrame: 30, durat
   };
   const markersOf = (d: ReturnType<typeof makeDraft>) => d.getState().markers ?? [];
 
-  // 单段 + notePrefix:s2 = "nice day." → fromFrame 45(=1.5s@30fps),covering 段长 27f
+  // Single segment + notePrefix: s2 = "nice day." → fromFrame 45 (=1.5s@30fps), covering the 27f segment length
   {
     const { d, c } = mk();
     const r = execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '2', transcriptTrack: 'A1', notePrefix: 'TODO' }, c) as { ok?: boolean; created?: string[] };
     assert.ok(r.ok, 'create via transcriptSegments succeeds without fromFrame/note');
     const m = markersOf(d)[0]!;
-    assert.equal(m.fromFrame, 45, 'fromFrame derived from the segment\'s first word (词级时间戳)');
+    assert.equal(m.fromFrame, 45, 'fromFrame derived from the segment\'s first word (word-level timestamps)');
     assert.equal(m.durationFrames, 27, 'duration spans the segment');
     assert.equal(m.note, 'TODO: nice day.', 'note = notePrefix + copied read_script text');
   }
 
-  // 段范围 "1-2":跨两段,note 按段顺序拼接
+  // Segment range "1-2": spans two segments, note is joined in segment order
   {
     const { d, c } = mk();
     execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '1-2', transcriptTrack: 'A1' }, c);
@@ -143,7 +143,7 @@ const existing: Marker[] = [{ id: 'mk_a', scope: 'project', fromFrame: 30, durat
     assert.equal(m.note, 'hello world. nice day.', 'note copies both segments');
   }
 
-  // 歧义:两个转写区域都有 s1 → 明确报错点名 transcriptTrack;带 track 过滤则命中 V1 clip
+  // Ambiguity: both transcript regions contain an s1 → the error explicitly names transcriptTrack; filtering by track hits the V1 clip
   {
     const { d, c } = mk();
     const amb = execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '1' }, c) as { error?: string };
@@ -156,16 +156,16 @@ const existing: Marker[] = [{ id: 'mk_a', scope: 'project', fromFrame: 30, durat
     assert.equal(m.note, 'hello again.');
   }
 
-  // 显式 fromFrame / note 优先于派生值(源:"unless you pass fromFrame explicitly")
+  // Explicit fromFrame / note win over the derived values (source: "unless you pass fromFrame explicitly")
   {
     const { d, c } = mk();
-    execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '2', transcriptTrack: 'A1', fromFrame: 999, note: '手写' }, c);
+    execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '2', transcriptTrack: 'A1', fromFrame: 999, note: 'handwritten' }, c);
     const m = markersOf(d)[0]!;
     assert.equal(m.fromFrame, 999, 'explicit fromFrame wins');
-    assert.equal(m.note, '手写', 'explicit note wins');
+    assert.equal(m.note, 'handwritten', 'explicit note wins');
   }
 
-  // 批量 markers[]:每项可独立用 transcriptSegments 或 fromFrame
+  // Batch markers[]: each entry can independently use transcriptSegments or fromFrame
   {
     const { d, c } = mk();
     const r = execMarkersTool('manage_markers', { action: 'create', markers: [
@@ -176,7 +176,7 @@ const existing: Marker[] = [{ id: 'mk_a', scope: 'project', fromFrame: 30, durat
     assert.equal(markersOf(d).length, 2);
   }
 
-  // 错误路径:未知段号 / 非法 spec / 未知轨,都不落任何 marker
+  // Error paths: unknown segment number / malformed spec / unknown track — none of them place a marker
   {
     const { d, c } = mk();
     assert.ok((execMarkersTool('manage_markers', { action: 'create', transcriptSegments: '9', transcriptTrack: 'A1' }, c) as { error?: string }).error, 'unknown segment errors');

@@ -57,7 +57,7 @@ export function matchEntries(entries: CaptionSourceEntry[], sel: Json, s: Timeli
     const hits = entries.flatMap((entry, index) => (entry.id === id ? [index] : []));
     return hits.length === 1
       ? hits
-      : { error: hits.length ? `ambiguous sourceId "${id}"` : `no source with id "${id}" (source_list 查 sourceId)` };
+      : { error: hits.length ? `ambiguous sourceId "${id}"` : `no source with id "${id}" (look up sourceId with source_list)` };
   }
   const idx = num(sel.index);
   if (idx !== undefined) {
@@ -66,7 +66,7 @@ export function matchEntries(entries: CaptionSourceEntry[], sel: Json, s: Timeli
       ? { error: `index ${idx} is legacy-only; use sourceId "${entries[idx]!.id}"` }
       : [idx];
   }
-  if (str(sel.speakerId)) return { error: 'speakerId selector 不支持:无 per-speaker 车道,请按轨/按 item 选择' };
+  if (str(sel.speakerId)) return { error: 'speakerId selector is unsupported: there are no per-speaker lanes, select by track or by item' };
   const slotId = str(sel.slotId);
   if (slotId) {
     const hits = entries.flatMap((e, i) => (e.slotId === slotId ? [i] : []));
@@ -101,7 +101,7 @@ export function matchEntries(entries: CaptionSourceEntry[], sel: Json, s: Timeli
     const hits = entries.flatMap((e, i) => (onTrack.has(e.itemId) ? [i] : []));
     return hits.length ? hits : { error: `no source on track "${track}"` };
   }
-  return { error: '缺选择器:每条要带 index / sourceId / trackId / itemId / label / variant 之一定位车道,例 {"index":0} 或 {"trackId":"A2"} 或 {"variant":{"languageCode":"en"}};sourceId 用 source_list 查' };
+  return { error: 'missing selector: every entry needs one of index / sourceId / trackId / itemId / label / variant to locate a lane, e.g. {"index":0} or {"trackId":"A2"} or {"variant":{"languageCode":"en"}}; look up sourceId with source_list' };
 }
 
 const entrySummary = (e: CaptionSourceEntry, i: number) => ({
@@ -115,7 +115,7 @@ const entrySummary = (e: CaptionSourceEntry, i: number) => ({
 export function execLayoutPolicy(json: Json, c: CaptionsData, ctx: AgentContext): Result {
   if (json.layoutPolicy === null) {
     ctx.commands.updateCaptions({ layoutPolicy: null });
-    return { ok: true, layoutPolicy: null, note: 'cleared — 回到默认 auto-stack' };
+    return { ok: true, layoutPolicy: null, note: 'cleared — back to the default auto-stack' };
   }
   const patch: Partial<CaptionsData> = {};
   const mode = str(json.mode);
@@ -125,13 +125,13 @@ export function execLayoutPolicy(json: Json, c: CaptionsData, ctx: AgentContext)
       patch.layoutPolicy = { mode, ...(cap !== undefined ? { maxVisibleSources: Math.max(1, Math.floor(cap)) } : {}) } as CaptionLayoutPolicy;
     } else if (mode === 'manual-slots') {
       const raw = Array.isArray(json.slots) ? json.slots : null;
-      if (!raw?.length) return { error: 'manual-slots 要给槽位表,例 {"mode":"manual-slots","slots":[{"id":"top","anchor":"top-center","offsetYRatio":0.08},{"id":"bottom","anchor":"bottom-center","offsetYRatio":-0.08}]};再用 source_update 把车道 slotId 钉到槽位' };
+      if (!raw?.length) return { error: 'manual-slots needs a slot table, e.g. {"mode":"manual-slots","slots":[{"id":"top","anchor":"top-center","offsetYRatio":0.08},{"id":"bottom","anchor":"bottom-center","offsetYRatio":-0.08}]}; then pin a lane to a slot with source_update slotId' };
       const slots: CaptionSlot[] = [];
       for (const sl of raw) {
         const o = (sl ?? {}) as Json;
         const sid = str(o.id);
         const anchor = str(o.anchor);
-        if (!sid || !ANCHORS.has(anchor)) return { error: `slot 非法:${JSON.stringify(sl)}(需 id + 3×3 anchor)` };
+        if (!sid || !ANCHORS.has(anchor)) return { error: `invalid slot: ${JSON.stringify(sl)} (needs id + a 3×3 anchor)` };
         slots.push({ id: sid, anchor: anchor as CaptionAnchor, offsetXRatio: num(o.offsetXRatio), offsetYRatio: num(o.offsetYRatio), widthRatio: num(o.widthRatio), heightRatio: num(o.heightRatio) });
       }
       patch.layoutPolicy = { mode, slots };
@@ -147,22 +147,22 @@ export function execLayoutPolicy(json: Json, c: CaptionsData, ctx: AgentContext)
     }
     patch.perSource = per;
   }
-  if (!('layoutPolicy' in patch) && !('perSource' in patch)) return { error: 'layout_policy 参数例:{"mode":"auto-stack","maxVisibleSources":2}(上下堆叠)/ {"mode":"single-lane"}(同位只显一条)/ {"mode":"manual-slots","slots":[…]} / {"perSource":{"<sourceId>":{"maxLines":2}}} / {"layoutPolicy":null} 清除' };
+  if (!('layoutPolicy' in patch) && !('perSource' in patch)) return { error: 'layout_policy examples: {"mode":"auto-stack","maxVisibleSources":2} (stacked vertically) / {"mode":"single-lane"} (only one shown per position) / {"mode":"manual-slots","slots":[…]} / {"perSource":{"<sourceId>":{"maxLines":2}}} / {"layoutPolicy":null} to clear' };
   ctx.commands.updateCaptions(patch);
-  return { ok: true, layoutPolicy: patch.layoutPolicy ?? c.layoutPolicy ?? { mode: 'auto-stack' }, ...(patch.perSource ? { perSource: patch.perSource } : {}), note: 'perSource.maxLines 按 maxLines×模板每页词数近似(分页按词数)' };
+  return { ok: true, layoutPolicy: patch.layoutPolicy ?? c.layoutPolicy ?? { mode: 'auto-stack' }, ...(patch.perSource ? { perSource: patch.perSource } : {}), note: 'perSource.maxLines is approximated as maxLines × the template words-per-page (pagination counts words)' };
 }
 
 /** action=positions — call multiple sources in one call (same anchor point = same block stack).*/
 export function execPositions(json: Json, c: CaptionsData, ctx: AgentContext, s: TimelineState): Result {
   const raw = Array.isArray(json.positions) ? json.positions : null;
-  if (!raw?.length) return { error: 'positions 参数例(可直接照抄改数):{"positions":[{"index":0,"anchor":"top-center","offsetYRatio":0.08},{"index":1,"anchor":"bottom-center","offsetYRatio":-0.08}]}——每条 = 选择器(index/sourceId/trackId/variant…)+ anchor(3×3);同 anchor 会堆叠成一块' };
+  if (!raw?.length) return { error: 'positions example (copy it and change the numbers): {"positions":[{"index":0,"anchor":"top-center","offsetYRatio":0.08},{"index":1,"anchor":"bottom-center","offsetYRatio":-0.08}]} — each entry = a selector (index/sourceId/trackId/variant…) + an anchor (3×3); sources sharing an anchor stack into one block' };
   const entries = ensureEntries(c, s);
-  if (!entries.length) return { error: '当前没有字幕 source:先 edit_captions action=enable 开字幕(或 source_set 指定 sources),再来摆位' };
+  if (!entries.length) return { error: 'no caption source right now: first turn captions on with edit_captions action=enable (or pick sources with source_set), then position them' };
   const placed: Result[] = [];
   for (const p of raw) {
     const o = (p ?? {}) as Json;
     const anchor = str(o.anchor);
-    if (!ANCHORS.has(anchor)) return { error: `anchor 非法:"${anchor}"。用 3×3 锚点:top/middle/bottom × left/center/right,如 top-center / bottom-center / middle-left` };
+    if (!ANCHORS.has(anchor)) return { error: `invalid anchor "${anchor}". Use the 3×3 anchors: top/middle/bottom × left/center/right, e.g. top-center / bottom-center / middle-left` };
     const m = matchEntries(entries, o, s);
     if ('error' in (m as object)) return m as Result;
     for (const i of m as number[]) {
@@ -171,15 +171,15 @@ export function execPositions(json: Json, c: CaptionsData, ctx: AgentContext, s:
     }
   }
   ctx.commands.updateCaptions({ sourceEntries: entries, sources: undefined, sourceMode: 'item' });
-  return { ok: true, placed, note: '同 anchor 的多个 source 在该锚点堆叠为一个普通字幕块;像素级 left/top 用 action=layout(整块)' };
+  return { ok: true, placed, note: 'multiple sources sharing an anchor stack into one ordinary caption block at that anchor; for pixel-level left/top use action=layout (whole block)' };
 }
 
 /** action=source_update — Change the presentation of single/multiple sources according to the selector (without moving the caption track/item).*/
 export function execSourceUpdate(json: Json, c: CaptionsData, ctx: AgentContext, s: TimelineState): Result {
   const raw = Array.isArray(json.updates) ? json.updates : (json.update ? [json.update] : null);
-  if (!raw?.length) return { error: 'source_update 参数例(可直接照抄改数):{"updates":[{"index":0,"anchor":"bottom-center","offsetYRatio":-0.08},{"trackId":"A2","visible":false},{"index":1,"style":{"sizePx":54,"color":"#fff"}}]}——每条 = 选择器 + 要改的字段(visible/anchor/offsetXRatio/offsetYRatio/slotId/style/preset/variant);sourceId 用 source_list 查' };
+  if (!raw?.length) return { error: 'source_update example (copy it and change the numbers): {"updates":[{"index":0,"anchor":"bottom-center","offsetYRatio":-0.08},{"trackId":"A2","visible":false},{"index":1,"style":{"sizePx":54,"color":"#fff"}}]} — each entry = a selector + the fields to change (visible/anchor/offsetXRatio/offsetYRatio/slotId/style/preset/variant); look up sourceId with source_list' };
   let entries = ensureEntries(c, s);
-  if (!entries.length) return { error: '当前没有字幕 source:先 edit_captions action=enable 开字幕(或 source_set 指定 sources)' };
+  if (!entries.length) return { error: 'no caption source right now: first turn captions on with edit_captions action=enable (or pick sources with source_set)' };
   const updated: Result[] = [];
   const notes: string[] = [];
   for (const u of raw) {
@@ -199,7 +199,7 @@ export function execSourceUpdate(json: Json, c: CaptionsData, ctx: AgentContext,
       if (str(o.slotId)) e.slotId = str(o.slotId);
       const anchor = str(o.anchor);
       if (anchor) {
-        if (!ANCHORS.has(anchor)) return { error: `anchor 非法:"${anchor}"。用 3×3 锚点,如 top-center / bottom-center / middle-left` };
+        if (!ANCHORS.has(anchor)) return { error: `invalid anchor "${anchor}". Use the 3×3 anchors, e.g. top-center / bottom-center / middle-left` };
         e.anchor = anchor as CaptionAnchor;
       }
       for (const k of ['offsetXRatio', 'offsetYRatio', 'widthRatio', 'heightRatio'] as const) {
@@ -211,11 +211,11 @@ export function execSourceUpdate(json: Json, c: CaptionsData, ctx: AgentContext,
       const vKind = str(variantObj?.variantKind ?? o.variantKind);
       const vLang = str(variantObj?.languageCode ?? o.languageCode);
       if (vKind || vLang) {
-        if (vKind && vKind !== 'translation') return { error: `variantKind "${vKind}" 不支持(仅 translation)` };
-        if (!vLang) return { error: 'variant 切换要给翻译目标语言,例 {"variant":{"variantKind":"translation","languageCode":"en"}} 或简写 {"languageCode":"en"}' };
+        if (vKind && vKind !== 'translation') return { error: `variantKind "${vKind}" is unsupported (translation only)` };
+        if (!vLang) return { error: 'switching variant needs a target translation language, e.g. {"variant":{"variantKind":"translation","languageCode":"en"}} or the shorthand {"languageCode":"en"}' };
         const item = s.items.find((it) => it.id === e.itemId);
         const v = item ? findVariantByLang(item.variants ?? [], vLang, 'translation') : undefined;
-        if (!v) return { error: `item ${e.itemId.slice(0, 8)} 上没有 "${vLang}" 翻译变体 — 先 manage_transcript translation_ensure` };
+        if (!v) return { error: `item ${e.itemId.slice(0, 8)} has no "${vLang}" translation variant — run manage_transcript translation_ensure first` };
         e.variant = { variantKind: 'translation', languageCode: vLang };
       }
       if (o.variant === null) e = { ...e, variant: undefined };
@@ -230,7 +230,7 @@ export function execSourceUpdate(json: Json, c: CaptionsData, ctx: AgentContext,
       if (o.style && typeof o.style === 'object') {
         const mapped = mapCaptionStyle(o.style as Json, s.height);
         e.style = { ...e.style, ...mapped.styleOverride };
-        if (mapped.ignored.length) notes.push(`style 忽略字段:${mapped.ignored.join(',')}`);
+        if (mapped.ignored.length) notes.push(`ignored style fields: ${mapped.ignored.join(', ')}`);
       }
       entries[i] = e;
       updated.push(entrySummary(e, i));

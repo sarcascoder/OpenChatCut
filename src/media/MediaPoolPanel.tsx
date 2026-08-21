@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useMusicAnalysisCards } from '../audio/intelligence/useMusicAnalysisCards';
-import { useT } from '../i18n/locale';
 import type { MediaAsset, MediaAssetRelinkPatch, MediaFolder } from '../editor/types';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { useFocusReturn } from '../hooks/useFocusReturn';
@@ -76,10 +75,9 @@ export function MediaPoolPanel({
   onImport, onImportMobile, directoryImport, directoryImportError, onAddAsset, onAddAssetsToTimeline, onAddAssetsToChat, onCreateFolder, onRenameFolder,
   onDeleteFolder, onMoveAssets, onRenameAsset, onRenameAssets, onSetFavorite, onSetAssetsFavorite, onRemoveAsset, onRemoveAssets, onPasteAssets, onRelinkAsset, onAddSolid, onTranscribe,
 }: MediaPoolPanelProps) {
-  const t = useT();
   const musicAnalysis = useMusicAnalysisCards(assets);
   const [error, setError] = useState<string | null>(null);
-  const fileImport = useMediaPoolFileImport({ onImport, onMoveAssets, setError, t });
+  const fileImport = useMediaPoolFileImport({ onImport, onMoveAssets, setError });
   const {
     inputRef, busy, setBusy, uploadRatio, canPickDirectory,
     pickFiles, pickDirectory, handleDrop,
@@ -121,7 +119,6 @@ export function MediaPoolPanel({
     onRelinkAsset,
     setBusy,
     setError,
-    t,
   });
   const {
     missing, missingList, relinkInputRef, directoryInputRef, relinkBusy, relinkMessage,
@@ -147,14 +144,14 @@ export function MediaPoolPanel({
   const submitPrompt = () => {
     const value = promptValue.trim();
     if (!promptState || !value) return;
-    if (promptState.rejectSlash && value.includes('/')) { setError(t('名称不能包含 /')); return; }
+    if (promptState.rejectSlash && value.includes('/')) { setError('Name cannot contain /'); return; }
     promptState.onSubmit(value);
     closePrompt();
   };
   const createFolder = (restoreFocus: () => void) => {
     modalFocus.remember(restoreFocus);
     openPrompt({
-      title: '新文件夹名称', initialValue: '', rejectSlash: true,
+      title: 'New folder name', initialValue: '', rejectSlash: true,
       onSubmit: (name) => setCurrentFolderId(onCreateFolder(name, currentFolderId)),
     });
   };
@@ -176,18 +173,18 @@ export function MediaPoolPanel({
   ), [assets, folders]);
   const renameFolderTarget = (folder: MediaFolder) => {
     openPrompt({
-      title: '重命名文件夹', initialValue: folder.name, rejectSlash: true,
+      title: 'Rename folder', initialValue: folder.name, rejectSlash: true,
       onSubmit: (name) => onRenameFolder(folder.id, name),
     });
   };
   const renameFolder = () => currentFolder && renameFolderTarget(currentFolder);
   const requestDeleteFolder = useCallback((folder: MediaFolder) => {
     if (!folderIsEmpty(folder.id)) {
-      setError(t('只能删除空文件夹，请先移出或删除其中的内容'));
+      setError('Only empty folders can be deleted; move or delete their contents first');
       return;
     }
     setDeleteState({ id: folder.id, name: folder.name, parentId: folder.parentId });
-  }, [folderIsEmpty, t]);
+  }, [folderIsEmpty]);
   const deleteFolder = () => {
     if (currentFolder) requestDeleteFolder(currentFolder);
   };
@@ -223,7 +220,7 @@ export function MediaPoolPanel({
   const renameAssets = (targets: MediaAsset[]) => {
     if (!targets.length) return;
     openPrompt({
-      title: targets.length > 1 ? '批量重命名素材' : '素材显示名称',
+      title: targets.length > 1 ? 'Batch rename media' : 'Asset display name',
       initialValue: targets.length > 1 ? '' : targets[0]!.name,
       onSubmit: (name) => {
         const entries = batchAssetRename(targets, name);
@@ -289,11 +286,11 @@ export function MediaPoolPanel({
     ...(showFolders && currentFolder ? [{
       kind: 'parent' as const,
       parentId: currentFolder.parentId,
-      parentName: parentFolder?.name ?? t('我的素材'),
+      parentName: parentFolder?.name ?? 'My Media',
     }] : []),
     ...(showFolders ? childFolders.map((folder) => ({ kind: 'folder' as const, folder })) : []),
     ...visible.map((asset) => ({ kind: 'asset' as const, asset })),
-  ], [childFolders, currentFolder, currentFolderId, onAddSolid, parentFolder?.name, showFolders, t, visible]);
+  ], [childFolders, currentFolder, currentFolderId, onAddSolid, parentFolder?.name, showFolders, visible]);
   const openFolder = useCallback((id: string) => setCurrentFolderId(id), []);
   const openParent = useCallback(() => {
     setCurrentFolderId(currentFolder?.parentId);
@@ -319,10 +316,10 @@ export function MediaPoolPanel({
   let assetDeleteTitle = '';
   if (assetDeleteState?.usedCount) {
     assetDeleteTitle = assetDeleteState.ids.length === 1
-      ? t('此素材正在剪辑中，确定删除吗？')
-      : t('所选素材中有正在剪辑的内容，确定删除吗？');
+      ? 'This media is used in the edit. Delete it?'
+      : 'Some selected media is used in the edit. Delete it?';
   } else if (assetDeleteState) {
-    assetDeleteTitle = t('确定删除所选素材吗？');
+    assetDeleteTitle = 'Delete the selected media?';
   }
 
   return (
@@ -383,17 +380,17 @@ export function MediaPoolPanel({
       <MissingMediaBanner count={missingList.length} onOpen={() => setShowRelinkAll(true)} />
 
       {(currentFolder || favoritesOnly || childFolders.length > 0) && <div className="cc-media-breadcrumb">
-        <button aria-label={t('返回上级文件夹')} disabled={!currentFolder && !favoritesOnly} onClick={() => {
+        <button aria-label="Back to parent folder" disabled={!currentFolder && !favoritesOnly} onClick={() => {
           if (favoritesOnly) setFavoritesOnly(false);
           else setCurrentFolderId(currentFolder?.parentId);
         }}>←</button>
-        <span>{t('我的素材')}{favoritesOnly ? ` / ${t('收藏夹')}` : currentFolder ? ` / ${folderPath(currentFolder, folders)}` : ''}</span>
-        {currentFolder && <button aria-label={t('重命名文件夹')} onClick={renameFolder}>{t('重命名')}</button>}
-        {currentFolder && <button aria-label={t('删除空文件夹')} disabled={assets.some((asset) => asset.folderId === currentFolder.id) || folders.some((folder) => folder.parentId === currentFolder.id)} onClick={deleteFolder}>{t('删除')}</button>}
+        <span>My Media{favoritesOnly ? ` / ${'Favorites'}` : currentFolder ? ` / ${folderPath(currentFolder, folders)}` : ''}</span>
+        {currentFolder && <button aria-label="Rename folder" onClick={renameFolder}>Rename</button>}
+        {currentFolder && <button aria-label="Delete empty folder" disabled={assets.some((asset) => asset.folderId === currentFolder.id) || folders.some((folder) => folder.parentId === currentFolder.id)} onClick={deleteFolder}>Delete</button>}
       </div>}
       {(error ?? directoryImportError) && <div className="cc-media-error">{error ?? directoryImportError}</div>}
-      {busy && <div className="cc-media-status">{t('正在导入素材…')}</div>}
-      {assets.length > 0 && <div className="cc-media-export-guide">{t('点击素材右上角“⋯”：图片、视频和音频可下载原文件，MG 可导出透明 MOV。')}</div>}
+      {busy && <div className="cc-media-status">Importing media…</div>}
+      {assets.length > 0 && <div className="cc-media-export-guide">Open the top-right menu: download original image, video, and audio files, or export MG as a transparent MOV.</div>}
 
       <MediaPoolGrid
         entries={gridEntries}

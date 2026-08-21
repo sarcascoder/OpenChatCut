@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import { theme } from '../../theme';
-import { getLocale, tData, useT } from '../../i18n/locale';
 import type { AgentReference } from '../../agent/context';
 import type { AgentContextUsage } from '../../agent/context-compaction';
 import { isSelectionRefKind } from '../../agent/selection-refs';
@@ -93,15 +92,14 @@ const REF_ICON: Record<RefItem['kind'], IconName> = {
 
 function referenceChipText(reference: RefItem): string {
   if (isSelectionRefKind(reference.kind)) return reference.name;
-  const displayName = reference.kind === 'template' ? tData(reference.name) : reference.name;
+  const displayName = reference.kind === 'template' ? reference.name : reference.name;
   return `@${displayName}`;
 }
 
 export function ChatComposer(props: ChatComposerProps) {
-  const t = useT();
   // The skill catalog comes with its own official English name, which can be used directly in English without duplication in the dictionary; the summary is only in Chinese, so use t().
   const skillName = (s: { name: string; nameZh: string }): string =>
-    (getLocale() === 'en' ? s.name : s.nameZh);
+    s.name;
   const {
     value, onChange, onSubmit, onStop, onEnhance, enhancing, running, mode, onModeChange,
     autoApply, onAutoApplyChange, contextUsage, selecting, onToggleSelecting,
@@ -193,14 +191,14 @@ export function ChatComposer(props: ChatComposerProps) {
   const attachmentsPending = hasPendingComposerAttachment(pasting, pendingAttachmentCount);
   const canSend = !!value.trim() && !running && !attachmentsPending && modelReady;
   const canEnhance = !!value.trim() && !enhancing && !running && !attachmentsPending && modelReady;
-  const pendingReason = t('请等待附件导入完成。');
+  const pendingReason = 'Wait for attachment imports to finish.';
   const sendTitle = attachmentsPending
     ? pendingReason
     : modelReady
-      ? t('发送 (Enter)')
+      ? 'Send (Enter)'
       : modelState.loaded
-        ? t('请先在设置中配置一个模型厂商。')
-        : t('正在读取模型配置…');
+        ? 'Configure at least one model provider in Settings first.'
+        : 'Loading model configuration…';
   const refList = (kind: 'asset' | 'template') =>
     references.filter((r) => (kind === 'template' ? r.kind === 'template' : r.kind !== 'template'));
 
@@ -283,18 +281,18 @@ export function ChatComposer(props: ChatComposerProps) {
         .map((r) => ({ key: r.id, icon: REF_ICON[r.kind], label: r.name, action: () => insert(r) }));
     }
     return [
-      { key: 'assets', icon: 'filePlay', label: t('引用媒体池素材'), sub: `${assets.length}`, action: go('assets') },
-      { key: 'timeline', icon: 'film', label: t('时间线'), sub: `${tracks.length}`, action: go('timeline') },
-      { key: 'templates', icon: 'sparkles', label: t('引用模板库'), action: go('templates') },
+      { key: 'assets', icon: 'filePlay', label: 'Reference media-pool assets', sub: `${assets.length}`, action: go('assets') },
+      { key: 'timeline', icon: 'film', label: 'Timeline', sub: `${tracks.length}`, action: go('timeline') },
+      { key: 'templates', icon: 'sparkles', label: 'Reference template library', action: go('templates') },
     ];
   };
 
   const refDrillTitle = (): { title: string; onBack: (() => void) | null } => {
-    if (refDrill === 'assets') return { title: t('引用媒体池素材'), onBack: () => { setRefDrill('root'); setRefIndex(0); } };
-    if (refDrill === 'timeline') return { title: t('时间线'), onBack: () => { setRefDrill('root'); setRefIndex(0); } };
-    if (refDrill === 'templates') return { title: t('引用模板库'), onBack: () => { setRefDrill('root'); setRefIndex(0); } };
+    if (refDrill === 'assets') return { title: 'Reference media-pool assets', onBack: () => { setRefDrill('root'); setRefIndex(0); } };
+    if (refDrill === 'timeline') return { title: 'Timeline', onBack: () => { setRefDrill('root'); setRefIndex(0); } };
+    if (refDrill === 'templates') return { title: 'Reference template library', onBack: () => { setRefDrill('root'); setRefIndex(0); } };
     if (refDrill.startsWith('track:')) return { title: refDrill.slice('track:'.length), onBack: () => { setRefDrill('timeline'); setRefIndex(0); } };
-    return { title: t('引用'), onBack: null };
+    return { title: 'Reference', onBack: null };
   };
 
   const refPopoverBody = (kind: 'asset' | 'template', empty: string) => {
@@ -302,7 +300,7 @@ export function ChatComposer(props: ChatComposerProps) {
       const list = refList('template');
       return (
         <>
-          {refGroupTitle(t('引用模板库'))}
+          {refGroupTitle('Reference template library')}
           {list.length === 0 && <div style={{ fontSize: 12, color: theme.textDim, padding: '6px 10px' }}>{empty}</div>}
           {list.map(refRow)}
         </>
@@ -387,8 +385,8 @@ export function ChatComposer(props: ChatComposerProps) {
         className="cc-chat-composer-resize"
         role="separator"
         aria-orientation="horizontal"
-        aria-label={t('拖动调整输入框高度')}
-        title={t('上下拖动调整输入框高度')}
+        aria-label="Drag to resize the composer"
+        title="Drag up/down to resize the composer"
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
         onPointerUp={onResizePointerUp}
@@ -397,7 +395,7 @@ export function ChatComposer(props: ChatComposerProps) {
         <span className="cc-chat-composer-resize-grip" aria-hidden />
       </div>
       {activeSkill && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }} title={t('当前创作工作流，随消息发送')}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }} title="Current creative workflow, sent with the message">
           <span
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: '100%',
@@ -407,11 +405,11 @@ export function ChatComposer(props: ChatComposerProps) {
           >
             <Icon name="wand" size={12} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {t('创作模式：{name}', { name: skillName(activeSkill) })}
+              {`Creative mode: ${skillName(activeSkill)}`}
             </span>
             <button
               type="button"
-              title={t('取消创作模式')}
+              title="Exit creative mode"
               onClick={() => onCreativeModeChange(null)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textDim, padding: 0, lineHeight: 0, display: 'grid' }}
             >
@@ -421,7 +419,7 @@ export function ChatComposer(props: ChatComposerProps) {
         </div>
       )}
       {selectedRefs.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }} title={t('发送时以 chat_context_entry 结构化注入')}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }} title="Injected as structured chat_context_entry on send">
           {selectedRefs.map((r) => (
             <span
               key={r.id}
@@ -436,7 +434,7 @@ export function ChatComposer(props: ChatComposerProps) {
               {onRemoveRef && (
                 <button
                   type="button"
-                  title={t('移除引用')}
+                  title="Remove reference"
                   onClick={() => onRemoveRef(r.id)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textDim, padding: 0, lineHeight: 0, display: 'grid' }}
                 >
@@ -463,7 +461,7 @@ export function ChatComposer(props: ChatComposerProps) {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: theme.accent, minWidth: 0 }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pasteError}</span>
               {onDismissPasteError && (
-                <button type="button" title={t('关闭')} onClick={onDismissPasteError}
+                <button type="button" title="Close" onClick={onDismissPasteError}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.accent, padding: 0, lineHeight: 0, display: 'grid', flexShrink: 0 }}>
                   <Icon name="x" size={11} />
                 </button>
@@ -537,7 +535,7 @@ export function ChatComposer(props: ChatComposerProps) {
           const files = Array.from(e.clipboardData?.files ?? []);
           if (files.length > 0 && onPasteFiles) { e.preventDefault(); onPasteFiles(files); }
         }}
-        placeholder={placeholder ?? t('告诉 AI 要做哪些修改 - @ 引用素材')}
+        placeholder={placeholder ?? 'Tell the AI what to change — @ to reference assets'}
         aria-describedby={attachmentsPending ? 'cc-chat-composer-import-status' : undefined}
         rows={1}
         style={{
@@ -557,8 +555,8 @@ export function ChatComposer(props: ChatComposerProps) {
       {/* menus rendered fixed — never clipped by composer bounds */}
       {pop === 'mode' && (
         <ComposerPopover width={172} anchor={popAnchor} onClose={closePop}>
-          {modeRow('agent', t('代理模式'), t('可编辑时间线，改动可撤销'))}
-          {modeRow('ask', t('问答模式'), t('只回答，不动时间线'))}
+          {modeRow('agent', 'Agent mode', 'Can edit the timeline; changes are undoable')}
+          {modeRow('ask', 'Q&A mode', 'Answers only — never touches the timeline')}
         </ComposerPopover>
       )}
       {pop === 'model' && (
@@ -576,14 +574,14 @@ export function ChatComposer(props: ChatComposerProps) {
       )}
       {pop === 'assets' && (
         <ComposerPopover anchor={popAnchor} onClose={closePop}>
-          {refPopoverBody('asset', t('媒体池暂无素材'))}
+          {refPopoverBody('asset', 'No assets in the media pool yet')}
         </ComposerPopover>
       )}
       {pop === 'skill' && (
         <ComposerPopover
           width={WORKFLOW_POPOVER_WIDTH}
           className="cc-chat-popover--workflow"
-          ariaLabel={t('选择创作工作流')}
+          ariaLabel="Choose a creative workflow"
           anchor={popAnchor}
           onClose={closePop}
         >
@@ -597,28 +595,28 @@ export function ChatComposer(props: ChatComposerProps) {
       )}
       {pop === 'templates' && (
         <ComposerPopover anchor={popAnchor} onClose={closePop}>
-          {refPopoverBody('template', t('暂无模板'))}
+          {refPopoverBody('template', 'No templates yet')}
         </ComposerPopover>
       )}
       {slashOpen && slashMatchQuery !== null && (
         <ComposerPopover
           width={WORKFLOW_POPOVER_WIDTH}
           className="cc-chat-popover--workflow"
-          ariaLabel={t('技能命令补全')}
+          ariaLabel="Skill command completion"
           anchor={taRef.current}
           onClose={() => { setSlashOpen(false); setSlashIndex(-1); }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 12px 6px' }}>
             <Icon name="wand" size={14} />
-            <strong style={{ fontSize: 12.5 }}>{slashExplicit ? t('技能命令') : t('创作工作流')}</strong>
+            <strong style={{ fontSize: 12.5 }}>{slashExplicit ? 'Skill command' : 'Creative workflows'}</strong>
             <code style={{ marginLeft: 'auto', fontSize: 10.5, color: theme.textDim }}>{value}</code>
           </div>
           <div ref={slashListRef} style={{ maxHeight: 264, overflowY: 'auto', padding: '2px 6px 8px' }}>
             {slashMatches.length === 0 && (
               <div style={{ fontSize: 12, color: theme.textDim, padding: '6px 10px' }}>
                 {slashExplicit
-                  ? t('未知技能“{query}”，按 / 查看全部创作工作流', { query: slashMatchQuery.trim() })
-                  : t('没有匹配“{query}”的创作工作流', { query: slashMatchQuery.trim() })}
+                  ? `Unknown skill “${slashMatchQuery.trim()}” — type / to see all creative workflows`
+                  : `No creative workflow matches “${slashMatchQuery.trim()}”`}
               </div>
             )}
             {slashMatches.map((s, index) => (
@@ -641,14 +639,14 @@ export function ChatComposer(props: ChatComposerProps) {
                     <code style={{ fontSize: 10, color: theme.textDim }}>/{s.slug}</code>
                   </span>
                   <span style={{ display: 'block', fontSize: 10.5, color: theme.textDim, lineHeight: 1.4, marginTop: 1 }}>
-                    {t(s.summary)}
+                    {s.summary}
                   </span>
                 </span>
                 {creativeMode === s.id && <Icon name="check" size={12} strokeWidth={2.4} />}
               </button>
             ))}
             <div style={{ fontSize: 10, color: theme.textDim, padding: '6px 10px 2px', letterSpacing: 0.4 }}>
-              {t('Tab / Enter 补全并激活 · Esc 退出')}
+              Tab / Enter completes and activates · Esc exits
             </div>
           </div>
         </ComposerPopover>

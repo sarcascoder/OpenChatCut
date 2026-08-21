@@ -64,7 +64,7 @@ function proxyProbeUrl(overrides: Record<string, unknown>): string {
 export async function runDataDirProbe(overrides: Record<string, unknown>): Promise<ProbeResult> {
   const profile = runtimeProfile();
   if (process.env[DATA_DIR_ENV]?.trim()) {
-    return { ok: false, message: `目录由 ${DATA_DIR_ENV} 固定，无法在设置中修改` };
+    return { ok: false, message: `Directory is pinned by ${DATA_DIR_ENV} and cannot be changed in settings` };
   }
   const raw = Object.hasOwn(overrides, DATA_DIR_ENV)
     ? String(overrides[DATA_DIR_ENV] ?? '')
@@ -73,26 +73,26 @@ export async function runDataDirProbe(overrides: Record<string, unknown>): Promi
   const body = await checkDataDir(raw, defaultRootDir(profile));
   const latencyMs = Date.now() - started;
   return body.ok
-    ? { ok: true, latencyMs, message: body.note ?? '目录可写' }
-    : { ok: false, latencyMs, message: body.error ?? '目录检查失败' };
+    ? { ok: true, latencyMs, message: body.note ?? 'Directory is writable' }
+    : { ok: false, latencyMs, message: body.error ?? 'Directory check failed' };
 }
 
 /** Test the saved proxy or the unsaved value currently shown in the settings field. */
 export async function runProxyProbe(overrides: Record<string, unknown>): Promise<ProbeResult> {
   const proxyUrl = proxyProbeUrl(overrides);
-  if (!proxyUrl) return { ok: false, message: '尚未填写代理地址，且未检测到系统代理环境变量' };
+  if (!proxyUrl) return { ok: false, message: 'No proxy address entered, and no system proxy environment variable was detected' };
   let dispatcher: ProxyAgent;
   try {
     dispatcher = new ProxyAgent(proxyUrl);
   } catch {
-    return { ok: false, message: '代理地址格式无效，请填写 http://host:port 或 https://host:port' };
+    return { ok: false, message: 'Invalid proxy address format, use http://host:port or https://host:port' };
   }
   const started = Date.now();
   try {
     const response = await fetch(PROXY_PROBE_URL, { signal: t(), dispatcher } as RequestInit);
     const latencyMs = Date.now() - started;
-    if (!response.ok) return { ok: false, status: response.status, latencyMs, message: `代理已连接，但外网探测返回 HTTP ${response.status}` };
-    return { ok: true, status: response.status, latencyMs, message: `代理连接成功 · 外网可达 · ${latencyMs}ms` };
+    if (!response.ok) return { ok: false, status: response.status, latencyMs, message: `Proxy connected, but the outbound probe returned HTTP ${response.status}` };
+    return { ok: true, status: response.status, latencyMs, message: `Proxy connected · internet reachable · ${latencyMs}ms` };
   } catch (error) {
     return { ok: false, latencyMs: Date.now() - started, message: proxyNetworkMessage(error) };
   } finally {
@@ -101,8 +101,8 @@ export async function runProxyProbe(overrides: Record<string, unknown>): Promise
 }
 
 function proxyNetworkMessage(error: unknown): string {
-  const message = networkMessage(error).replace(/，不代表 Key 错误$/, '');
-  return `代理连接失败 · ${message}`;
+  const message = networkMessage(error).replace(/, not a sign the key is wrong$/, '');
+  return `Proxy connection failed · ${message}`;
 }
 const base = (get: Get, name: KeyName, def: string): string => (get(name) || def).replace(/\/+$/, '');
 const bearer = (key: string): Record<string, string> => ({ Authorization: `Bearer ${key}` });
@@ -157,7 +157,7 @@ export function minimaxPostCheck(bodyText: string): string | null {
     const code = body.base_resp?.status_code ?? 0;
     if (code === 0) return null;
     const msg = body.base_resp?.status_msg ?? '';
-    const hint = code === 1004 ? '（鉴权失败，检查 Key）' : '';
+    const hint = code === 1004 ? ' (authentication failed, check the key)' : '';
     return `MiniMax base_resp ${code}${msg ? ` · ${sanitize(msg)}` : ''}${hint}`;
   } catch {
     return null; // Non-JSON 2xx are counted as successful
@@ -300,7 +300,7 @@ export const PROBES: Record<string, ProbeDef> = {
       },
       body: JSON.stringify({
         user: { uid: 'openchatcut-probe' },
-        req_params: { text: '测', speaker: 'zh_female_vv_uranus_bigtts', audio_params: { format: 'mp3', sample_rate: 24_000 } },
+        req_params: { text: '\u6d4b', speaker: 'zh_female_vv_uranus_bigtts', audio_params: { format: 'mp3', sample_rate: 24_000 } },
       }),
     }),
   },
@@ -323,7 +323,7 @@ export const PROBES: Record<string, ProbeDef> = {
     run: (get) => fetch(`${base(get, 'SPEECHIFY_TTS_BASE_URL', 'https://api.sws.speechify.com')}/v1/audio/speech`, {
       method: 'POST', signal: t(),
       headers: { 'Content-Type': 'application/json', ...bearer(get('SPEECHIFY_TTS_API_KEY')) },
-      body: JSON.stringify({ input: '测', voice_id: 'george', audio_format: 'mp3', model: get('SPEECHIFY_TTS_MODEL') || 'simba-multilingual' }),
+      body: JSON.stringify({ input: '\u6d4b', voice_id: 'george', audio_format: 'mp3', model: get('SPEECHIFY_TTS_MODEL') || 'simba-multilingual' }),
     }),
   },
   'video/seedance': {
@@ -447,10 +447,10 @@ export async function runProbe(page: string, overrides: Record<string, unknown>)
   // writability check reads the panel's raw value directly.
   if (page === 'storage/projects') return runDataDirProbe(overrides);
   const probe = PROBES[page];
-  if (!probe) return { ok: false, message: '该厂商暂不支持连接测试' };
+  if (!probe) return { ok: false, message: 'This provider does not support a connection test yet' };
   const get = makeGetter(overrides);
   const ready = probe.needs.some((group) => group.every((n) => get(n).length > 0));
-  if (!ready) return { ok: false, message: '尚未填写 API Key · 填好后再点测试' };
+  if (!ready) return { ok: false, message: 'No API key entered · fill it in before testing' };
   const started = Date.now();
   try {
     const response = await probe.run(get);
@@ -461,9 +461,9 @@ export async function runProbe(page: string, overrides: Record<string, unknown>)
       if (vendorError) return { ok: false, status: response.status, latencyMs, message: vendorError };
       const models = probe.models?.(bodyText);
       const modelText = models
-        ? models.length > 0 ? ` · 已读取 ${models.length} 个模型` : ' · 接口未返回模型列表'
+        ? models.length > 0 ? ` · read ${models.length} models` : ' · the endpoint returned no model list'
         : '';
-      const okText = probe.okText?.(bodyText) ?? '连接成功 · 鉴权通过';
+      const okText = probe.okText?.(bodyText) ?? 'Connected · authentication passed';
       return {
         ok: true,
         status: response.status,

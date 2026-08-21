@@ -13,11 +13,11 @@ const state = {
   items: [
     {
       id: 'a0_bgm', kind: 'audio', track: 'A1', startFrame: 0, durationInFrames: 300,
-      name: '背景音乐', src: '/media/uploads/x.wav', volume: 1,
+      name: 'Background Music', src: '/media/uploads/x.wav', volume: 1,
     },
     {
       id: 'v0_main', kind: 'video', track: 'V1', startFrame: 0, durationInFrames: 300,
-      name: '主画面', src: '/media/uploads/x.mp4', volume: 1,
+      name: 'Main Video', src: '/media/uploads/x.mp4', volume: 1,
     },
   ],
   fps: 30, width: 1920, height: 1080, selectedId: null,

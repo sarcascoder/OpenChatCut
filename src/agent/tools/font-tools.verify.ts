@@ -42,7 +42,8 @@ assert.strictEqual(inter.ok, true);
 assert.ok(inter.results.some((r) => r.family === 'Inter' && r.loadable));
 
 // Chinese alias → bundled local font (loadable, source:'bundled')
-const deyi = searchFontCatalog('得意黑');
+// '\u5f97\u610f\u9ed1' = "Deyi Hei" — Chinese alias for Smiley Sans
+const deyi = searchFontCatalog('\u5f97\u610f\u9ed1');
 assert.ok(deyi.some((r) => r.family === 'Smiley Sans' && r.loadable && r.source === 'bundled'));
 
 // every bundled family + its Chinese aliases hit the search catalog
@@ -56,7 +57,8 @@ for (const font of LOCAL_CJK_FONTS) {
 }
 
 // search_fonts tool surfaces bundled fonts with source marker
-const douyin = await execFontTool('search_fonts', { query: '抖音美好体' }, ctx) as {
+// query '\u6296\u97f3\u7f8e\u597d\u4f53' = "Douyin Meihao Ti" — Chinese alias of the bundled family
+const douyin = await execFontTool('search_fonts', { query: '\u6296\u97f3\u7f8e\u597d\u4f53' }, ctx) as {
   ok: boolean; results: Array<{ family: string; loadable: boolean; source: string }>;
 };
 assert.ok(douyin.results.some((r) => r.family === 'Douyin Meihao Ti' && r.loadable && r.source === 'bundled'));
@@ -71,19 +73,21 @@ for (const font of LOCAL_CJK_FONTS) {
 }
 
 // alias resolution + ensureLocalFont promise cache (node path: no FontFace, still cached)
-assert.strictEqual(findLocalFont('轻松手写体一')?.family, 'Qingsong Shouxie Ti Yi');
-assert.strictEqual(findLocalFont('新青年'), undefined);
-assert.strictEqual(findLocalFont('思源黑体')?.family, 'Noto Sans SC');
-assert.strictEqual(findLocalFont('鸿蒙'), undefined);
+// "Qingsong Shouxie Ti Yi" (known alias) / "Xin Qingnian" (unknown) /
+// "Source Han Sans" (alias of Noto Sans SC) / "HarmonyOS" (unknown)
+assert.strictEqual(findLocalFont('\u8f7b\u677e\u624b\u5199\u4f53\u4e00')?.family, 'Qingsong Shouxie Ti Yi');
+assert.strictEqual(findLocalFont('\u65b0\u9752\u5e74'), undefined);
+assert.strictEqual(findLocalFont('\u601d\u6e90\u9ed1\u4f53')?.family, 'Noto Sans SC');
+assert.strictEqual(findLocalFont('\u9e3f\u8499'), undefined);
 assert.strictEqual(findLocalFont('Comic Sans MS'), undefined);
-assert.strictEqual(ensureLocalFont('得意黑'), ensureLocalFont('Smiley Sans'));
-await ensureLocalFont('得意黑');
+assert.strictEqual(ensureLocalFont('\u5f97\u610f\u9ed1'), ensureLocalFont('Smiley Sans'));
+await ensureLocalFont('\u5f97\u610f\u9ed1');
 await ensureLocalFont('not-a-local-font'); // non-local resolves, never throws
 
 // loadable check — bundled CJK now export-safe
 assert.strictEqual(isLoadableFontFamily('Inter'), true);
 assert.strictEqual(isLoadableFontFamily('Smiley Sans'), true);
-assert.strictEqual(isLoadableFontFamily('抖音美好体'), true);
+assert.strictEqual(isLoadableFontFamily('\u6296\u97f3\u7f8e\u597d\u4f53'), true); // "Douyin Meihao Ti" alias
 assert.strictEqual(isLoadableFontFamily('Comic Sans MS'), false);
 assert.strictEqual(isLoadableFontFamily('system-ui, sans-serif'), true);
 
@@ -101,7 +105,7 @@ const blockedState: TimelineState = {
     durationInFrames: 90,
     name: 'Title',
     kind: 'motion-graphic',
-    props: { fontFamily: 'Comic Sans MS', title: '你好' },
+    props: { fontFamily: 'Comic Sans MS', title: '\u4f60\u597d' }, // "hello" — CJK title under a non-CJK font
   }],
 };
 const refs = collectReferencedFonts(blockedState);

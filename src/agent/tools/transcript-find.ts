@@ -18,7 +18,7 @@ const MAX_LIMIT = 100;
 const FUZZY_MAX_SKIP = 3;
 
 export function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9一-鿿]+/g, ' ').trim();
+  return s.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, ' ').trim();
 }
 
 /** Locate a phrase in a word list; returns the first covering [start, start+count) run. */

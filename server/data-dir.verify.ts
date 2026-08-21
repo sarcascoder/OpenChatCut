@@ -66,24 +66,24 @@ try {
   // path fails without creating anything; a valid path is created and left empty.
   const unset = await checkDataDir('  ', '/default/root');
   assert.equal(unset.ok, true);
-  assert.match(unset.note ?? '', /默认目录 \/default\/root/);
+  assert.match(unset.note ?? '', /default directory \/default\/root/);
 
   const relative = await checkDataDir('relative/saves', '/default/root');
   assert.equal(relative.ok, false);
-  assert.match(relative.error ?? '', /绝对路径/);
+  assert.match(relative.error ?? '', /absolute path/);
   assert.equal(existsSync(join(process.cwd(), 'relative')), false, 'a rejected path must not be created');
 
   const probeTarget = join(fixture, 'probe-target');
   const probed = await checkDataDir(probeTarget, '/default/root');
   assert.equal(probed.ok, true);
-  assert.match(probed.note ?? '', /目录可写/);
+  assert.match(probed.note ?? '', /is writable/);
   assert.deepEqual(await readdir(probeTarget), [], 'the probe file is removed after the check');
 
   const blocked = join(fixture, 'blocked');
   await writeFile(blocked, 'a file where a directory is expected');
   const blockedProbe = await checkDataDir(blocked, '/default/root');
   assert.equal(blockedProbe.ok, false);
-  assert.match(blockedProbe.error ?? '', /目录不可写/);
+  assert.match(blockedProbe.error ?? '', /not writable/);
 
   // 5. Relocation copies the store entries, leaves regenerated files behind, and never
   // deletes the source: moving the storage root must not be the step that loses projects.

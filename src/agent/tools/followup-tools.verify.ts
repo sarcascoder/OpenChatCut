@@ -33,7 +33,7 @@ const widget = buildFollowupWidget([
     options: [
       { id: 'talking-head', label: 'Talking head', description: 'Clean up a presenter clip' },
       { id: 'app-promo', label: 'App promo' },
-      { id: 'custom', label: '其他想法', description: '我来描述' },
+      { id: 'custom', label: 'Something else', description: 'Let me describe it' },
     ],
   },
 ], 'One quick check', {
@@ -73,10 +73,10 @@ const answer = formatWidgetAnswer(parsed.fields, {
 }, parsed.messagePrefix);
 assert.equal(answer, [
   'Apply these choices:',
-  '- What should change?：Use tighter pacing',
-  '- Choose a look：Noir',
-  '- Choose a voice：Use the calm narrator',
-  '- Choose workflows：Talking head、App promo',
+  '- What should change?: Use tighter pacing',
+  '- Choose a look: Noir',
+  '- Choose a voice: Use the calm narrator',
+  '- Choose workflows: Talking head, App promo',
 ].join('\n'));
 
 const compatibility = parseWidgets('<widget><form-single id="length" label="Length" options="30|30 sec,60|60 sec" allow_other="true"/></widget>');

@@ -74,7 +74,7 @@ assertSplitConsistent([{ frame: 5, value: 5, easing: 'easeIn' }, { frame: 20, va
   approx(right[0].value, 40, 1e-9, 'boundary anchor carries the sampled value');
 }
 
-// ── scale (变速): frames rescale + rounding collisions collapse ─────────────
+// ── scale (speed change): frames rescale + rounding collisions collapse ─────
 {
   const kfs: Keyframe[] = [{ frame: 0, value: 0 }, { frame: 10, value: 1 }, { frame: 11, value: 2 }, { frame: 40, value: 3 }];
   const half = scaleKeyframes(kfs, 0.5);
@@ -113,7 +113,7 @@ const stateOf = (it: TimelineItem, locked = false): TimelineState =>
   const s = stateOf(clip({ kind: 'audio', src: '/a.mp3' }));
   assert.equal(reduce(s, { type: 'setKeyframe', id: 'v1', prop: 'opacity', frame: 0, value: 1 }), s, 'audio → no-op');
 }
-{ // locked track blocks keyframe + prop edits (轨道 lock)
+{ // locked track blocks keyframe + prop edits (track lock)
   const s = stateOf(clip({}), true);
   assert.equal(reduce(s, { type: 'setKeyframe', id: 'v1', prop: 'scale', frame: 0, value: 2 }), s, 'locked: setKeyframe no-op');
   assert.equal(reduce(s, { type: 'setTransform', id: 'v1', patch: { scale: 2 } }), s, 'locked: setTransform no-op');

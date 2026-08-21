@@ -11,7 +11,6 @@ import {
   type SoundEffect,
 } from '../audio/soundLibrary';
 import { Icon } from '../components/icons';
-import { tData, useT } from '../i18n/locale';
 import { setLibraryDrag } from './drag';
 import { useFixedVirtualGrid } from '../hooks/useFixedVirtualGrid';
 
@@ -40,7 +39,6 @@ function matchesQuery(s: SoundEffect, q: string): boolean {
   if (!tokens.length) return true;
   const hay = [
     s.name,
-    tData(s.name),
     s.desc,
     s.group,
     ...s.keywords,
@@ -65,7 +63,6 @@ function toAsset(s: SoundEffect, fps: number): AudioAsset {
 }
 
 export const SoundBrowser = memo(function SoundBrowser({ fps, onAdd }: SoundBrowserProps) {
-  const t = useT();
   const [query, setQuery] = useState('');
   const [chip, setChip] = useState<string>(POPULAR);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -154,20 +151,20 @@ export const SoundBrowser = memo(function SoundBrowser({ fps, onAdd }: SoundBrow
         <input
           id="cc-sound-library-search"
           type="search"
-          placeholder={t('搜索音效')}
+          placeholder="Search sounds"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
           spellCheck={false}
         />
         {query ? (
-          <button type="button" className="cc-sound-search-clear" onClick={() => setQuery('')} aria-label={t('清除')}>
+          <button type="button" className="cc-sound-search-clear" onClick={() => setQuery('')} aria-label="Clear">
             <Icon name="x" size={12} />
           </button>
         ) : null}
       </label>
 
-      <div className="cc-sound-chips" role="tablist" aria-label={t('音效分组')}>
+      <div className="cc-sound-chips" role="tablist" aria-label="Sound groups">
         <button
           type="button"
           role="tab"
@@ -175,7 +172,7 @@ export const SoundBrowser = memo(function SoundBrowser({ fps, onAdd }: SoundBrow
           className={`cc-sound-chip${chip === POPULAR ? ' selected' : ''}`}
           onClick={() => setChip(POPULAR)}
         >
-          {t('热门')}
+          Popular
         </button>
         {SOUND_GROUPS.map((g) => (
           <button
@@ -186,19 +183,19 @@ export const SoundBrowser = memo(function SoundBrowser({ fps, onAdd }: SoundBrow
             className={`cc-sound-chip${chip === g.id ? ' selected' : ''}`}
             onClick={() => setChip(g.id)}
           >
-            {t(g.name)}
+            {g.name}
           </button>
         ))}
       </div>
 
       {list.length === 0 ? (
-        <div className="cc-sound-empty">{t('此分类下暂无音效')}{query ? t('（与「{query}」不匹配）', { query }) : ''}</div>
+        <div className="cc-sound-empty">No sounds in this group{query ? ` (nothing matches "${query}")` : ''}</div>
       ) : (
         <div
           ref={virtualList.containerRef}
           className="cc-sound-list"
           role="listbox"
-          aria-label={t('音效列表')}
+          aria-label="Sound list"
           style={{ height: virtualList.totalHeight }}
         >
           {virtualList.rows.map((row) => {
@@ -230,7 +227,7 @@ export const SoundBrowser = memo(function SoundBrowser({ fps, onAdd }: SoundBrow
         </div>
       )}
 
-      <div className="cc-sound-hint">{t('单击试听 · 双击/点 + 或拖到时间线音轨 · 共 {n} 个音效', { n: list.length })}</div>
+      <div className="cc-sound-hint">{`Click to preview · Double-click / + / drag onto an audio track · ${list.length} sounds total`}</div>
     </div>
   );
 });
@@ -254,8 +251,7 @@ const SoundRow = memo(function SoundRow({
   onFocusChange,
   onDragChange,
 }: SoundRowProps) {
-  const t = useT();
-  const displayName = tData(sound.name);
+  const displayName = sound.name;
   const tone = SOUND_GROUP_TONE[sound.group] ?? SOUND_GROUP_TONE['ui-motion-feedback']!;
   const path = useMemo(
     () => peaksToPath(resamplePeaks(sound.peaks, WAVE_BINS), WAVE_W, WAVE_H),
@@ -267,7 +263,7 @@ const SoundRow = memo(function SoundRow({
       role="option"
       aria-selected={playing}
       className={`cc-sound-row${playing ? ' active' : ''}`}
-      title={t('{desc} · 可拖到时间线音轨', { desc: sound.desc })}
+      title={`${sound.desc} · Drag onto a timeline audio track`}
       draggable
       onDragStart={(event) => {
         onDragChange(sound.id);
@@ -295,7 +291,7 @@ const SoundRow = memo(function SoundRow({
           event.stopPropagation();
           onAudition(sound);
         }}
-        aria-label={playing ? t('暂停 {name}', { name: displayName }) : t('试听 {name}', { name: displayName })}
+        aria-label={playing ? `Pause ${displayName}` : `Preview ${displayName}`}
       >
         <Icon name={playing ? 'pause' : 'play'} size={12} />
       </button>
@@ -315,8 +311,8 @@ const SoundRow = memo(function SoundRow({
       <button
         type="button"
         className="cc-sound-add"
-        title={t('添加到时间线：{name}', { name: displayName })}
-        aria-label={t('添加 {name}', { name: displayName })}
+        title={`Add to timeline: ${displayName}`}
+        aria-label={`Add ${displayName}`}
         onClick={(event) => {
           event.stopPropagation();
           onAdd(sound);

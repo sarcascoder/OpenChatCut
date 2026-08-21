@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { analyzeAutoGrade, type AutoGradeResponse } from '../color/autoGrade';
-import type { t as translate } from '../i18n/locale';
 import { showAppToast } from '../ui/appToast';
 import { sourceWindowForTimelineRange } from './sourceLimit';
 import type { EditorCommands } from './store';
 import type { TimelineItem, TimelineState } from './types';
 import { selectedIdsOf } from './types';
 
-type Translate = typeof translate;
 
 interface AutoGradeRecommendation {
   itemId: string;
@@ -26,7 +24,6 @@ interface UseEditorAutoGradeOptions {
   stateRef: MutableRefObject<TimelineState>;
   commands: EditorCommands;
   projectId: string;
-  t: Translate;
   setPreviewState: Dispatch<SetStateAction<TimelineState | null>>;
 }
 interface AutoGradeController {
@@ -98,13 +95,13 @@ function useAnalyzeSelectedColor(
   options: UseEditorAutoGradeOptions,
   controller: AutoGradeController,
 ) {
-  const { stateRef, setPreviewState, t } = options;
+  const { stateRef, setPreviewState } = options;
   const { requestRef, setBusy, setSession } = controller;
   return useCallback(async () => {
     const snapshot = stateRef.current;
     const targets = autoGradeTargetsOf(snapshot);
     if (!targets.length) {
-      showAppToast(t('请选择已导入媒体池的视频、图片或 GIF 片段'), { error: true });
+      showAppToast('Select video, image, or GIF clips imported into the media pool', { error: true });
       return;
     }
     const requestId = ++requestRef.current;
@@ -114,27 +111,24 @@ function useAnalyzeSelectedColor(
     const result = await collectRecommendations(snapshot, targets, () => requestRef.current === requestId);
     if (!result) return;
     try {
-      if (!result.recommendations.length) throw result.firstError ?? new Error(t('未获得可用的校色结果'));
+      if (!result.recommendations.length) throw result.firstError ?? new Error('No usable color-correction result was returned');
       const failedCount = targets.length - result.recommendations.length;
       setSession({ recommendations: result.recommendations, failedCount });
       showAppToast(failedCount
-        ? t('已预览 {n} 个片段，{failed} 个分析失败', { n: result.recommendations.length, failed: failedCount })
-        : t('自动校色预览已生成，可确认应用或取消'));
+        ? `Previewing ${result.recommendations.length} clip(s); ${failedCount} analysis failed`
+        : 'Auto color preview is ready. Apply or cancel it.');
     } catch (error) {
-      showAppToast(t('自动校色分析失败：{error}', {
-        error: error instanceof Error ? error.message : String(error),
-      }), { error: true });
+      showAppToast(`Auto color analysis failed: ${error instanceof Error ? error.message : String(error)}`, { error: true });
     } finally {
       if (requestRef.current === requestId) setBusy(false);
     }
-  }, [requestRef, setBusy, setPreviewState, setSession, stateRef, t]);
+  }, [requestRef, setBusy, setPreviewState, setSession, stateRef]);
 }
 
 function useApplyAutoGrade(
   session: AutoGradeSession | null,
   setSession: Dispatch<SetStateAction<AutoGradeSession | null>>,
   commands: EditorCommands,
-  t: Translate,
 ) {
   return useCallback(() => {
     if (!session?.recommendations.length) return;
@@ -145,8 +139,8 @@ function useApplyAutoGrade(
     })), 'Apply automatic color correction');
     const applied = session.recommendations.length;
     setSession(null);
-    showAppToast(t('已将自动校色应用到 {n} 个片段', { n: applied }));
-  }, [session, commands, setSession, t]);
+    showAppToast(`Applied auto color to ${applied} clip(s)`);
+  }, [session, commands, setSession]);
 }
 
 function previewStateFor(state: TimelineState, session: AutoGradeSession | null): TimelineState | null {
@@ -162,12 +156,12 @@ function previewStateFor(state: TimelineState, session: AutoGradeSession | null)
 }
 
 export function useEditorAutoGrade(options: UseEditorAutoGradeOptions) {
-  const { state, commands, projectId, t } = options;
+  const { state, commands, projectId } = options;
   const selectionKey = selectedIdsOf(state).join('\u0000');
   const controller = useAutoGradeController(selectionKey, projectId);
   const autoGradeTargets = useMemo(() => autoGradeTargetsOf(state), [state]);
   const analyzeSelectedColor = useAnalyzeSelectedColor(options, controller);
-  const applyAutoGrade = useApplyAutoGrade(controller.session, controller.setSession, commands, t);
+  const applyAutoGrade = useApplyAutoGrade(controller.session, controller.setSession, commands);
   const autoGradePreviewState = useMemo(
     () => previewStateFor(state, controller.session),
     [controller.session, state],

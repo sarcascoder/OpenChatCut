@@ -46,17 +46,19 @@ async function startExportJobAfterMaterialization<T extends object>(
   jobs.push(await materializeBlobMedia(snapshot, { fetcher }));
 }
 
+// "\u661f\u56fe" = "star chart" — a non-ASCII asset filename: it must survive the
+// \p{L} sanitizer and the percent-encoded /upload round-trip unchanged.
 const projectWithBlobs = {
   activeTimelineId: 'main',
   assets: [
-    { id: 'asset-a', kind: 'image', name: '星图.png', src: BLOB_A, durationInFrames: 90 },
+    { id: 'asset-a', kind: 'image', name: '\u661f\u56fe.png', src: BLOB_A, durationInFrames: 90 },
     { id: 'asset-b', kind: 'video', name: 'clip.mp4', src: BLOB_B, durationInFrames: 300 },
   ],
   timelines: [
     {
       id: 'main',
       items: [
-        { id: 'item-a', kind: 'image', name: '星图.png', src: BLOB_A, durationInFrames: 90 },
+        { id: 'item-a', kind: 'image', name: '\u661f\u56fe.png', src: BLOB_A, durationInFrames: 90 },
         { id: 'item-b', kind: 'video', name: 'clip.mp4', src: BLOB_B, durationInFrames: 300 },
       ],
     },
@@ -75,7 +77,7 @@ async function main(): Promise<void> {
   const result = await materializeBlobMedia(projectWithBlobs, { fetcher });
   assert.equal(uploads.length, 2, 'each distinct blob source uploads exactly once');
   const snapshot = result;
-  assert.equal(snapshot.assets[0]!.src, '/media/uploads/星图-blob.png');
+  assert.equal(snapshot.assets[0]!.src, '/media/uploads/\u661f\u56fe-blob.png');
   assert.equal(snapshot.assets[1]!.src, '/media/uploads/clip-blob.mp4');
   assert.equal(snapshot.timelines[0]!.items[0]!.src, snapshot.assets[0]!.src, 'item and asset share the same replacement');
   assert.equal(snapshot.timelines[0]!.items[1]!.src, snapshot.assets[1]!.src);
@@ -98,7 +100,7 @@ async function main(): Promise<void> {
       assert.equal(error.failure.retryable, false);
       assert.match(error.message, /clip\.mp4/);
       assert.match(error.message, new RegExp(BLOB_B.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-      assert.match(error.message, /重新导入|re-import/);
+      assert.match(error.message, /re-import/);
       return true;
     },
   );
@@ -156,7 +158,7 @@ async function main(): Promise<void> {
       assert.equal(error.failure.code, 'export_media_not_ready');
       assert.equal(error.failure.stage, 'preflight');
       assert.equal(error.failure.retryable, false);
-      assert.match(error.message, /未就绪/);
+      assert.match(error.message, /not ready/);
       return true;
     },
   );
@@ -169,7 +171,7 @@ async function main(): Promise<void> {
       assert.ok(error instanceof ExportFailureError);
       assert.equal(error.failure.code, 'export_media_not_ready');
       assert.equal(error.failure.retryable, false);
-      assert.match(error.message, /disk full|上传/);
+      assert.match(error.message, /disk full/);
       return true;
     },
   );

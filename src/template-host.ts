@@ -123,7 +123,7 @@ function stripComments(code: string): string {
 export function validateTemplate(code: string): void {
   const scan = stripComments(code);
   for (const [re, reason] of FORBIDDEN) {
-    if (re.test(scan)) throw new Error(`sandbox 拒绝：检测到「${reason}」`);
+    if (re.test(scan)) throw new Error(`sandbox rejected: detected "${reason}"`);
   }
 }
 
@@ -136,7 +136,7 @@ function templateName(code: string): string {
   );
   const fallback = code.match(/const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\(|async\b|function)/);
   const name = (itemSignature ?? fallback)?.[1];
-  if (!name) throw new Error('template: 找不到 `const NAME = (...)` 声明');
+  if (!name) throw new Error('template: no `const NAME = (...)` declaration found');
   return name;
 }
 
@@ -156,7 +156,7 @@ async function compileUncached(code: string): Promise<MgComponent> {
     presets: [['react', { runtime: 'classic' }]],
     filename: 'template.jsx',
   }).code;
-  if (!output) throw new Error('template: babel 无输出');
+  if (!output) throw new Error('template: babel produced no output');
   return evaluateTemplate(output, name);
 }
 
@@ -184,6 +184,6 @@ export function prepareTemplate(code: string): Promise<MgComponent> {
 /** Synchronous render path. Call prepareTemplate() at a readiness boundary first. */
 export function getCompiledTemplate(code: string): MgComponent {
   const compiled = cache.get(code);
-  if (!compiled) throw new Error('template: 尚未完成编译');
+  if (!compiled) throw new Error('template: not compiled yet');
   return compiled;
 }

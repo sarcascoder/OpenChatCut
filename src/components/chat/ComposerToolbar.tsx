@@ -1,5 +1,4 @@
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 import { Icon, type IconName } from '../icons';
 import type { ChatMode } from './ChatComposer';
@@ -55,13 +54,12 @@ export function ComposerToolbar({
   pop, selecting, enhancing, running, canEnhance, canSend, sendTitle, onTogglePop,
   onToggleSelecting, onEnhance, onSubmit, onStop,
 }: ToolbarProps) {
-  const t = useT();
   const secondaryActive = selecting || !!activeSkillName
     || pop === 'settings' || pop === 'assets' || pop === 'skill' || pop === 'templates';
   return (
     <div className="cc-chat-composer-bar">
       <div className="cc-chat-composer-bar-tools">
-        <button title={t('模式')} onClick={(event) => onTogglePop('mode', event.currentTarget)}
+        <button title="Mode" onClick={(event) => onTogglePop('mode', event.currentTarget)}
           className="cc-chat-mode-btn"
           style={{ height: 28, display: 'flex', alignItems: 'center', gap: 3, padding: '0 3px', border: 0, borderRadius: 6, background: pop === 'mode' ? theme.panelAlt : 'transparent', color: theme.text, cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>
           <Icon name="sparkles" size={15} /><span className="cc-chat-mode-label">{mode === 'agent' ? 'Agent' : 'Q&A'}</span><Icon name="chevronDown" size={11} />
@@ -69,30 +67,30 @@ export function ComposerToolbar({
         <button type="button" className="cc-chat-model-btn"
           disabled={running}
           title={activeModel
-            ? `${t('当前模型：{name}', { name: `${activeModel.providerLabel} · ${activeModel.model}` })} · ${contextTitle}`
-            : t('选择模型')}
+            ? `${`Current model: ${`${activeModel.providerLabel} · ${activeModel.model}`}`} · ${contextTitle}`
+            : 'Choose model'}
           onClick={(event) => onTogglePop('model', event.currentTarget)}
           style={{ height: 28, minWidth: 0, maxWidth: 196, display: 'flex', alignItems: 'center', gap: 4, padding: '0 6px', border: 0, borderRadius: 4, background: pop === 'model' ? theme.panel : 'transparent', color: contextNearLimit ? theme.gold : theme.textDim, cursor: running ? 'default' : 'pointer', fontSize: 11, flexShrink: 1 }}>
           <Icon name="cloud" size={13} />
-          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeModel?.model ?? t('模型')}</span>
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeModel?.model ?? 'Model'}</span>
           {contextLabel && <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', fontSize: 10 }}>{contextLabel}</span>}
           <Icon name="chevronDown" size={10} />
         </button>
         <span className="cc-composer-secondary">
-          <BarBtn icon="sliders" title={t('设置')} active={pop === 'settings'} onClick={(event) => onTogglePop('settings', event.currentTarget)} />
-          <BarBtn icon="cursor" title={t('选择模式：点片段 / 拖画布 / 选文字稿作为引用')} active={selecting} onClick={onToggleSelecting} />
-          <BarBtn icon="plus" title={t('引用媒体池素材')} active={pop === 'assets'} onClick={(event) => onTogglePop('assets', event.currentTarget)} />
-          <BarBtn icon="wand" title={activeSkillName ? t('创作模式：{name}', { name: activeSkillName }) : t('创作模式')} active={pop === 'skill' || !!activeSkillName} onClick={(event) => onTogglePop('skill', event.currentTarget)} />
-          <BarBtn icon="bookOpen" title={t('引用模板库')} active={pop === 'templates'} onClick={(event) => onTogglePop('templates', event.currentTarget)} />
-          <BarBtn icon="sparkles" title={enhancing ? t('增强中…') : t('增强提示词')} disabled={!canEnhance} onClick={onEnhance} />
+          <BarBtn icon="sliders" title="Settings" active={pop === 'settings'} onClick={(event) => onTogglePop('settings', event.currentTarget)} />
+          <BarBtn icon="cursor" title="Selection mode: click clips / drag canvas / select transcript as references" active={selecting} onClick={onToggleSelecting} />
+          <BarBtn icon="plus" title="Reference media-pool assets" active={pop === 'assets'} onClick={(event) => onTogglePop('assets', event.currentTarget)} />
+          <BarBtn icon="wand" title={activeSkillName ? `Creative mode: ${activeSkillName}` : 'Creative mode'} active={pop === 'skill' || !!activeSkillName} onClick={(event) => onTogglePop('skill', event.currentTarget)} />
+          <BarBtn icon="bookOpen" title="Reference template library" active={pop === 'templates'} onClick={(event) => onTogglePop('templates', event.currentTarget)} />
+          <BarBtn icon="sparkles" title={enhancing ? 'Enhancing…' : 'Enhance prompt'} disabled={!canEnhance} onClick={onEnhance} />
         </span>
-        <BarBtn icon="more" title={t('更多工具')} className="cc-composer-more-btn"
+        <BarBtn icon="more" title="More tools" className="cc-composer-more-btn"
           active={pop === 'more' || secondaryActive}
           expanded={pop === 'more'} hasPopup
           onClick={(event) => onTogglePop('more', event.currentTarget)} />
       </div>
       {running ? (
-        <button title={t('停止')} onClick={onStop} className="cc-chat-send-btn"
+        <button title="Stop" onClick={onStop} className="cc-chat-send-btn"
           style={{ width: 28, height: 28, borderRadius: '50%', border: 'none', background: theme.accent, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
           <span style={{ width: 10, height: 10, background: theme.onAccent, borderRadius: 2 }} />
         </button>
@@ -133,17 +131,16 @@ export function ComposerMoreMenu({
   selecting, activeSkillName, canEnhance, enhancing,
   onChoosePopover, onToggleSelecting, onEnhance, onClose,
 }: MoreMenuProps) {
-  const t = useT();
   const run = (action: () => void) => { onClose(); action(); };
   return (
     <div className="cc-composer-more-menu" role="menu">
-      <MoreItem icon="sliders" label={t('设置')} onClick={() => onChoosePopover('settings')} />
-      <MoreItem icon="cursor" label={t('选择引用')} active={selecting} onClick={() => run(onToggleSelecting)} />
-      <MoreItem icon="plus" label={t('引用媒体池素材')} onClick={() => onChoosePopover('assets')} />
-      <MoreItem icon="wand" label={activeSkillName ? t('创作模式：{name}', { name: activeSkillName }) : t('创作模式')}
+      <MoreItem icon="sliders" label="Settings" onClick={() => onChoosePopover('settings')} />
+      <MoreItem icon="cursor" label="Select reference" active={selecting} onClick={() => run(onToggleSelecting)} />
+      <MoreItem icon="plus" label="Reference media-pool assets" onClick={() => onChoosePopover('assets')} />
+      <MoreItem icon="wand" label={activeSkillName ? `Creative mode: ${activeSkillName}` : 'Creative mode'}
         active={!!activeSkillName} onClick={() => onChoosePopover('skill')} />
-      <MoreItem icon="bookOpen" label={t('引用模板库')} onClick={() => onChoosePopover('templates')} />
-      <MoreItem icon="sparkles" label={enhancing ? t('增强中…') : t('增强提示词')}
+      <MoreItem icon="bookOpen" label="Reference template library" onClick={() => onChoosePopover('templates')} />
+      <MoreItem icon="sparkles" label={enhancing ? 'Enhancing…' : 'Enhance prompt'}
         disabled={!canEnhance} onClick={() => run(onEnhance)} />
     </div>
   );

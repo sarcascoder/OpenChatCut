@@ -1,5 +1,4 @@
 import { Icon } from '../components/icons';
-import { useT } from '../i18n/locale';
 import type { ExportDestination } from './exportDestination';
 
 interface ExportDestinationBarProps {
@@ -15,21 +14,20 @@ export function ExportDestinationBar({
   destination,
   onChoose,
 }: ExportDestinationBarProps) {
-  const t = useT();
   const downloads = destination.type === 'downloads';
   const file = destination.type === 'browser-file' || destination.type === 'desktop-file';
   return (
     <div className="cc-export-destination">
       <span className="cc-export-destination-icon"><Icon name="folder" size={16} /></span>
       <span className="cc-export-destination-copy">
-        <small>{t('保存到')}</small>
-        <strong title={destination.label}>{downloads ? t('浏览器下载目录') : destination.label}</strong>
+        <small>Save to</small>
+        <strong title={destination.label}>{downloads ? 'Browser downloads' : destination.label}</strong>
         {!file && (
-          <i>{downloads ? t('保存位置由浏览器下载设置决定') : t('文件将直接写入所选文件夹')}</i>
+          <i>{downloads ? 'The browser controls the download location' : 'Files are written directly to the selected folder'}</i>
         )}
       </span>
       <button type="button" onClick={() => void onChoose()} disabled={busy || choosing}>
-        {choosing ? t('正在选择…') : downloads ? t('选择…') : t('更改…')}
+        {choosing ? 'Choosing…' : downloads ? 'Choose…' : 'Change…'}
       </button>
     </div>
   );

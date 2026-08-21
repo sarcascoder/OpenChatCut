@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create or improve OpenChatCut custom skills. Use whenever the user asks to create a skill, capture a workflow as a skill, write a SKILL.md, add a reusable workflow, 创建技能, 把流程做成技能, 写一个技能, or improve an existing custom skill. Pushy: treat any workflow the user repeats as a skill candidate, even if they do not say "skill".
+description: Create or improve OpenChatCut custom skills. Use whenever the user asks to create a skill, capture a workflow as a skill, write a SKILL.md, add a reusable workflow, turn a process into a skill, write a skill, or improve an existing custom skill. Pushy: treat any workflow the user repeats as a skill candidate, even if they do not say "skill".
 ---
 
 # Skill Creator

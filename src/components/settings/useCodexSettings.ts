@@ -8,7 +8,6 @@ import {
   cancelCodexLogin, fetchCodexModels, fetchCodexStatus, logoutCodex, startCodexLogin,
 } from '../../agent/codex/client';
 import { applyCodexAgentStatus } from '../../agent/model-selection';
-import { t } from '../../i18n/locale';
 
 const LOGIN_POLL_MS = 1_500;
 
@@ -70,7 +69,7 @@ function useCodexStatusControl(): RemoteStatusControl {
     } catch {
       if (mounted.current) {
         setState((current) => ({
-          ...current, loading: false, error: t('无法连接 Codex 服务，请确认开发服务正在运行。'),
+          ...current, loading: false, error: 'Could not reach the Codex service. Make sure the development server is running.',
         }));
       }
       return null;
@@ -97,7 +96,7 @@ function usePendingLogin(remote: RemoteStatusControl) {
         if (authUrl) window.open(authUrl, '_blank', 'noopener,noreferrer');
       }
     } catch {
-      if (mounted.current) setError(t('无法启动登录，请稍后重试。'));
+      if (mounted.current) setError('Could not start sign-in. Please try again.');
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -109,7 +108,7 @@ function usePendingLogin(remote: RemoteStatusControl) {
       if (mounted.current) setLogin(null);
       await refresh(true);
     } catch {
-      if (mounted.current) setError(t('无法取消登录，请稍后重试。'));
+      if (mounted.current) setError('Could not cancel sign-in. Please try again.');
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -139,7 +138,7 @@ function useCodexLogout(remote: RemoteStatusControl, onLoggedOut: () => void) {
       onLoggedOut();
       await refresh(true);
     } catch {
-      if (mounted.current) setError(t('无法退出登录，请稍后重试。'));
+      if (mounted.current) setError('Could not sign out. Please try again.');
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -170,14 +169,14 @@ function useCodexModels(autoDiscover: boolean) {
       const response = await fetchCodexModels();
       if (generation !== requestGeneration.current) return [];
       if (response.error) {
-        if (mounted.current) setError(t('读取模型失败：{message}', { message: response.error }));
+        if (mounted.current) setError(`Could not load models: ${response.error}`);
         return [];
       }
       if (mounted.current) setModels(response.models);
       return response.models;
     } catch {
       if (generation === requestGeneration.current && mounted.current) {
-        setError(t('无法读取 Codex 模型，请稍后重试。'));
+        setError('Could not load Codex models. Please try again.');
       }
       return [];
     } finally {

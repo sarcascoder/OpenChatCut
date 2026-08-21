@@ -1,6 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
 import type { PlayerRef } from '@remotion/player';
-import { useT } from '../i18n/locale';
 import { Icon } from './icons';
 import { HistoryGestureProvider } from './inspector/InspectorKeyframeControls';
 import { InspectorContent, type InspectorTab } from './inspector/InspectorContent';
@@ -38,7 +37,6 @@ function useInspectorPlayhead(getPlayhead: () => number, playerRef: RefObject<Pl
 }
 
 function InspectorHeader({ panel }: { panel: InspectorPanelProps }) {
-  const t = useT();
   const item = panel.selectedItem;
   const caption = panel.selectedCaption;
   const count = panel.selectedItems.length;
@@ -46,22 +44,21 @@ function InspectorHeader({ panel }: { panel: InspectorPanelProps }) {
     <button
       type="button"
       onClick={() => panel.onCollapsedChange(!panel.collapsed)}
-      title={panel.collapsed ? t('展开属性') : t('收起属性')}
+      title={panel.collapsed ? 'Expand properties' : 'Collapse properties'}
       className="cc-insp-header"
     >
       <span className={`cc-insp-chevron${panel.collapsed ? ' closed' : ''}`}><Icon name="chevronDown" size={12} /></span>
       <span className="cc-insp-heading">
-        <span className="cc-insp-title">{caption ? t('字幕属性') : t('片段属性')}</span>
+        <span className="cc-insp-title">{caption ? 'Caption properties' : 'Clip properties'}</span>
         {caption ? <span className="cc-insp-title-name" title={caption.target.cue.text}>{caption.target.cue.text}</span>
-          : item && <span className="cc-insp-title-name" title={item.name}>{count > 1 ? t('{n} 个片段', { n: count }) : item.name}</span>}
+          : item && <span className="cc-insp-title-name" title={item.name}>{count > 1 ? `${count} clips` : item.name}</span>}
       </span>
-      {item?.denoisedSrc && <span className="cc-insp-pill">{t('人声隔离')}</span>}
+      {item?.denoisedSrc && <span className="cc-insp-pill">Voice Isolation</span>}
     </button>
   );
 }
 
 export function InspectorPanel(panel: InspectorPanelProps) {
-  const t = useT();
   const [activeTab, setActiveTab] = useState<InspectorTab>('basic');
   const playhead = useInspectorPlayhead(panel.getPlayhead, panel.playerRef);
   const item = panel.selectedItem;
@@ -87,7 +84,7 @@ export function InspectorPanel(panel: InspectorPanelProps) {
         {!panel.collapsed && (panel.selectedCaption && panel.onCaptionUpdate
           ? <CaptionInspectorControls selection={panel.selectedCaption} onUpdate={panel.onCaptionUpdate} />
           : item ? <InspectorContent panel={panel} item={item} schema={schema} playheadLocal={playheadLocal} activeTab={activeTab} onTabChange={setActiveTab} />
-          : <div className="cc-insp-body"><div className="cc-insp-muted">{t('选中时间线上的片段以编辑属性。')}</div></div>)}
+          : <div className="cc-insp-body"><div className="cc-insp-muted">Select a clip on the timeline to edit its properties.</div></div>)}
       </section>
     </HistoryGestureProvider>
   );

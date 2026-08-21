@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useT } from '../../i18n/locale';
 import { theme } from '../../theme';
 import {
   cancelModelPackInstall,
@@ -79,19 +78,18 @@ interface LocalModelPackPaneProps {
   description?: string;
 }
 
-export function LocalModelPackPane({ packIds, title = '本地智能模型', description = '模型不会自动安装。安装后，节拍与音乐语义分析只在本机运行。' }: LocalModelPackPaneProps) {
-  const t = useT();
+export function LocalModelPackPane({ packIds, title = 'Local intelligence models', description = 'Models are never installed automatically. Once installed, beat and music-semantic analysis runs locally.' }: LocalModelPackPaneProps) {
   const { packs, loadError, refresh } = usePackCatalog();
   const actions = usePackActions(refresh);
   const visiblePacks = packs?.filter((pack) => packIds.includes(pack.id)) ?? [];
   return (
     <section style={sectionStyle} aria-labelledby="local-model-packs-heading">
       <div>
-        <div id="local-model-packs-heading" style={{ fontSize: 12.5, fontWeight: 650 }}>{t(title)}</div>
-        <div style={{ marginTop: 3, fontSize: 11.5, color: theme.textDim }}>{t(description)}</div>
+        <div id="local-model-packs-heading" style={{ fontSize: 12.5, fontWeight: 650 }}>{title}</div>
+        <div style={{ marginTop: 3, fontSize: 11.5, color: theme.textDim }}>{description}</div>
       </div>
-      {loadError && <div role="alert" style={errorStyle}>{t('无法读取模型包列表：{err}', { err: loadError })}</div>}
-      {!loadError && !packs && <div style={hintStyle}>{t('读取中…')}</div>}
+      {loadError && <div role="alert" style={errorStyle}>{`Cannot load model packs: ${loadError}`}</div>}
+      {!loadError && !packs && <div style={hintStyle}>Loading…</div>}
       {visiblePacks.map((pack) => (
         <PackCard key={pack.id} pack={pack} busy={actions.busyId === pack.id}
           error={actions.errors[pack.id]} install={actions.install} remove={actions.remove}
@@ -111,14 +109,13 @@ interface PackCardProps {
 }
 
 function PackCard({ pack, busy, error: actionError, install, remove, cancel }: PackCardProps) {
-  const t = useT();
   const error = actionError ?? pack.error ?? pack.task?.error;
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12.5, fontWeight: 650 }}>{t(pack.label)}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 650 }}>{pack.label}</span>
             <PackStatus pack={pack} />
           </div>
           <PackMetadata pack={pack} />
@@ -133,61 +130,51 @@ function PackCard({ pack, busy, error: actionError, install, remove, cancel }: P
 
 
 function PackMetadata({ pack }: { pack: ModelPackCatalogEntry }) {
-  const t = useT();
   return <>
     <div style={{ marginTop: 3, fontSize: 11, color: theme.textDim }}>
-      {formatBytes(pack.sizeBytes)} · {pack.license} · {t('建议内存 {memory}', {
-        memory: formatBytes(pack.recommendedMemoryBytes),
-      })}
+      {formatBytes(pack.sizeBytes)} · {pack.license} · {`Recommended memory ${formatBytes(pack.recommendedMemoryBytes)}`}
     </div>
     <div style={{ marginTop: 5, fontSize: 11.5, color: theme.text }}>
-      {pack.capabilities.map((capability) => t(capability)).join(' · ')}
+      {pack.capabilities.map((capability) => capability).join(' · ')}
     </div>
-    <div style={{ marginTop: 3, fontSize: 11, color: theme.textDim }}>{t(pack.description)}</div>
+    <div style={{ marginTop: 3, fontSize: 11, color: theme.textDim }}>{pack.description}</div>
   </>;
 }
 
 function PackProgress({ pack }: { pack: ModelPackCatalogEntry }) {
-  const t = useT();
   const percent = progressPercent(pack);
   return <div style={{ marginTop: 8 }}>
     <div style={progressTrack}><div style={{ ...progressFill, width: `${percent}%` }} /></div>
     <div style={{ marginTop: 3, fontSize: 10.5, color: theme.textDim }}>
-      {t('安装中 {pct}%（{done}/{total} 个文件）', {
-        pct: percent,
-        done: pack.task?.filesDone ?? 0,
-        total: pack.task?.filesTotal ?? pack.files.length,
-      })}
+      {`Installing ${percent}% (${pack.task?.filesDone ?? 0}/${pack.task?.filesTotal ?? pack.files.length} files)`}
     </div>
   </div>;
 }
 
 function PackStatus({ pack }: { pack: ModelPackCatalogEntry }) {
-  const t = useT();
   const display = pack.status === 'installed'
-    ? { text: t('已安装'), color: theme.success }
+    ? { text: 'Installed', color: theme.success }
     : pack.status === 'downloading'
-      ? { text: t('安装中'), color: theme.accent }
+      ? { text: 'Installing', color: theme.accent }
       : pack.status === 'error'
-        ? { text: t('安装错误'), color: theme.danger }
-        : { text: t('未安装'), color: theme.textDim };
+        ? { text: 'Install error', color: theme.danger }
+        : { text: 'Not installed', color: theme.textDim };
   return <span style={{ fontSize: 10.5, color: display.color }}>{display.text}</span>;
 }
 
 function PackActions({ pack, busy, install, remove, cancel }: Omit<PackCardProps, 'error'>) {
-  const t = useT();
   if (pack.status === 'downloading') {
-    return <button type="button" disabled={busy} onClick={() => void cancel(pack.id)} style={smallButton}>{t('取消')}</button>;
+    return <button type="button" disabled={busy} onClick={() => void cancel(pack.id)} style={smallButton}>Cancel</button>;
   }
   if (pack.status === 'installed') {
-    return <button type="button" disabled={busy} onClick={() => void remove(pack.id)} style={smallButton}>{t('删除')}</button>;
+    return <button type="button" disabled={busy} onClick={() => void remove(pack.id)} style={smallButton}>Delete</button>;
   }
   return <div style={{ display: 'flex', gap: 5 }}>
     {pack.status === 'error' && (
-      <button type="button" disabled={busy} onClick={() => void remove(pack.id)} style={smallButton}>{t('删除')}</button>
+      <button type="button" disabled={busy} onClick={() => void remove(pack.id)} style={smallButton}>Delete</button>
     )}
     <button type="button" disabled={busy} onClick={() => void install(pack.id)} style={installButton}>
-      {pack.status === 'error' ? t('重新安装') : t('安装')}
+      {pack.status === 'error' ? 'Reinstall' : 'Install'}
     </button>
   </div>;
 }

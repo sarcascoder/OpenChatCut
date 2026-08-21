@@ -52,7 +52,9 @@ const sanitizedSource = serializeMessagesForSummary([{
 assert.match(sanitizedSource, /truncated for context summary/);
 assert.doesNotMatch(sanitizedSource, /Z{1_000}/,
   'checkpoint source archives the sanitized summary transcript, not a full large payload');
-const cjkSource = [message('user', '请保留中文标点：镜头一、镜头二；不要改写。')];
+// "Keep the Chinese punctuation: shot one, shot two; do not rewrite."
+// — multi-byte CJK text exercises the UTF-8 byte-for-byte digest lineage.
+const cjkSource = [message('user', '\u8bf7\u4fdd\u7559\u4e2d\u6587\u6807\u70b9\uff1a\u955c\u5934\u4e00\u3001\u955c\u5934\u4e8c\uff1b\u4e0d\u8981\u6539\u5199\u3002')];
 const cjkDigest = await sourceMessagesDigest(cjkSource);
 assert.equal(cjkDigest, await sha256(serializeMessagesForSummary(cjkSource)));
 assert.equal(await sourceMessagesDigest(cjkSource), cjkDigest,

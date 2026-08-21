@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useT } from '../../i18n/locale';
 import {
   loadAgentRuntimeSidecar,
   subscribeAgentRuntime,
@@ -24,7 +23,6 @@ import { serverEventsForRun, serverRunTerminalReason, isServerRunRecord } from '
 import { theme, themeAlpha } from '../../theme';
 import { Icon } from '../icons';
 
-type Translate = (key: string, params?: Record<string, string | number>) => string;
 type PopoverBox = { left: number; top: number; width: number; maxHeight: number };
 
 const compactNumber = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
@@ -79,11 +77,11 @@ function usePopoverBox(open: boolean, anchor: HTMLElement | null): PopoverBox | 
   return box;
 }
 
-function statusLabel(status: string, t: Translate): string {
+function statusLabel(status: string): string {
   return {
-    running: t('运行中'), waiting_approval: t('等待确认'), awaiting_user: t('等待回复'),
-    completed: t('已完成'), failed: t('失败'), aborted: t('已取消'), interrupted: t('已中断'),
-  }[status] ?? t('未知状态');
+    running: 'Running', waiting_approval: 'Awaiting approval', awaiting_user: 'Awaiting reply',
+    completed: 'Completed', failed: 'Failed', aborted: 'Cancelled', interrupted: 'Interrupted',
+  }[status] ?? 'Unknown status';
 }
 
 function statusColor(status: string): string {
@@ -122,16 +120,16 @@ function contextMetric(context: unknown, key: string): unknown {
   if (!context || typeof context !== 'object' || Array.isArray(context)) return undefined;
   return Reflect.get(context, key);
 }
-function cacheMissLabel(value: unknown, t: Translate): string | undefined {
+function cacheMissLabel(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   return {
-    none: t('已命中缓存'),
-    first_request: t('首次请求'),
-    model_changed: t('模型已变化'),
-    system_prompt_changed: t('系统提示已变化'),
-    tool_surface_changed: t('工具面已变化'),
-    idle_ttl_expired: t('缓存已过期'),
-    unknown: t('未确认原因'),
+    none: 'Cache hit',
+    first_request: 'First request',
+    model_changed: 'Model changed',
+    system_prompt_changed: 'System prompt changed',
+    tool_surface_changed: 'Tool surface changed',
+    idle_ttl_expired: 'Cache expired',
+    unknown: 'Unconfirmed reason',
   }[value];
 }
 
@@ -161,85 +159,85 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   </section>;
 }
 
-function ContextSection({ run, t }: { run: AgentRunRecord; t: Translate }) {
+function ContextSection({ run }: { run: AgentRunRecord; }) {
   const context = run.context;
-  // 缓存写仅对支持「显式写缓存」的 provider（如 Anthropic）有意义；DeepSeek 等
-  // 只有服务器端 prompt 缓存，从不回报缓存写。无值时隐藏，避免显示无意义的 —。
+  // Cache writes only matter for providers that support explicit cache writes (e.g. Anthropic); DeepSeek
+  // and friends only have server-side prompt caching and never report them. Hide it when unset, to avoid a meaningless —.
   const cacheWriteTokens = numberText(contextMetric(context, 'cacheWriteTokens'));
-  return <Section title={t('上下文与工具')} hint={t('本次运行与最近一次模型请求的 token 用量、缓存与工具面信息')}>
-    <div style={subheadInSection}>{t('最近一次模型请求')}</div>
+  return <Section title="Context and tools" hint="Token usage, cache and tool-surface info for this run and the latest model request.">
+    <div style={subheadInSection}>Latest model request</div>
     <div style={metrics}>
-      <Metric label={t('输入')} title={t('输入 token：最近一次模型请求的输入量（提示词+工具结果）')} value={numberText(contextMetric(context, 'inputTokens'))} />
-      <Metric label={t('输出')} title={t('输出 token：最近一次模型请求返回的文本量')} value={numberText(contextMetric(context, 'outputTokens'))} />
-      <Metric label={t('系统')} title={t('系统提示词占用的输入 token')} value={numberText(contextMetric(context, 'systemTokens'))} />
-      <Metric label={t('历史')} title={t('对话历史占用的输入 token')} value={numberText(contextMetric(context, 'historyTokens'))} />
+      <Metric label="Input" title="Input tokens in the latest model request (prompt + tool results)." value={numberText(contextMetric(context, 'inputTokens'))} />
+      <Metric label="Output" title="Output tokens returned by the latest model request." value={numberText(contextMetric(context, 'outputTokens'))} />
+      <Metric label="System" title="Input tokens used by the system prompt." value={numberText(contextMetric(context, 'systemTokens'))} />
+      <Metric label="History" title="Input tokens used by the conversation history." value={numberText(contextMetric(context, 'historyTokens'))} />
     </div>
-    <div style={subheadInSection}>{t('缓存')}</div>
+    <div style={subheadInSection}>Cache</div>
     <div style={metrics}>
-      <Metric label={t('缓存读')} title={t('缓存读：本次命中缓存的输入 token 数；命中越多越省')} value={numberText(contextMetric(context, 'cacheReadTokens'))} />
+      <Metric label="Cache read" title="Cache reads: input tokens served from an existing cache this request." value={numberText(contextMetric(context, 'cacheReadTokens'))} />
       {cacheWriteTokens !== undefined && (
-        <Metric label={t('缓存写')} title={t('缓存写：本次写入缓存的 token 数（仅部分模型支持）')} value={cacheWriteTokens} />
+        <Metric label="Cache write" title="Cache writes: input tokens written to the cache this request (only some models)." value={cacheWriteTokens} />
       )}
-      <Metric label={t('未缓存')} title={t('未缓存：本次未命中缓存、需重新计算的输入 token')} value={numberText(contextMetric(context, 'noCacheTokens'))} />
-      <Metric label={t('命中率')} title={t('本次运行累计的缓存命中比例')} value={percentText(contextMetric(context, 'cacheHitRatio'))} />
-      <Metric label={t('诊断')} title={t('上次缓存未命中的原因，用于判断为何没省到缓存')} value={cacheMissLabel(contextMetric(context, 'cacheMissReason'), t)} />
+      <Metric label="Uncached" title="Uncached: input tokens that were not cached and had to be computed." value={numberText(contextMetric(context, 'noCacheTokens'))} />
+      <Metric label="Hit rate" title="Share of total inputs served from cache across this run." value={percentText(contextMetric(context, 'cacheHitRatio'))} />
+      <Metric label="Diagnosis" title="Why the cache last missed, to see why savings were not realized." value={cacheMissLabel(contextMetric(context, 'cacheMissReason'))} />
     </div>
-    <div style={subheadInSection}>{t('工具')}</div>
+    <div style={subheadInSection}>Tools</div>
     <div style={metrics}>
-      <Metric label={t('活跃工具')} title={t('本次请求向模型开放可调用的工具数量')} value={numberText(contextMetric(context, 'activeToolCount'))} />
-      <Metric label={t('工具定义')} title={t('随请求一起发送给模型的工具 Schema 数量')} value={numberText(contextMetric(context, 'toolSchemaCount'))} />
-      <Metric label={t('Schema 字符')} title={t('全部工具 Schema 的字符数，衡量工具面大小')} value={numberText(contextMetric(context, 'toolSchemaChars'))} />
+      <Metric label="Active tools" title="Number of tools the model could call on the latest request." value={numberText(contextMetric(context, 'activeToolCount'))} />
+      <Metric label="Tool schemas" title="Number of tool schemas sent to the model with the request." value={numberText(contextMetric(context, 'toolSchemaCount'))} />
+      <Metric label="Schema chars" title="Total characters of all tool schemas, a rough measure of tool-surface size." value={numberText(contextMetric(context, 'toolSchemaChars'))} />
     </div>
-    <div style={subheadInSection}>{t('本次运行累计')}</div>
+    <div style={subheadInSection}>Run totals</div>
     <div style={metrics}>
-      <Metric label={t('模型请求')} title={t('本次运行累计发起的模型请求次数')} value={numberText(contextMetric(context, 'modelRequestCount'))} />
-      <Metric label={t('累计输入')} title={t('本次运行所有模型请求的输入 token 之和')} value={numberText(contextMetric(context, 'totalInputTokens'))} />
-      <Metric label={t('新鲜输入')} title={t('未命中任何缓存、真正新计算的输入 token 之和')} value={numberText(contextMetric(context, 'totalFreshInputTokens'))} />
-      <Metric label={t('累计输出')} title={t('本次运行所有模型请求的输出 token 之和')} value={numberText(contextMetric(context, 'totalOutputTokens'))} />
-      <Metric label={t('累计重试')} title={t('本次运行因临时错误自动重试的次数')} value={numberText(contextMetric(context, 'totalRetryCount'))} />
-      <Metric label={t('图片输入')} title={t('本次发送给模型的图片数量')} value={numberText(contextMetric(context, 'totalMediaInputs'))} />
+      <Metric label="Model requests" title="Total model requests issued so far in this run." value={numberText(contextMetric(context, 'modelRequestCount'))} />
+      <Metric label="Total input" title="Sum of input tokens across all model requests in this run." value={numberText(contextMetric(context, 'totalInputTokens'))} />
+      <Metric label="Fresh input" title="Input tokens actually computed from scratch (no cache hit) across this run." value={numberText(contextMetric(context, 'totalFreshInputTokens'))} />
+      <Metric label="Total output" title="Sum of output tokens across all model requests in this run." value={numberText(contextMetric(context, 'totalOutputTokens'))} />
+      <Metric label="Retries" title="Times this run automatically retried a model request after a transient error." value={numberText(contextMetric(context, 'totalRetryCount'))} />
+      <Metric label="Media inputs" title="Number of images sent to the model in this run." value={numberText(contextMetric(context, 'totalMediaInputs'))} />
     </div>
   </Section>;
 }
 
-function CheckpointSection({ checkpoint, t }: { checkpoint?: AgentCheckpointRecord; t: Translate }) {
+function CheckpointSection({ checkpoint }: { checkpoint?: AgentCheckpointRecord; }) {
   // Same treatment as the archived-results block: hide the section entirely when
   // this run made no context checkpoint, since "no checkpoint on this run" is the
   // normal state and an always-visible empty block is not helpful.
   if (!checkpoint) return null;
-  return <Section title={t('上下文检查点')} hint={t('长对话被压缩后的摘要检查点，用于追溯上下文如何被裁剪')}>
-    <div style={detailLine}>{checkpoint.summary || t('无摘要')}</div>
-    <div style={subtle}>{t('源消息 {count} 条', { count: numberText(checkpoint.sourceMessageCount) ?? '—' })}</div>
+  return <Section title="Context checkpoint" hint="A summary checkpoint saved when a long conversation was compacted; shows how context was trimmed.">
+    <div style={detailLine}>{checkpoint.summary || 'No summary'}</div>
+    <div style={subtle}>{`${numberText(checkpoint.sourceMessageCount) ?? '—'} source messages`}</div>
     <code title={checkpoint.sourceDigest} style={digest}>{checkpoint.sourceDigest}</code>
     {checkpoint.summaryDigest && <code title={checkpoint.summaryDigest} style={digest}>{checkpoint.summaryDigest}</code>}
   </Section>;
 }
 
-function outcomeLabel(event: AgentRunEvent, t: Translate): string {
+function outcomeLabel(event: AgentRunEvent): string {
   const kind = event.outcome?.kind;
-  if (!isOutcomeKind(kind)) return t('未知结果');
+  if (!isOutcomeKind(kind)) return 'Unknown outcome';
   const labels: Record<AgentToolOutcomeKind, string> = {
-    success: t('成功'),
-    validation_failed: t('校验失败'),
-    denied: t('已拒绝'),
-    aborted_before_side_effect: t('副作用前已中止'),
-    stale: t('已过期'),
-    retryable_failure: t('可重试失败'),
-    outcome_unknown: t('结果未知'),
-    terminal_failure: t('终止失败'),
+    success: 'Success',
+    validation_failed: 'Validation failed',
+    denied: 'Denied',
+    aborted_before_side_effect: 'Aborted before side effect',
+    stale: 'Stale',
+    retryable_failure: 'Retryable failure',
+    outcome_unknown: 'Outcome unknown',
+    terminal_failure: 'Terminal failure',
   };
   return labels[kind];
 }
 
-function ToolOutcomeSection({ events, t }: { events: unknown; t: Translate }) {
+function ToolOutcomeSection({ events }: { events: unknown; }) {
   const outcomes = validToolOutcomes(events).slice(-8).reverse();
-  return <Section title={t('工具结果')} hint={t('最近调用的工具及其执行结果（只列最近 8 条）')}>
-    {outcomes.length === 0 ? <div style={emptyLine}>{t('没有工具结果')}</div> : outcomes.map((event) => {
+  return <Section title="Tool outcomes" hint="Recently called tools and their outcomes (latest 8 only).">
+    {outcomes.length === 0 ? <div style={emptyLine}>No tool outcomes</div> : outcomes.map((event) => {
       const detail = firstText(event.outcome?.summary, event.outcome?.code, event.operationId);
       return <div key={event.eventId} style={row}>
         <span style={{ ...statusDot, background: statusColor(event.outcome?.kind === 'success' ? 'completed' : 'failed') }} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={rowTitle}><code style={mono}>{textValue(event.toolName) ?? t('未知工具')}</code><span>{outcomeLabel(event, t)}</span></div>
+          <div style={rowTitle}><code style={mono}>{textValue(event.toolName) ?? 'Unknown tool'}</code><span>{outcomeLabel(event)}</span></div>
           {detail && <div style={subtle}>{detail}</div>}
         </div>
       </div>;
@@ -247,60 +245,60 @@ function ToolOutcomeSection({ events, t }: { events: unknown; t: Translate }) {
   </Section>;
 }
 
-function approvalLabel(status: string, t: Translate): string {
+function approvalLabel(status: string): string {
   return {
-    pending: t('待决定'), allowed: t('已允许'), denied: t('已拒绝'),
-    expired: t('已过期'), cancelled: t('已取消'),
-  }[status] ?? t('未知状态');
+    pending: 'Pending', allowed: 'Allowed', denied: 'Denied',
+    expired: 'Stale', cancelled: 'Cancelled',
+  }[status] ?? 'Unknown status';
 }
 
-function ApprovalSection({ approvals, t }: { approvals: readonly AgentApprovalRecord[]; t: Translate }) {
-  return <Section title={t('审批')} hint={t('本次运行涉及的确认/审批记录（只列前 6 条）')}>
-    {approvals.length === 0 ? <div style={emptyLine}>{t('没有审批记录')}</div> : approvals.slice(0, 6).map((approval) => {
+function ApprovalSection({ approvals }: { approvals: readonly AgentApprovalRecord[]; }) {
+  return <Section title="Approvals" hint="Confirmation / approval records from this run (first 6 only).">
+    {approvals.length === 0 ? <div style={emptyLine}>No approval records</div> : approvals.slice(0, 6).map((approval) => {
       const detail = firstText(approval.summary, approval.operationId);
       return <div key={approval.approvalId} style={row}>
         <span style={{ ...statusDot, background: statusColor(approval.status === 'allowed' ? 'completed' : approval.status === 'pending' ? 'waiting_approval' : 'failed') }} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={rowTitle}><code style={mono}>{textValue(approval.toolName) ?? t('未知工具')}</code><span>{approvalLabel(approval.status, t)}</span></div>
+          <div style={rowTitle}><code style={mono}>{textValue(approval.toolName) ?? 'Unknown tool'}</code><span>{approvalLabel(approval.status)}</span></div>
           {detail && <div style={subtle}>{detail}</div>}
-          <code title={approval.argsDigest} style={digest}>{t('参数摘要')} {approval.argsDigest}</code>
+          <code title={approval.argsDigest} style={digest}>Args digest {approval.argsDigest}</code>
         </div>
       </div>;
     })}
   </Section>;
 }
 
-function ArtifactSection({ artifacts, t }: { artifacts: readonly AgentArtifactIndexEntry[]; t: Translate }) {
-  // Hide the section entirely when there is nothing archived: the "归档结果"
+function ArtifactSection({ artifacts }: { artifacts: readonly AgentArtifactIndexEntry[]; }) {
+  // Hide the section entirely when there is nothing archived: the "Archived results"
   // block is an internal token-optimization diagnostic that is empty for most
   // runs and confusing as an always-visible empty block.
   if (artifacts.length === 0) return null;
-  return <Section title={t('归档结果')} hint={t('本次运行归档的产物记录（只列前 6 条）')}>
+  return <Section title="Archived results" hint="Artifacts archived by this run (first 6 only).">
     {artifacts.slice(0, 6).map((artifact) => (
       <div key={artifact.artifactId} style={artifactRow}>
         <div style={rowTitle}><code title={artifact.artifactId} style={mono}>{artifact.artifactId}</code><span>{textValue(artifact.toolName) ?? artifact.kind}</span></div>
-        <div style={subtle}>{numberText(artifact.originalChars) ?? '—'} {t('字符')} · {numberText(artifact.originalBytes) ?? '—'} {t('字节')}{artifact.redacted ? ` · ${t('已脱敏')}` : ''}{artifact.binaryOmitted ? ` · ${t('已省略二进制')}` : ''}</div>
+        <div style={subtle}>{numberText(artifact.originalChars) ?? '—'} characters · {numberText(artifact.originalBytes) ?? '—'} bytes{artifact.redacted ? ` · ${'redacted'}` : ''}{artifact.binaryOmitted ? ` · ${'binary omitted'}` : ''}</div>
         <code title={artifact.bodySha256} style={digest}>SHA-256 {artifact.bodySha256}</code>
       </div>
     ))}
   </Section>;
 }
 
-function InspectorContent({ sidecar, loading, failed, t }: {
+function InspectorContent({ sidecar, loading, failed }: {
   sidecar: AgentRuntimeSidecar | null;
   loading: boolean;
   failed: boolean;
-  t: Translate;
+  
 }) {
-  if (loading && !sidecar) return <div role="status" style={emptyState}>{t('正在读取运行记录…')}</div>;
-  if (failed && !sidecar) return <div role="alert" style={emptyState}>{t('无法读取运行记录')}</div>;
+  if (loading && !sidecar) return <div role="status" style={emptyState}>Loading run record…</div>;
+  if (failed && !sidecar) return <div role="alert" style={emptyState}>Unable to load run record</div>;
   const run = sidecar?.runs[0];
-  if (!run) return <div style={emptyState}><strong>{t('还没有运行记录')}</strong><span>{t('发送消息后可在这里查看运行状态；中断的操作不会自动重放。')}</span></div>;
+  if (!run) return <div style={emptyState}><strong>No runs yet</strong><span>Run details appear here after you send a message. Interrupted operations are never replayed automatically.</span></div>;
   const checkpoint = sidecar.checkpoints.find((item) => item.runId === run.runId);
   const approvals = sidecar.approvals.filter((item) => item.runId === run.runId);
   const artifacts = sidecar.artifacts.filter((item) => item.runId === run.runId);
   // Cumulative totals across every run in this project: the inspector shows the
-  // latest run's details, but "几步对话/多少次模型请求" is a project-wide figure.
+  // latest run's details, but "how many turns / how many model requests" is a project-wide figure.
   const runCount = sidecar.runs.length;
   const totalModelRequests = sidecar.runs.reduce((sum, item) => {
     const value = contextMetric(item.context, 'modelRequestCount');
@@ -313,26 +311,25 @@ function InspectorContent({ sidecar, loading, failed, t }: {
     <div style={runSummary}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
         <span style={{ ...statusDot, background: statusColor(run.status) }} />
-        <strong style={{ color: theme.text, fontSize: 12.5 }}>{statusLabel(run.status, t)}</strong>
-        {serverRun && <span style={serverBadge}>{t('服务端')}</span>}
+        <strong style={{ color: theme.text, fontSize: 12.5 }}>{statusLabel(run.status)}</strong>
+        {serverRun && <span style={serverBadge}>Server-side</span>}
         <span style={{ marginLeft: 'auto', color: theme.textDim, fontSize: 10.5 }}>{validTime(run.updatedAt)}</span>
       </div>
-      <div style={backend}>{textValue(run.backend) ?? t('未知后端')} · {textValue(run.modelId) ?? t('未知模型')}</div>
-      <div style={subtle}>{t('全部对话：{runs} 轮 · 累计 {requests} 次模型请求', { runs: numberText(runCount) ?? '0', requests: numberText(totalModelRequests) ?? '0' })}</div>
-      <div style={{ ...subtle, marginTop: 4 }}>{run.userInputPreview || t('未记录请求摘要')}</div>
+      <div style={backend}>{textValue(run.backend) ?? 'Unknown backend'} · {textValue(run.modelId) ?? 'Unknown model'}</div>
+      <div style={subtle}>{`${numberText(runCount) ?? '0'} runs total · ${numberText(totalModelRequests) ?? '0'} cumulative model requests`}</div>
+      <div style={{ ...subtle, marginTop: 4 }}>{run.userInputPreview || 'Request summary was not recorded.'}</div>
     </div>
-    {run.status === 'interrupted' && <div role="note" style={interrupted}>{t('这次运行被意外中断，系统不会自动继续或重放副作用。请先检查外部任务状态，再决定是否重试。')}{terminalReason && <div style={reason}>{terminalReason}</div>}</div>}
+    {run.status === 'interrupted' && <div role="note" style={interrupted}>This run was interrupted unexpectedly. Nothing will continue or replay automatically. Check external task status before retrying.{terminalReason && <div style={reason}>{terminalReason}</div>}</div>}
     {serverRun && run.status !== 'interrupted' && terminalReason && <div role="note" style={serverReason}>{terminalReason}</div>}
-    <ContextSection run={run} t={t} />
-    <CheckpointSection checkpoint={checkpoint} t={t} />
-    <ToolOutcomeSection events={run.events} t={t} />
-    <ApprovalSection approvals={approvals} t={t} />
-    <ArtifactSection artifacts={artifacts} t={t} />
+    <ContextSection run={run} />
+    <CheckpointSection checkpoint={checkpoint} />
+    <ToolOutcomeSection events={run.events} />
+    <ApprovalSection approvals={approvals} />
+    <ArtifactSection artifacts={artifacts} />
   </>;
 }
 
 export function AgentRunInspector({ projectId }: { projectId: string }) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const { sidecar, loading, failed } = useRuntimeSidecar(projectId, open);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -351,20 +348,20 @@ export function AgentRunInspector({ projectId }: { projectId: string }) {
   const latest = sidecar?.runs[0];
   return <>
     <button ref={triggerRef} type="button" aria-haspopup="dialog" aria-expanded={open} aria-controls="cc-agent-run-inspector"
-      title={t('Agent 运行检查器')} aria-label={t('Agent 运行检查器')} onClick={() => setOpen((value) => !value)}
+      title="Agent Run Inspector" aria-label="Agent Run Inspector" onClick={() => setOpen((value) => !value)}
       className="cc-header-btn" style={trigger}>
       <Icon name="list" size={14} />
       {latest && <span aria-hidden style={{ ...triggerDot, background: statusColor(latest.status) }} />}
     </button>
     {open && box && createPortal(
       <div role="presentation" onPointerDown={close} style={backdrop}>
-        <section id="cc-agent-run-inspector" role="dialog" aria-label={t('Agent 运行检查器')}
+        <section id="cc-agent-run-inspector" role="dialog" aria-label="Agent Run Inspector"
           onPointerDown={(event) => event.stopPropagation()} style={{ ...popover, ...box }}>
           <header style={header}>
-            <div><strong style={{ fontSize: 13 }}>{t('Agent 运行检查器')}</strong><div style={subtle}>{t('只读诊断，不会执行或恢复任何操作。')}</div></div>
-            <button ref={closeRef} type="button" onClick={close} aria-label={t('关闭')} title={t('关闭')} className="cc-header-btn" style={closeButton}><Icon name="x" size={14} /></button>
+            <div><strong style={{ fontSize: 13 }}>Agent Run Inspector</strong><div style={subtle}>Read-only diagnostics. No operation will be executed or resumed.</div></div>
+            <button ref={closeRef} type="button" onClick={close} aria-label="Close" title="Close" className="cc-header-btn" style={closeButton}><Icon name="x" size={14} /></button>
           </header>
-          <div style={scroll}><InspectorContent sidecar={sidecar} loading={loading} failed={failed} t={t} /></div>
+          <div style={scroll}><InspectorContent sidecar={sidecar} loading={loading} failed={failed} /></div>
         </section>
       </div>, document.body,
     )}

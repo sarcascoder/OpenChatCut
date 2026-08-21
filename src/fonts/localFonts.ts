@@ -16,7 +16,7 @@ export function normalizeFontKey(value: string): string {
   return value
     .toLowerCase()
     .normalize('NFKC')
-    .replace(/[\s_\-·.,'"`]+/g, '');
+    .replace(/[\s_\-\u00b7.,'"`]+/g, '');
 }
 
 export interface LocalCjkFont {
@@ -39,34 +39,34 @@ export const LOCAL_CJK_FONTS: readonly LocalCjkFont[] = [
   // Noto Sans SC v40 — SIL Open Font License 1.1. The Fontsource package
   // preserves Google Fonts' unicode-range variable WOFF2 shards, so existing
   // project weights from 100 through 900 stay offline without synthetic aliases.
-  { family: 'Noto Sans SC', importName: 'NotoSansSC', aliasZh: ['Noto Sans CJK SC', '思源黑体'],
+  { family: 'Noto Sans SC', importName: 'NotoSansSC', aliasZh: ['Noto Sans CJK SC', '\u601d\u6e90\u9ed1\u4f53'], // aliasZh: "Source Han Sans" — Chinese font-alias lookup key
     stylesheet: '/fonts/noto-sans-sc/noto-sans-sc.css', weightRange: [100, 900] },
   // Deyihei — SIL Open Font License 1.1(github.com/atelier-anchor/smiley-sans, v2.0.1)
-  { family: 'Smiley Sans', importName: 'SmileySans', aliasZh: ['得意黑'],
+  { family: 'Smiley Sans', importName: 'SmileySans', aliasZh: ['\u5f97\u610f\u9ed1'], // aliasZh: "Deyihei" (Smiley Sans) — Chinese font-alias lookup key
     files: { 400: '/fonts/smiley-sans/SmileySans-Oblique.woff2' } },
   // Easy Handwriting 1 — Free for commercial use (Easy Handwriting Series; subject to the original publisher’s authorization page)
-  { family: 'Qingsong Shouxie Ti Yi', importName: 'QingsongShouxieTiYi', aliasZh: ['轻松手写体一', '轻松手写体'],
+  { family: 'Qingsong Shouxie Ti Yi', importName: 'QingsongShouxieTiYi', aliasZh: ['\u8f7b\u677e\u624b\u5199\u4f53\u4e00', '\u8f7b\u677e\u624b\u5199\u4f53'], // aliasZh: "Qingsong Handwriting One", "Qingsong Handwriting"
     files: { 400: '/fonts/qingsong-shouxieti-yi/QingsongShouxietiYi-Regular.woff2' } },
   // Easy handwriting three - free for commercial use (same as the above series; subject to the original publisher’s authorization page)
-  { family: 'Qingsong Shouxie Ti San P', importName: 'QingsongShouxieTiSanP', aliasZh: ['轻松手写体三', '轻松手写体'],
+  { family: 'Qingsong Shouxie Ti San P', importName: 'QingsongShouxieTiSanP', aliasZh: ['\u8f7b\u677e\u624b\u5199\u4f53\u4e09', '\u8f7b\u677e\u624b\u5199\u4f53'], // aliasZh: "Qingsong Handwriting Three", "Qingsong Handwriting"
     files: { 400: '/fonts/qingsong-shouxieti-san-p/QingsongShouxietiSanP-Regular.woff2' } },
   // Pangmen Zhengdao title style — Pangmen Zhengdao free commercial license
-  { family: 'Pangmen Zhengdao Biaoti Ti', importName: 'PangmenZhengdaoBiaotiTi', aliasZh: ['庞门正道标题体', '庞门正道'],
+  { family: 'Pangmen Zhengdao Biaoti Ti', importName: 'PangmenZhengdaoBiaotiTi', aliasZh: ['\u5e9e\u95e8\u6b63\u9053\u6807\u9898\u4f53', '\u5e9e\u95e8\u6b63\u9053'], // aliasZh: "Pangmen Zhengdao Title", "Pangmen Zhengdao"
     files: { 400: '/fonts/pangmen-zhengdao-biaotiti/PangmenZhengdaoBiaotiti-Regular.woff2' } },
   // Pangmen Zhengdao Relaxation Body - Pangmen Zhengdao free commercial license
-  { family: 'Pangmen Zhengdao Qingsong Ti', importName: 'PangmenZhengdaoQingsongTi', aliasZh: ['庞门正道轻松体'],
+  { family: 'Pangmen Zhengdao Qingsong Ti', importName: 'PangmenZhengdaoQingsongTi', aliasZh: ['\u5e9e\u95e8\u6b63\u9053\u8f7b\u677e\u4f53'], // aliasZh: "Pangmen Zhengdao Qingsong"
     files: { 400: '/fonts/pangmen-zhengdao-qingsongti/PangmenZhengdaoQingsongti-Regular.woff2' } },
   // Hu Xiaobo Male God Body — Hu Xiaobo font free commercial license
-  { family: 'Huxiaobo Nanshen Ti', importName: 'HuxiaoboNanshenTi', aliasZh: ['胡晓波男神体'],
+  { family: 'Huxiaobo Nanshen Ti', importName: 'HuxiaoboNanshenTi', aliasZh: ['\u80e1\u6653\u6ce2\u7537\u795e\u4f53'], // aliasZh: "Huxiaobo Nanshen"
     files: { 400: '/fonts/huxiaobo-nanshenti/HuxiaoboNanshenti-Regular.woff2' } },
   // Hu Xiaobo's Sao Bao Body - Hu Xiaobo Font Free Commercial License
-  { family: 'Huxiaobo Saobao Ti', importName: 'HuxiaoboSaobaoTi', aliasZh: ['胡晓波骚包体'],
+  { family: 'Huxiaobo Saobao Ti', importName: 'HuxiaoboSaobaoTi', aliasZh: ['\u80e1\u6653\u6ce2\u9a9a\u5305\u4f53'], // aliasZh: "Huxiaobo Saobao"
     files: { 400: '/fonts/huxiaobo-saobaoti/HuxiaoboSaobaoti-Regular.woff2' } },
   // Hu Xiaobo is really handsome — Hu Xiaobo font is licensed for free commercial use
-  { family: 'Huxiaobo Zhenshuai Ti', importName: 'HuxiaoboZhenshuaiTi', aliasZh: ['胡晓波真帅体'],
+  { family: 'Huxiaobo Zhenshuai Ti', importName: 'HuxiaoboZhenshuaiTi', aliasZh: ['\u80e1\u6653\u6ce2\u771f\u5e05\u4f53'], // aliasZh: "Huxiaobo Zhenshuai"
     files: { 400: '/fonts/huxiaobo-zhenshuaiti/HuxiaoboZhenshuaiti-Regular.woff2' } },
   // Douyin Beauty — Douyin Beauty Authorization (ByteDance, free for commercial use); charge 400+700 for the same Bold file
-  { family: 'Douyin Meihao Ti', importName: 'DouyinMeihaoTi', aliasZh: ['抖音美好体'],
+  { family: 'Douyin Meihao Ti', importName: 'DouyinMeihaoTi', aliasZh: ['\u6296\u97f3\u7f8e\u597d\u4f53'], // aliasZh: "Douyin Meihao"
     files: { 400: '/fonts/douyin-meihaoti/DouyinMeihaoti-Bold.woff2',
              700: '/fonts/douyin-meihaoti/DouyinMeihaoti-Bold.woff2' } },
 ];

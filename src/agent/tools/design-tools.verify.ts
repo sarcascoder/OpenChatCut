@@ -1,7 +1,7 @@
 // Runnable contract check: `npx tsx src/agent/design-tools.check.ts`.
 // Covers manage_design_style: preset list/apply, custom designSpec (array +
 // legacy role-keyed object normalizers), update patch, clear,
-// AND the owned-style library ("我的风格": save/list/apply/delete), which
+// AND the owned-style library ("My styles": save/list/apply/delete), which
 // persists through projectStore's IndexedDB helpers — hence the in-memory
 // IndexedDB shim below (same pattern as src/persist/chat-persist.check.ts),
 // installed BEFORE anything that touches the store is imported.
@@ -97,25 +97,25 @@ assert.ok('error' in (await execDesignTool('manage_design_style', { action: 'app
 await execDesignTool('manage_design_style', { action: 'clear' }, ctx);
 assert.strictEqual(draft.getDoc().designStyle, undefined);
 
-// ── owned-style library ("我的风格"): save → list → apply by id → delete ──
+// ── owned-style library ("My styles"): save → list → apply by id → delete ──
 // save requires a name
 assert.ok('error' in (await execDesignTool('manage_design_style', { action: 'save', designSpec: '{}' }, ctx) as object));
 
 const saveRes = await execDesignTool('manage_design_style', {
-  action: 'save', name: '我的风格 1',
+  action: 'save', name: 'My Style 1',
   designSpec: JSON.stringify({ colors: [{ role: 'primary', value: '#123456' }], fonts: [{ role: 'heading', family: 'Sora' }] }),
 }, ctx) as { ok: boolean; saved: { id: string; name: string } };
 assert.ok(saveRes.ok);
-assert.strictEqual(saveRes.saved.name, '我的风格 1');
+assert.strictEqual(saveRes.saved.name, 'My Style 1');
 
 const list1 = await execDesignTool('manage_design_style', { action: 'list' }, ctx) as { owned: { presetId: string; name: string }[] };
 assert.strictEqual(list1.owned.length, 1);
 assert.strictEqual(list1.owned[0].presetId, saveRes.saved.id);
-assert.strictEqual(list1.owned[0].name, '我的风格 1');
+assert.strictEqual(list1.owned[0].name, 'My Style 1');
 
 // saving again under the same name replaces (not duplicates) the entry
 const resave = await execDesignTool('manage_design_style', {
-  action: 'save', name: '我的风格 1', designSpec: JSON.stringify({ colors: [{ role: 'primary', value: '#abcdef' }] }),
+  action: 'save', name: 'My Style 1', designSpec: JSON.stringify({ colors: [{ role: 'primary', value: '#abcdef' }] }),
 }, ctx) as { saved: { id: string } };
 assert.strictEqual(resave.saved.id, saveRes.saved.id, 'same-name save replaces the existing entry');
 const list1b = await execDesignTool('manage_design_style', { action: 'list' }, ctx) as { owned: unknown[] };

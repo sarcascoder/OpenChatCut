@@ -65,7 +65,6 @@ export function exporter(exportDestination: ExportDestination = destination) {
     setEngineReason: noop,
     setProgress: noop,
     setRenderEngine: noop,
-    t: (key) => key,
     verifyCompletedExport: async () => undefined,
   });
 }

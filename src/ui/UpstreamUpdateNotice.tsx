@@ -1,5 +1,4 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { useT } from '../i18n/locale';
 import {
   dismissUpstreamUpdate,
   getUpstreamUpdateState,
@@ -15,7 +14,6 @@ import {
 import { UpstreamUpdateNoticeView } from './UpstreamUpdateNoticeView';
 
 export function UpstreamUpdateNotice() {
-  const t = useT();
   const update = useSyncExternalStore(
     subscribeUpstreamUpdate,
     getUpstreamUpdateState,
@@ -35,7 +33,7 @@ export function UpstreamUpdateNotice() {
       message={upstreamUpdateMessage(update, desktopUpdate)}
       actionLabel={showAction ? action.label : undefined}
       actionDisabled={action.disabled}
-      closeLabel={t('关闭')}
+      closeLabel="Close"
       onAction={showAction ? () => { runUpstreamUpdateCommand(action.command); } : undefined}
       onDismiss={dismissUpstreamUpdate}
     />

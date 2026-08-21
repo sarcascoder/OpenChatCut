@@ -50,7 +50,7 @@ function execTemplateCatalog(name: string, args: Args, ctx: AgentContext): unkno
     if (category) return ctx.templates.filter((template) => template.category.toLowerCase() === category).map((template) => template.name);
     const categories: Record<string, number> = {};
     for (const template of ctx.templates) categories[template.category] = (categories[template.category] ?? 0) + 1;
-    return { categories, total: ctx.templates.length, hint: '传 category 或用 search_templates 精确找' };
+    return { categories, total: ctx.templates.length, hint: 'pass category, or use search_templates for a precise match' };
   }
   if (name === 'search_templates') {
     const query = String(args.query ?? '').toLowerCase();

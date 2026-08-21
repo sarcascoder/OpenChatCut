@@ -8,9 +8,10 @@ import type { ImportSession, UploadVerifierFixture } from './upload-tools.verify
 export async function verifyUploadImportSession(fixture: UploadVerifierFixture): Promise<void> {
   const { context, draft, state } = fixture;
 
-  assert.equal(safeSourceFilename('/Users/editor/素材/采访.最终版.001.MOV'), '采访.最终版.001.MOV');
-  assert.equal(safeSourceFilename('D:\\capture\\采访.最终版.001.MOV'), '采访.最终版.001.MOV');
-  assert.equal(safeSourceFilename('\\\\server\\share\\采访.最终版.001.MOV'), '采访.最终版.001.MOV');
+  // "footage" dir / "interview.final.001.MOV" — non-ASCII filename round-trip through path stripping
+  assert.equal(safeSourceFilename('/Users/editor/\u7d20\u6750/\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV'), '\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV');
+  assert.equal(safeSourceFilename('D:\\capture\\\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV'), '\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV');
+  assert.equal(safeSourceFilename('\\\\server\\share\\\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV'), '\u91c7\u8bbf.\u6700\u7ec8\u7248.001.MOV');
   assert.equal(safeSourceFilename('literal%2Fname.final.mov'), 'literal%2Fname.final.mov');
   for (const invalid of ['', ' ', '.', '..', '/tmp/', 'bad\u0001.mov', 42, null]) {
     assert.equal(safeSourceFilename(invalid), undefined);
@@ -53,7 +54,8 @@ export async function verifyUploadImportSession(fixture: UploadVerifierFixture):
   const session = await execUploadTool('import_media', {
     action: 'create_session',
     assetType: 'image',
-    filename: '/Users/editor/素材/海报.最终版.png',
+    // "footage" dir / "poster.final.png" — non-ASCII filename round-trip
+    filename: '/Users/editor/\u7d20\u6750/\u6d77\u62a5.\u6700\u7ec8\u7248.png',
     contentType: 'image/png',
     size: 1024,
   }, context) as ImportSession;
@@ -61,7 +63,7 @@ export async function verifyUploadImportSession(fixture: UploadVerifierFixture):
   assert.equal(session.state, 'awaiting_upload');
   assert.equal(session.slots.length, 1);
   const slot = session.slots[0]!;
-  assert.equal(slot.filename, '海报.最终版.png');
+  assert.equal(slot.filename, '\u6d77\u62a5.\u6700\u7ec8\u7248.png');
   assert.equal(slot.existingAsset, false);
   assert.equal(slot.fileKey, `uploads/${slot.assetId}.${session.sessionId}.png`);
   assert.match(slot.uploadUrl, /^http:\/\/editor\.test\/upload\?/);
@@ -108,7 +110,8 @@ export async function verifyUploadImportSession(fixture: UploadVerifierFixture):
     action: 'create_session',
     assetId: slot.assetId,
     assetType: 'image',
-    filename: '替换后.jpg',
+    // "replaced.jpg" — non-ASCII filename round-trip on replacement
+    filename: '\u66ff\u6362\u540e.jpg',
     contentType: 'image/jpeg',
     size: 2048,
   }, context) as ImportSession;
@@ -133,7 +136,7 @@ export async function verifyUploadImportSession(fixture: UploadVerifierFixture):
     assetType: 'image',
   }, context);
   const replacedAsset = draft.getDoc().assets.find((asset) => asset.id === slot.assetId);
-  assert.equal(replacedAsset?.name, '替换后.jpg');
+  assert.equal(replacedAsset?.name, '\u66ff\u6362\u540e.jpg');
   assert.equal(replacedAsset?.sourceContentHash, replacementHash);
   assert.equal(replacedAsset?.sourceRevision, `source-sha256-${replacementHash}`);
 }

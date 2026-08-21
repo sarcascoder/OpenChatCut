@@ -1,4 +1,4 @@
-// Runnable: `npx tsx src/agent/tools/project-tools.check.ts`（已挂 verify:agent-tools）
+// Runnable: `npx tsx src/agent/tools/project-tools.check.ts` (wired into verify:agent-tools)
 import assert from 'node:assert';
 import { makeDraft } from '../../editor/store';
 import {
@@ -153,22 +153,22 @@ const spDraft = makeDraft(docFromTimeline({
   ],
 }));
 const spCtx: AgentContext = { ...ctx, commands: spDraft.commands, getState: spDraft.getState, getDoc: spDraft.getDoc, getProjectId: () => 'p1' };
-const su = await execProjectTool('edit_project', { action: 'speaker-update', from: 'A', to: '主持人' }, spCtx) as { ok?: boolean; itemsChanged?: number; wordsChanged?: number };
+const su = await execProjectTool('edit_project', { action: 'speaker-update', from: 'A', to: 'Host' }, spCtx) as { ok?: boolean; itemsChanged?: number; wordsChanged?: number };
 assert.strictEqual(su.ok, true, 'speaker-update succeeds');
 assert.strictEqual(su.itemsChanged, 2, 'relabels speaker A in both clips');
 assert.strictEqual(su.wordsChanged, 2, 'two words were speaker A');
 const st = spDraft.getState();
-assert.strictEqual(st.items.find((i) => i.id === 'c1')!.transcript!.find((w) => w.text === 'hi')!.speaker, '主持人', 'A→主持人 applied');
+assert.strictEqual(st.items.find((i) => i.id === 'c1')!.transcript!.find((w) => w.text === 'hi')!.speaker, 'Host', 'A→Host applied');
 assert.strictEqual(st.items.find((i) => i.id === 'c1')!.transcript!.find((w) => w.text === 'yo')!.speaker, 'B', 'B untouched; only from-speaker words change');
 assert.ok((await execProjectTool('edit_project', { action: 'speaker-update', from: 'Z', to: 'x' }, spCtx) as { error?: string }).error, 'unknown speaker errors');
 assert.ok((await execProjectTool('edit_project', { action: 'speaker-update', from: 'A' }, spCtx) as { error?: string }).error, 'missing to errors');
 
 // Top-level `id` is the speaker id and aliases from/json.id.
-const suById = await execProjectTool('edit_project', { action: 'speaker-update', id: 'B', to: '嘉宾' }, spCtx) as { ok?: boolean; from?: string; wordsChanged?: number };
+const suById = await execProjectTool('edit_project', { action: 'speaker-update', id: 'B', to: 'Guest' }, spCtx) as { ok?: boolean; from?: string; wordsChanged?: number };
 assert.strictEqual(suById.ok, true, 'speaker-update accepts top-level id as the speaker locator');
 assert.strictEqual(suById.from, 'B', 'id resolved as the from-speaker');
 assert.strictEqual(suById.wordsChanged, 1, 'the one B word relabeled');
-assert.strictEqual(spDraft.getState().items.find((i) => i.id === 'c1')!.transcript!.find((w) => w.text === 'yo')!.speaker, '嘉宾', 'B→嘉宾 via id');
+assert.strictEqual(spDraft.getState().items.find((i) => i.id === 'c1')!.transcript!.find((w) => w.text === 'yo')!.speaker, 'Guest', 'B→Guest via id');
 // edit_project schema exposes the `id` field.
 const epSchema = PROJECT_TOOL_SCHEMAS.find((t) => t.name === 'edit_project')!;
 assert.ok('id' in (epSchema.input_schema as { properties: Record<string, unknown> }).properties, 'edit_project schema has top-level id');

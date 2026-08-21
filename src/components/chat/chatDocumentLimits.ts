@@ -3,16 +3,16 @@ export const CHAT_DOCUMENT_MAX_TEXT_CHARS = 100_000;
 export const CHAT_PDF_MAX_PAGES = 100;
 
 export function assertChatDocumentSize(byteLength: number): void {
-  if (byteLength > CHAT_DOCUMENT_MAX_BYTES) throw new Error('文档大小不能超过 10 MB');
+  if (byteLength > CHAT_DOCUMENT_MAX_BYTES) throw new Error('Documents must be 10 MB or smaller');
 }
 
 export function assertChatDocumentPageCount(pageCount: number): void {
-  if (pageCount > CHAT_PDF_MAX_PAGES) throw new Error('PDF 页数不能超过 100 页');
+  if (pageCount > CHAT_PDF_MAX_PAGES) throw new Error('PDF documents must contain at most 100 pages');
 }
 
 export function assertChatDocumentTextLength(characterCount: number): void {
   if (characterCount > CHAT_DOCUMENT_MAX_TEXT_CHARS) {
-    throw new Error('文档文本不能超过 100,000 个字符');
+    throw new Error('Document text must contain at most 100,000 characters');
   }
 }
 

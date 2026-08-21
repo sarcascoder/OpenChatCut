@@ -5,10 +5,6 @@
 <h1 align="center">OpenChatCut</h1>
 
 <p align="center">
-  <a href="README_ZH.md">简体中文</a> · <strong>English</strong>
-</p>
-
-<p align="center">
   <strong>Open-source ChatCut alternative · agent-native · local-first AI video editor</strong>
 </p>
 

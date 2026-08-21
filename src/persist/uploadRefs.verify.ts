@@ -21,12 +21,12 @@ const docOf = (items: unknown[], assets: unknown[] = []): ProjectDoc => ({
     [{ id: 'as1', name: 'raw', kind: 'audio', src: '/media/uploads/raw.wav', durationInFrames: 30 }],
   );
   const refs = collectUploadSrcs(doc);
-  assert.ok(refs.includes('/media/uploads/raw.wav'), '源素材');
+  assert.ok(refs.includes('/media/uploads/raw.wav'), 'the source media');
   assert.ok(
     refs.includes('/media/uploads/clean.wav'),
-    'isolate_voice 的产物只以 denoisedSrc 存在,漏掉它清理就会删掉正在播放的音轨',
+    'the isolate_voice output only exists as denoisedSrc; miss it and cleanup deletes the audio track that is playing',
   );
-  assert.equal(new Set(refs).size, refs.length, '不重复');
+  assert.equal(new Set(refs).size, refs.length, 'no duplicates');
 }
 
 // ── Original bytes that cannot be read: still need to fish out the reference ──
@@ -46,21 +46,21 @@ const docOf = (items: unknown[], assets: unknown[] = []): ProjectDoc => ({
   assert.deepEqual(rawUploadSrcs(null), []);
   assert.deepEqual(rawUploadSrcs(undefined), []);
   assert.deepEqual(rawUploadSrcs({}), []);
-  assert.deepEqual(rawUploadSrcs('/media/uploads/x.mp4"'), ['/media/uploads/x.mp4'], '直接给字符串也能扫');
+  assert.deepEqual(rawUploadSrcs('/media/uploads/x.mp4"'), ['/media/uploads/x.mp4'], 'a bare string is scanned too');
   assert.deepEqual(
     rawUploadSrcs({ a: '/media/uploads/dup.mp4', b: '/media/uploads/dup.mp4' }),
     ['/media/uploads/dup.mp4'],
-    '同一个文件只算一次',
+    'the same file counts only once',
   );
   assert.deepEqual(
     rawUploadSrcs({ a: '/media/uploads/.hidden', b: '/media/uploads/ok.mp4' }),
     ['/media/uploads/ok.mp4'],
-    '点开头的名字不合法,不当引用',
+    'a name starting with a dot is invalid and is not treated as a reference',
   );
   assert.deepEqual(
     rawUploadSrcs({ a: '/media/uploads/f.mp4?v=2' }),
     ['/media/uploads/f.mp4'],
-    '查询串不进文件名',
+    'the query string is not part of the file name',
   );
   // Circular reference: If it cannot be scanned, it will return empty, and the caller will handle it as unknown (instead of throwing an exception and causing the entire cleanup to hang up)
   const cyclic: Record<string, unknown> = { src: '/media/uploads/z.mp4' };
@@ -76,8 +76,8 @@ const docOf = (items: unknown[], assets: unknown[] = []): ProjectDoc => ({
   );
   const raw = new Set(rawUploadSrcs(doc));
   for (const src of collectUploadSrcs(doc)) {
-    assert.ok(raw.has(src), `原始扫描漏了 ${src},退化路径就会比正常路径更危险`);
+    assert.ok(raw.has(src), `the raw scan missed ${src}; the fallback path would then be more dangerous than the normal one`);
   }
 }
 
-console.log('uploadRefs.verify: ok (denoisedSrc 计入/读不出时扫原始字节/边界/超集关系)');
+console.log('uploadRefs.verify: ok (denoisedSrc counted/raw byte scan when unreadable/boundaries/superset relation)');

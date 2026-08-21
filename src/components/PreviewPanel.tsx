@@ -22,7 +22,6 @@ import {
 } from '../captions/captionStyleDrag';
 import { appendDroppedManualCaption } from '../captions/manualCaptions';
 import { Icon } from './icons';
-import { useT } from '../i18n/locale';
 import { ReviewCommentsButton, type ReviewOpenRequest } from '../review/ReviewCommentsButton';
 import { usePreviewProjectDoc } from '../media/previewMedia';
 import {
@@ -47,14 +46,13 @@ function previewStatusKey(status: Pick<SelectedPreviewStatus, 'kind' | 'targetId
 }
 
 function PreviewSourceToggle() {
-  const t = useT();
   const mode = useSyncExternalStore(subscribeQualityMode, getPreviewSourceMode, getPreviewSourceMode);
-  const label = mode === 'original' ? t('高清') : mode === 'proxy' ? t('流畅') : t('自动');
+  const label = mode === 'original' ? 'High quality' : mode === 'proxy' ? 'Smooth' : 'Auto';
   const title = mode === 'original'
-    ? t('高清：显示原始素材，画质最好，可能更吃性能')
+    ? 'High quality: shows the original media (best quality; may use more CPU/GPU)'
     : mode === 'proxy'
-      ? t('流畅：使用轻量副本，播放更流畅')
-      : t('自动：跟随画质策略（画质优先=高清，均衡=流畅）');
+      ? 'Smooth: plays a lightweight copy for fluid playback'
+      : 'Auto: follows the quality policy (Master=high quality, Balanced=smooth)';
   return (
     <button
       type="button"
@@ -71,7 +69,7 @@ function PreviewSourceToggle() {
         color: mode === 'auto' ? theme.textDim : theme.text,
       }}
     >
-      {t('预览画质')}: {label}
+      Preview quality: {label}
     </button>
   );
 }
@@ -114,7 +112,6 @@ export const PreviewPanel = memo(function PreviewPanel({
   selectedPreviewStatuses, onSelectedPreviewStatus, slipPreview,
   hoverPreviewFrame = null,
 }: PreviewPanelProps) {
-  const t = useT();
   const renderProject = useMemo<ProjectDoc>(() => ({
     ...project,
     timelines: project.timelines.map((timeline) => timeline.id === timelineId
@@ -258,7 +255,7 @@ export const PreviewPanel = memo(function PreviewPanel({
     const x = (clientX - rect.left) / rect.width;
     const y = (clientY - rect.top) / rect.height;
     const startMs = ((playerRef.current?.getCurrentFrame() ?? 0) / state.fps) * 1000;
-    const dropped = appendDroppedManualCaption(entry.captions, state.items, payload.template, t('双击编辑字幕'), startMs, {
+    const dropped = appendDroppedManualCaption(entry.captions, state.items, payload.template, 'Double-click to edit caption', startMs, {
       anchor: 'middle-center', offsetXRatio: x - 0.5, offsetYRatio: y - 0.5,
     });
     if (!dropped) return false;
@@ -273,11 +270,11 @@ export const PreviewPanel = memo(function PreviewPanel({
   return (
     <section style={{ display: 'flex', flex: 1, flexDirection: 'column', background: theme.panel, minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
       <div className="cc-preview-header" style={{ height: 30, padding: '0 12px', display: 'flex', alignItems: 'center', borderBottom: `0.5px solid ${theme.border}`, flexShrink: 0 }}>
-        <span style={{ fontSize: 12, color: theme.text }}>{t('预览')}</span>
+        <span style={{ fontSize: 12, color: theme.text }}>Preview</span>
         {pickMode && (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginLeft: 10, fontSize: 11, color: theme.accent }}>
             <Icon name="cursor" size={11} />
-            {t('选择模式：在画面上拖框选区作为引用')}
+            Select mode: drag a box on the frame to use the region as a reference
           </span>
         )}
         <div className="cc-preview-header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -295,24 +292,24 @@ export const PreviewPanel = memo(function PreviewPanel({
           )}
           {state.items.length > 0 && (
             <button type="button" onClick={() => setShowSafe((v) => !v)} aria-pressed={showSafe}
-              title={t('切换标题/动作安全区参考框（竖屏成片构图辅助）')}
+              title="Toggle title/action safe-area guides (framing aid for vertical deliverables)"
               style={{
                 fontSize: 11, lineHeight: 1, padding: '3px 8px', borderRadius: 5, cursor: 'pointer',
                 border: `0.5px solid ${theme.border}`, background: showSafe ? theme.panelAlt : 'transparent',
                 color: showSafe ? theme.text : theme.textDim,
               }}>
-              {t('安全框')}
+              Safe Area
             </button>
           )}
           {selectedItem && (
             <button type="button" onClick={onToggleInspector} aria-pressed={inspectorOpen}
-              title={inspectorOpen ? t('收起属性') : t('展开属性')}
+              title={inspectorOpen ? 'Collapse properties' : 'Expand properties'}
               style={{
                 fontSize: 11, lineHeight: 1, padding: '3px 8px', borderRadius: 5, cursor: 'pointer',
                 border: `0.5px solid ${theme.border}`, background: inspectorOpen ? theme.panelAlt : 'transparent',
                 color: inspectorOpen ? theme.text : theme.textDim,
               }}>
-              {t('属性')}
+              Properties
             </button>
           )}
         </div>
@@ -328,7 +325,7 @@ export const PreviewPanel = memo(function PreviewPanel({
             <input ref={inputRef} type="file" accept="video/*,image/*,audio/*" multiple hidden onChange={(event) => { if (event.target.files) void importFiles(event.target.files); event.target.value = ''; }} />
             <button className="cc-preview-empty" disabled={busy} onClick={() => inputRef.current?.click()}>
               <Icon name="upload" size={24} />
-              <span>{busy ? t('正在导入媒体…') : t('拖拽媒体到这里')}</span>
+              <span>{busy ? 'Importing media…' : 'Drop media here'}</span>
             </button>
           </>
         ) : (
@@ -371,7 +368,7 @@ export const PreviewPanel = memo(function PreviewPanel({
               // Restart by pressing play again.
             />
             {!fullscreen && hoverPreviewFrame !== null && (
-              <div className="cc-preview-hover-frame" aria-label={t('时间线悬停预览')}>
+              <div className="cc-preview-hover-frame" aria-label="Timeline hover preview">
                 <Thumbnail
                   component={TimelineComposition}
                   inputProps={thumbnailInputProps}
@@ -391,7 +388,7 @@ export const PreviewPanel = memo(function PreviewPanel({
                 padding: '6px 10px', borderRadius: 6, background: themeAlpha.shadow(0.88),
                 border: `1px solid ${theme.accent}`, color: theme.text, fontSize: 11,
               }}>
-                {t('离线素材：{list}', { list: offlineNames.join('、') })}
+                {`Offline media: ${offlineNames.join(', ')}`}
               </div>
             )}
             {(pendingProxies > 0 || failedProxies.length > 0) && (
@@ -402,8 +399,8 @@ export const PreviewPanel = memo(function PreviewPanel({
                 fontSize: 10,
               }}>
                 {failedProxies.length
-                  ? t('流畅预览暂不可用，已自动使用原画质播放（画面正常，不影响导出）')
-                  : t('正在准备流畅预览…')}
+                  ? 'Smooth preview is unavailable; playing at original quality instead (picture is fine, export unaffected)'
+                  : 'Preparing smooth preview…'}
               </div>
             )}
             {visibleShaderFallback && (
@@ -414,10 +411,10 @@ export const PreviewPanel = memo(function PreviewPanel({
                 color: theme.text, fontSize: 10,
               }}>
                 {visibleShaderFallback.fallbackReason === 'media-loading'
-                  ? t('正在加载效果预览；暂时显示回退画面')
+                  ? 'Loading effect preview; showing fallback temporarily'
                   : visibleShaderFallback.adapter === 'css-transition'
-                    ? t('着色器预览已回退为 CSS 近似；当前画面不代表导出效果')
-                    : t('着色器预览不可用；当前显示未处理源画面')}
+                    ? 'Shader preview fell back to CSS approximation; current picture does not represent the export'
+                    : 'Shader preview unavailable; showing unprocessed source'}
               </div>
             )}
             {showSafe && <SafeZoneOverlay />}
@@ -452,7 +449,6 @@ export const PreviewPanel = memo(function PreviewPanel({
 // reference in COMPOSITION coordinates, with the visual clips it covers at the
 // current frame (emits openchatcut:canvas-region-marked).
 function RegionPickOverlay({ state, playerRef }: { state: TimelineState; playerRef: RefObject<PlayerRef | null> }) {
-  const t = useT();
   const boxRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const pos = (event: React.PointerEvent) => {
@@ -465,7 +461,7 @@ function RegionPickOverlay({ state, playerRef }: { state: TimelineState; playerR
   return (
     <div
       ref={boxRef}
-      title={t('拖拽框选画面区域作为引用')}
+      title="Drag to select a frame region as a reference"
       onPointerDown={(event) => {
         if (event.button !== 0) return; // left button only
         event.currentTarget.setPointerCapture(event.pointerId);

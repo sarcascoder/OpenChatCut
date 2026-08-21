@@ -54,7 +54,7 @@ assert.ok((await listCustomSkills()).some((s) => s.id === 'skill_seed'), 'create
 await deleteCustomSkill('skill_seed');
 assert.ok(!(await loadCustomSkills()).some((s) => s.id === 'skill_seed'), 'delete → list no longer contains it');
 
-// ── tool layer (manage_skill) ── 库是全局的;ctx 只被 current/activate 用到,给最小桩
+// ── tool layer (manage_skill) ── the library is global; ctx is only used by current/activate, so a minimal stub is enough
 const ctx = { getCreativeMode: () => null, setCreativeMode: () => {} } as unknown as AgentContext;
 
 const created = await execSkillTool('manage_skill', { action: 'create', name: 'Agent Skill', body: 'plan then execute' }, ctx) as { ok: boolean; created: { id: string } };

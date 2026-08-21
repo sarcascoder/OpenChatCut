@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { CaptionsData } from './types';
 import type { TimelineItem } from '../editor/types';
-import { useT } from '../i18n/locale';
 import { buildCues, cueTextPatch, fmtCueMs } from './captionCues';
 
 // Sentence-by-sentence caption editing: List the pagination results of the same pipeline in the rendering layer (resolve→overrides→paginate) as
@@ -20,7 +19,6 @@ interface CaptionCueEditorProps {
 }
 
 export function CaptionCueEditor({ captions, items, fps, onUpdate, onSeekMs }: CaptionCueEditorProps) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
@@ -39,25 +37,25 @@ export function CaptionCueEditor({ captions, items, fps, onUpdate, onSeekMs }: C
   return (
     <div className="cc-cap-bilingual">
       <button type="button" className="cc-cap-bilingual-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-        <span>{t('逐句编辑')}{rows.length > 0 ? t('（{n} 句）', { n: rows.length }) : ''}</span>
-        <span className="cc-cap-hint">{open ? t('收起') : t('展开')}</span>
+        <span>Edit lines{rows.length > 0 ? ` (${rows.length} lines)` : ''}</span>
+        <span className="cc-cap-hint">{open ? 'Collapse' : 'Expand'}</span>
       </button>
       {open && multiLane && (
-        <p className="cc-cap-hint">{t('转写字幕车道请在对话里修改；手动车道可在上方「手动字幕」中直接编辑。')}</p>
+        <p className="cc-cap-hint">Edit transcript-driven lanes in chat; manual lanes can be edited directly in “Manual captions” above.</p>
       )}
       {open && !multiLane && rows.length === 0 && (
-        <p className="cc-cap-hint">{t('还没有可编辑的字幕句（先转写并生成字幕）。')}</p>
+        <p className="cc-cap-hint">No caption lines to edit yet (transcribe and generate captions first).</p>
       )}
       {open && !multiLane && rows.length > 0 && (
         <div className="cc-cap-cues">
-          <p className="cc-cap-hint">{t('点时间码跳到对应画面；点句子文字直接改，清空文字＝删掉这句。改动可撤销（⌘Z）。')}</p>
+          <p className="cc-cap-hint">Click a timecode to jump there; click the text to edit it. Clearing the text removes the line. Undo with ⌘Z.</p>
           <div className="cc-cap-cue-list">
             {rows.map((cue, k) => (
               <div key={`${cue.start}_${k}`} className="cc-cap-cue-row">
                 <button
                   type="button"
                   onClick={() => onSeekMs?.(cue.start)}
-                  title={t('跳到这句')}
+                  title="Jump to this line"
                   className="cc-cap-cue-time"
                 >
                   {fmtCueMs(cue.start)}
@@ -76,15 +74,15 @@ export function CaptionCueEditor({ captions, items, fps, onUpdate, onSeekMs }: C
                       className="cc-cap-input cc-cap-textarea active"
                     />
                     <div className="cc-cap-cue-actions">
-                      <button type="button" className="cc-cap-btn primary sm" onClick={() => save(k, draft)}>{t('保存')}</button>
-                      <button type="button" className="cc-cap-btn sm" onClick={() => setEditIdx(null)}>{t('取消')}</button>
+                      <button type="button" className="cc-cap-btn primary sm" onClick={() => save(k, draft)}>Save</button>
+                      <button type="button" className="cc-cap-btn sm" onClick={() => setEditIdx(null)}>Cancel</button>
                       <button
                         type="button"
                         className="cc-cap-btn sm ghost"
-                        title={t('这句不再显示（词与时间线不受影响）')}
+                        title="Hide this line (transcript words and timeline stay untouched)"
                         onClick={() => save(k, '')}
                       >
-                        {t('删除这句')}
+                        Remove line
                       </button>
                     </div>
                   </div>
@@ -92,7 +90,7 @@ export function CaptionCueEditor({ captions, items, fps, onUpdate, onSeekMs }: C
                   <button
                     type="button"
                     className="cc-cap-cue-text"
-                    title={t('点击编辑这句字幕')}
+                    title="Click to edit this caption line"
                     onClick={() => { setEditIdx(k); setDraft(cue.text); }}
                   >
                     {cue.text}

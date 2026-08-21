@@ -31,7 +31,7 @@ export function createAgentChangeSession(
   return {
     id: crypto.randomUUID(),
     createdAt: Date.now(),
-    summary: summary.trim() || 'Agent 修改',
+    summary: summary.trim() || 'Agent edit',
     operations: operations.map(({ action, target, impact }) => ({ action, target, impact })),
     beforeDoc,
     afterRevision: revisionOf(afterDoc),

@@ -4,25 +4,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
-const testLocaleId = '\0asset-menu-destinations-test-locale';
 const vite = await createServer({
   appType: 'custom',
-  plugins: [{
-    name: 'asset-menu-destinations-test-locale',
-    enforce: 'pre',
-    resolveId(id) {
-      return id.endsWith('/i18n/locale') || id.endsWith('/i18n/locale.ts') ? testLocaleId : null;
-    },
-    load(id) {
-      if (id !== testLocaleId) return null;
-      return `
-        export const t = (text, params) => params
-          ? text.replace(/\\{(\\w+)\\}/g, (match, key) => key in params ? String(params[key]) : match)
-          : text;
-        export const useT = () => t;
-      `;
-    },
-  }],
   server: { middlewareMode: true },
 });
 
@@ -52,49 +35,50 @@ try {
   assert.deepEqual(
     assetMenuSelectionIds('asset-b', new Set(['asset-a', 'asset-b']), ['asset-a', 'asset-b', 'asset-c']),
     ['asset-a', 'asset-b'],
-    '右键已选素材必须保留整个多选集',
+    'right-clicking a selected asset must keep the whole multi-selection',
   );
-  assert.equal(duplicateAssetName('项目素材.mp4', 'copy'), '项目素材 copy.mp4');
-  assert.equal(duplicateAssetName('无扩展名', 'copy'), '无扩展名 copy');
+  assert.equal(duplicateAssetName('Project Footage.mp4', 'copy'), 'Project Footage copy.mp4');
+  assert.equal(duplicateAssetName('No Extension', 'copy'), 'No Extension copy');
   assert.deepEqual(
     assetMenuSelectionIds('asset-c', new Set(['asset-a', 'asset-b']), ['asset-a', 'asset-b', 'asset-c']),
     ['asset-c'],
-    '右键未选素材必须只操作当前素材',
+    'right-clicking an unselected asset must act on that asset alone',
   );
   assert.equal(
     assetMenuFavoriteValue([{ favorite: true }, { favorite: false }]),
     true,
-    '批量收藏只要其中一个未收藏，就应统一收藏',
+    'a bulk favorite must favorite everything when any item is not yet favorited',
   );
   assert.equal(
     assetMenuFavoriteValue([{ favorite: true }, { favorite: true }]),
     false,
-    '批量取消收藏只在全部已收藏时发生',
+    'a bulk unfavorite only happens when everything is already favorited',
   );
   assert.deepEqual(
     batchAssetRename([
-      { id: 'asset-a', name: '原片.mp4' },
-      { id: 'asset-b', name: '封面.png' },
-    ], '项目素材'),
+      { id: 'asset-a', name: 'Original Cut.mp4' },
+      { id: 'asset-b', name: 'Cover.png' },
+    ], 'Project Footage'),
     [
-      { id: 'asset-a', name: '项目素材.mp4' },
-      { id: 'asset-b', name: '项目素材 2.png' },
+      { id: 'asset-a', name: 'Project Footage.mp4' },
+      { id: 'asset-b', name: 'Project Footage 2.png' },
     ],
-    '批量重命名必须保留各素材扩展名，并给后续素材添加稳定序号',
+    'a bulk rename must keep each asset extension and give later assets a stable index',
   );
 
   const markup = renderToStaticMarkup(createElement(AssetMenuDestinations, {
-    assetName: '7月7日.mp4',
+    // "July 7" — a non-ASCII asset name that must survive into the aria-label
+    assetName: '7\u67087\u65e5.mp4',
     onAddTimeline: () => undefined,
     onAddChat: () => undefined,
   }));
 
-  assert.match(markup, /添加到：/);
-  assert.match(markup, />时间线</);
-  assert.match(markup, />AI 对话框</);
-  assert.ok(markup.indexOf('>AI 对话框<') < markup.indexOf('>时间线<'), 'AI 对话框应位于左侧，时间线应位于右侧');
-  assert.match(markup, /aria-label="添加 7月7日.mp4 到时间线"/);
-  assert.match(markup, /aria-label="添加 7月7日.mp4 到 AI 对话框"/);
+  assert.match(markup, /Add to:/);
+  assert.match(markup, />Timeline</);
+  assert.match(markup, />AI chat</);
+  assert.ok(markup.indexOf('>AI chat<') < markup.indexOf('>Timeline<'), 'AI chat must sit on the left and Timeline on the right');
+  assert.match(markup, /aria-label="Add 7\u67087\u65e5.mp4 to timeline"/);
+  assert.match(markup, /aria-label="Add 7\u67087\u65e5.mp4 to AI chat"/);
 
   const blankMenuMarkup = renderToStaticMarkup(createElement(BlankMediaMenuActions, {
     clipboardCount: 2,
@@ -113,18 +97,18 @@ try {
     onSort: () => undefined,
     onType: () => undefined,
   }));
-  assert.match(blankMenuMarkup, /粘贴副本 \(2\)/);
-  assert.match(blankMenuMarkup, />全选</);
-  assert.match(blankMenuMarkup, />上传素材</);
-  assert.match(blankMenuMarkup, />本地语义搜索</);
-  assert.match(blankMenuMarkup, />手机传素材</);
-  assert.match(blankMenuMarkup, />新建文件夹</);
-  assert.match(blankMenuMarkup, /aria-label="素材排序"/);
-  assert.match(blankMenuMarkup, /aria-label="筛选素材"/);
+  assert.match(blankMenuMarkup, /Paste copies \(2\)/);
+  assert.match(blankMenuMarkup, />Select all</);
+  assert.match(blankMenuMarkup, />Upload media</);
+  assert.match(blankMenuMarkup, />Local semantic search</);
+  assert.match(blankMenuMarkup, />Upload from phone</);
+  assert.match(blankMenuMarkup, />New folder</);
+  assert.match(blankMenuMarkup, /aria-label="Sort media"/);
+  assert.match(blankMenuMarkup, /aria-label="Filter media"/);
 
   const overlaySource = await readFile(new URL('./MediaPoolOverlays.tsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(overlaySource, /className="cc-asset-menu-backdrop"/, '素材菜单不应使用全屏遮罩阻断直接右键另一素材');
-  assert.match(overlaySource, /document\.addEventListener\('pointerdown', closeOutside, true\)/, '素材菜单应通过外部点击关闭');
+  assert.doesNotMatch(overlaySource, /className="cc-asset-menu-backdrop"/, 'the asset menu must not use a full-screen backdrop that blocks right-clicking straight onto another asset');
+  assert.match(overlaySource, /document\.addEventListener\('pointerdown', closeOutside, true\)/, 'the asset menu must close on an outside click');
 } finally {
   await vite.close();
 }

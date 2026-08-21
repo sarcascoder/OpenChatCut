@@ -1,5 +1,5 @@
-// `npx tsx src/persist/jobRegistryStore.check.ts`（与 verify 同域；重复断言由 verify 覆盖，本文件保留
-// 可恢复语义独有覆盖。已挂 verify:persist。）
+// `npx tsx src/persist/jobRegistryStore.check.ts` (same domain as verify; duplicate assertions are covered by verify, this file keeps
+// only the coverage unique to resumable semantics. Already wired into verify:persist.)
 import assert from 'node:assert';
 import { isTerminal } from '../agent/progress/job-model';
 import {

@@ -17,7 +17,7 @@ export function mediaOnTrack(items: TimelineItem[], track: TrackId): TimelineIte
 /** Background music / SFX — not for speech transcription by default. */
 export function isLikelyNonSpeech(item: TimelineItem): boolean {
   const name = (item.name ?? '').toLowerCase();
-  return /背景音乐|bgm|\bmusic\b|score|ambient|音效|whoosh|sfx|instrumental/.test(name);
+  return /\u80cc\u666f\u97f3\u4e50|bgm|\bmusic\b|score|ambient|\u97f3\u6548|whoosh|sfx|instrumental/.test(name);
 }
 
 export function clipLabel(item: TimelineItem, max = 28): string {
@@ -39,8 +39,8 @@ export function pickDefaultTrack(options: TranscriptTrackOption[], items: Timeli
       const speech = clips.filter((clip) => !isLikelyNonSpeech(clip));
       const name = `${track.name ?? ''} ${track.alias}`.toLowerCase();
       let score = speech.length * 10 + clips.length;
-      if (/配音|voice|vo|旁白|口播|anchor/.test(name)) score += 50;
-      if (/背景|music|bgm|follower/.test(name)) score -= 40;
+      if (/\u914d\u97f3|voice|vo|\u65c1\u767d|\u53e3\u64ad|anchor/.test(name)) score += 50;
+      if (/\u80cc\u666f|music|bgm|follower/.test(name)) score -= 40;
       if (!clips.length) score -= 100;
       return { id: track.id, score };
     })

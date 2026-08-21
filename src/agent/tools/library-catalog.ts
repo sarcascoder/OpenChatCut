@@ -136,7 +136,7 @@ export function buildLibraryItems(templates: Tpl[]): LibraryItem[] {
     category: 'audio-fx',
     description: 'Open-box speech denoise (ffmpeg spectral NR). Attaches denoisedSrc; master clip src unchanged.',
     group: 'voice',
-    usage: 'isolate_voice itemId=<clip> action=apply strength?=70 — not edit_item (per-clip denoise, not a library place). action=clear removes. Library UI: 资源库 → 音频效果.',
+    usage: 'isolate_voice itemId=<clip> action=apply strength?=70 — not edit_item (per-clip denoise, not a library place). action=clear removes. Library UI: Library → Audio Effects.',
   });
   items.push({
     id: AUDIO_FX_ISOLATE_LIGHT,

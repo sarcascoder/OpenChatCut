@@ -6,7 +6,6 @@ import { theme } from '../../theme';
 import { Icon } from '../icons';
 import type { EditorCommands } from '../../editor/store';
 import type { TrackFlags, TrackId, TrackKind } from '../../editor/types';
-import { useT } from '../../i18n/locale';
 import type { TrackDeletePlan } from './trackDelete';
 import { MenuDrillHeader } from './MenuDrillHeader';
 
@@ -19,7 +18,7 @@ const flagBtn = (active: boolean): React.CSSProperties => ({
 interface TrackHeadProps {
   trackId: TrackId;
   kind: TrackKind;
-  /** Stable title, e.g. 视频1 / V1 — never the custom name. */
+  /** Stable title, e.g. Video 1 / V1 — never the custom name. */
   trackName: string;
   /** Optional custom name rendered as a second row under the title. */
   customName?: string;
@@ -42,39 +41,37 @@ interface TrackHeadProps {
 
 function trackDeleteTitle(
   blockedReason: TrackDeletePlan['blockedReason'],
-  t: ReturnType<typeof useT>,
 ): string {
-  if (blockedReason === 'last-video') return t('至少保留一条视频轨道');
-  if (blockedReason === 'locked') return t('请先解锁轨道');
-  return t('删除轨道');
+  if (blockedReason === 'last-video') return 'Keep at least one video track';
+  if (blockedReason === 'locked') return 'Unlock the track first';
+  return 'Delete track';
 }
 
 export function TrackHead({
   trackId, kind, trackName, customName, config, deleteBlockedReason, onDelete, menuElevated, width,
   commands, onToggleCaptions, onToggleCaptionMenu, onToggleDuckMenu, duckMenuPos, onCloseDuckMenu, onBackDuckMenu, children,
 }: TrackHeadProps) {
-  const t = useT();
   const hidden = config.hidden ?? false;
   const muted = config.muted ?? false;
   const locked = config.locked ?? false;
   const isCaption = kind === 'caption';
-  const deleteTitle = trackDeleteTitle(deleteBlockedReason, t);
+  const deleteTitle = trackDeleteTitle(deleteBlockedReason);
   const tagColor = kind === 'video' ? theme.trackVideo : kind === 'audio' ? theme.trackAudioA1 : theme.trackCaption;
-  const nameTitle = config.role === 'anchor' ? `${trackName} · ${t('主轨（闪避）')}`
-    : config.role === 'follower' ? `${trackName} · ${t('跟随（闪避）')}`
+  const nameTitle = config.role === 'anchor' ? `${trackName} · ${'Anchor (ducking)'}`
+    : config.role === 'follower' ? `${trackName} · ${'Follower (ducking)'}`
       : trackName;
   return (
     <div className="cc-track-head" style={{ width, ...(menuElevated ? { zIndex: 40 } : {}) }}>
       <div className="cc-track-head-controls">
-        <span className="cc-track-name" title={t('{name}（{id}）', { name: nameTitle, id: trackId })} style={{ background: tagColor }}>
+        <span className="cc-track-name" title={`${nameTitle}(${trackId})`} style={{ background: tagColor }}>
           <span className="cc-track-name-title">{trackName}</span>
           {customName && <span className="cc-track-name-custom">{customName}</span>}
         </span>
-        <button style={flagBtn(hidden)} title={hidden ? t('显示轨道') : t('隐藏轨道')} onClick={isCaption ? onToggleCaptions : () => commands.toggleTrackFlag(trackId, 'hidden')}><Icon name={hidden ? 'eyeOff' : 'eye'} size={14} /></button>
-        {!isCaption && <button style={flagBtn(muted)} title={muted ? t('取消静音') : t('静音轨道')} onClick={() => commands.toggleTrackFlag(trackId, 'muted')}><Icon name={muted ? 'volumeOff' : 'volume'} size={14} /></button>}
-        <button style={{ ...flagBtn(false), color: locked ? theme.gold : theme.textMuted }} title={locked ? t('解锁轨道') : t('锁定轨道（禁止移动 / 裁剪 / 删除 / 落轨）')} onClick={() => commands.toggleTrackFlag(trackId, 'locked')}><Icon name={locked ? 'lock' : 'unlock'} size={14} /></button>
-        {isCaption && <button data-caption-menu-trigger style={flagBtn(false)} title={t('字幕样式与翻译')} onClick={(e) => onToggleCaptionMenu(e.currentTarget.getBoundingClientRect())}><Icon name="chevronDown" size={12} /></button>}
-        {!isCaption && <button data-duck-menu-trigger style={{ ...flagBtn(false), color: config.role === 'anchor' || config.role === 'follower' ? theme.gold : theme.textMuted }} title={t('自动闪避（混音角色：主轨说话 / 跟随背景乐）')} onClick={(e) => onToggleDuckMenu(e.currentTarget.getBoundingClientRect())}><Icon name="sliders" size={13} /></button>}
+        <button style={flagBtn(hidden)} title={hidden ? 'Show track' : 'Hide track'} onClick={isCaption ? onToggleCaptions : () => commands.toggleTrackFlag(trackId, 'hidden')}><Icon name={hidden ? 'eyeOff' : 'eye'} size={14} /></button>
+        {!isCaption && <button style={flagBtn(muted)} title={muted ? 'Unmute' : 'Mute track'} onClick={() => commands.toggleTrackFlag(trackId, 'muted')}><Icon name={muted ? 'volumeOff' : 'volume'} size={14} /></button>}
+        <button style={{ ...flagBtn(false), color: locked ? theme.gold : theme.textMuted }} title={locked ? 'Unlock track' : 'Lock track (no moving / trimming / deleting / dropping)'} onClick={() => commands.toggleTrackFlag(trackId, 'locked')}><Icon name={locked ? 'lock' : 'unlock'} size={14} /></button>
+        {isCaption && <button data-caption-menu-trigger style={flagBtn(false)} title="Caption style & translation" onClick={(e) => onToggleCaptionMenu(e.currentTarget.getBoundingClientRect())}><Icon name="chevronDown" size={12} /></button>}
+        {!isCaption && <button data-duck-menu-trigger style={{ ...flagBtn(false), color: config.role === 'anchor' || config.role === 'follower' ? theme.gold : theme.textMuted }} title="Auto-ducking (mix roles: anchor speech / follower music)" onClick={(e) => onToggleDuckMenu(e.currentTarget.getBoundingClientRect())}><Icon name="sliders" size={13} /></button>}
         <button
           type="button"
           className="cc-track-fixed-action"
@@ -104,28 +101,27 @@ function DuckMenu({ trackId, config, pos, commands, onClose, onBack }: {
   onClose: () => void;
   onBack: () => void;
 }) {
-  const t = useT();
   return (
     <div className="cc-caption-style-menu cc-duck-menu" style={{ position: 'fixed', left: pos.left, top: pos.top }} onPointerDown={(e) => e.stopPropagation()}>
-      <MenuDrillHeader title={t('自动闪避')} onBack={onBack} />
+      <MenuDrillHeader title="Auto duck" onBack={onBack} />
       <div className="cc-caption-style-list">
         {([
-          { role: null, label: '关闭', hint: '不参与自动闪避' },
-          { role: 'anchor', label: '主轨 · 说话', hint: '说话时触发其它轨闪避' },
-          { role: 'follower', label: '跟随 · 背景音乐', hint: '主轨说话时自动压低' },
+          { role: null, label: 'Close', hint: 'Not part of auto-ducking' },
+          { role: 'anchor', label: 'Anchor · Speech', hint: 'Speech ducks the other tracks' },
+          { role: 'follower', label: 'Follower · Background music', hint: 'Automatically lowered while the anchor speaks' },
         ] as const).map((opt) => (
           <button key={opt.label} className={(config.role ?? null) === opt.role ? 'active' : ''}
             onClick={() => { commands.updateTrack(trackId, { role: opt.role }); if (opt.role !== 'follower') onClose(); }}>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 1, lineHeight: 1.25 }}>
-              <span>{t(opt.label)}</span>
-              <span style={{ fontSize: 11, color: theme.textMuted }}>{t(opt.hint)}</span>
+              <span>{opt.label}</span>
+              <span style={{ fontSize: 11, color: theme.textMuted }}>{opt.hint}</span>
             </span>
           </button>
         ))}
       </div>
       {config.role === 'follower' && (
         <div style={{ borderTop: `0.5px solid ${theme.border}`, padding: '7px 10px 9px' }}>
-          <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 5 }}>{t('闪避强度（dB）')}</div>
+          <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 5 }}>Duck depth (dB)</div>
           <div style={{ display: 'flex', gap: 4 }}>
             {[-6, -12, -18, -24].map((db) => {
               const cur = config.audioRouting?.duckDepthDb ?? -12;

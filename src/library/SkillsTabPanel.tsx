@@ -3,7 +3,6 @@
 // the composer uses); the active skill is highlighted. Custom skills get a
 // search box, per-card edit (name/summary/body via modal) and delete.
 import { useEffect, useMemo, useState } from 'react';
-import { getLocale, useT } from '../i18n/locale';
 import { allCreativeSkills, setCustomSkills, findSkill } from '../agent/skills/skills-catalog';
 import { loadCustomSkills, saveCustomSkill, deleteCustomSkill } from '../persist/skillStore';
 import type { CustomSkill } from '../persist/skillStore';
@@ -19,7 +18,6 @@ export function SkillsTabPanel({
   creativeMode: string | null;
   onCreativeModeChange: (id: string | null) => void;
 }) {
-  const t = useT();
   const [, bumpCustom] = useState(0);
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<CustomSkill | null>(null);
@@ -29,7 +27,7 @@ export function SkillsTabPanel({
   }, []);
   const skills = allCreativeSkills();
   const active = findSkill(creativeMode);
-  const skillName = (s: SkillDefinition) => (getLocale() === 'en' ? s.name : s.nameZh);
+  const skillName = (s: SkillDefinition) => s.name;
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return skills;
@@ -45,14 +43,14 @@ export function SkillsTabPanel({
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', padding: '12px 14px 18px', gap: 8 }}>
       <div style={{ fontSize: 11.5, color: theme.textDim, lineHeight: 1.5, marginBottom: 2 }}>
-        {t('选择创作工作流会约束 Agent 的规划与工具调用；激活后下一条消息按该工作流执行。')}
+        Choosing a creative workflow guides the Agent's planning and tool use; the next message runs under it.
       </div>
       <div style={{ position: 'relative' }}>
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('搜索技能（名称 / 说明）')}
+          placeholder="Search skills (name / description)"
           style={{
             width: '100%', padding: '6px 9px 6px 26px', borderRadius: 5,
             border: `0.5px solid ${theme.borderLight}`, background: theme.inset,
@@ -67,13 +65,13 @@ export function SkillsTabPanel({
           onClick={() => onCreativeModeChange(null)}
           style={{ textAlign: 'left', padding: '7px 10px', borderRadius: 6, border: `0.5px solid ${theme.accent}`, background: theme.panelAlt, cursor: 'pointer', color: theme.text }}
         >
-          <div style={{ fontSize: 12, fontWeight: 600 }}>{t('当前：{name}', { name: skillName(active) })}</div>
-          <div style={{ fontSize: 11, color: theme.textDim, marginTop: 1 }}>{t('点击取消创作模式，回到自由创作')}</div>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>{`Active: ${skillName(active)}`}</div>
+          <div style={{ fontSize: 11, color: theme.textDim, marginTop: 1 }}>Click to exit creative mode and return to freeform</div>
         </button>
       )}
-      <div className="cc-creative-picker-section">{t('专业工作流')}</div>
+      <div className="cc-creative-picker-section">Specialized workflows</div>
       {filtered.length === 0 && (
-        <div style={{ fontSize: 12, color: theme.textDim, padding: '14px 4px' }}>{t('没有匹配的技能')}</div>
+        <div style={{ fontSize: 12, color: theme.textDim, padding: '14px 4px' }}>No matching skills</div>
       )}
       <div className="cc-creative-mode-grid">
         {filtered.map((skill) => (
@@ -84,15 +82,15 @@ export function SkillsTabPanel({
               className="cc-creative-mode-row cc-creative-mode-card"
               data-active={creativeMode === skill.id}
               aria-pressed={creativeMode === skill.id}
-              title={t(skill.summary)}
+              title={skill.summary}
             >
               <span className="cc-creative-mode-icon"><IconWand /></span>
               <span className="cc-creative-mode-copy">
                 <span className="cc-creative-mode-title">
                   <strong>{skillName(skill)}</strong>
-                  {!BUILTIN_IDS.has(skill.slug) && <em>{t('自定义')}</em>}
+                  {!BUILTIN_IDS.has(skill.slug) && <em>Custom</em>}
                 </span>
-                <small>{t(skill.summary)}</small>
+                <small>{skill.summary}</small>
               </span>
               {creativeMode === skill.id && <span className="cc-creative-mode-check">✓</span>}
             </button>
@@ -100,8 +98,8 @@ export function SkillsTabPanel({
               <span className="cc-skill-actions">
                 <button
                   type="button"
-                  title={t('修改技能')}
-                  aria-label={t('修改技能')}
+                  title="Edit skill"
+                  aria-label="Edit skill"
                   onClick={(event) => {
                     event.stopPropagation();
                     const custom = skills.find((candidate) => candidate.id === skill.id) as CustomSkill | undefined;
@@ -112,8 +110,8 @@ export function SkillsTabPanel({
                 </button>
                 <button
                   type="button"
-                  title={t('删除技能')}
-                  aria-label={t('删除技能')}
+                  title="Delete skill"
+                  aria-label="Delete skill"
                   className={confirmingDelete === skill.id ? 'cc-skill-delete-confirm' : undefined}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -122,7 +120,7 @@ export function SkillsTabPanel({
                     void deleteCustomSkill(skill.id).then(reload);
                   }}
                 >
-                  {confirmingDelete === skill.id ? t('确认?') : '✕'}
+                  {confirmingDelete === skill.id ? 'Confirm?' : '✕'}
                 </button>
               </span>
             )}
@@ -130,7 +128,7 @@ export function SkillsTabPanel({
         ))}
       </div>
       <div style={{ fontSize: 10.5, color: theme.textDim, marginTop: 8, lineHeight: 1.5 }}>
-        {t('提示：也可在聊天输入框用 /skill:名称 快速激活，或用「技能创作器」创建自己的技能。')}
+        Tip: type /skill:name in the chat box to activate quickly, or use Skill Creator to build your own.
       </div>
       {editing && (
         <SkillEditDialog
@@ -152,7 +150,6 @@ function SkillEditDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const t = useT();
   const [name, setName] = useState(skill.name);
   const [summary, setSummary] = useState(skill.summary);
   const [body, setBody] = useState(skill.body);
@@ -160,7 +157,7 @@ function SkillEditDialog({
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
-    if (!name.trim()) { setError(t('名称不能为空')); return; }
+    if (!name.trim()) { setError('Name cannot be empty'); return; }
     setSaving(true);
     setError(null);
     try {
@@ -181,11 +178,11 @@ function SkillEditDialog({
         onPointerDown={(event) => event.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <strong style={{ fontSize: 14 }}>{t('修改技能')} · {skill.slug}</strong>
-          <button type="button" onClick={onClose} style={{ marginLeft: 'auto', padding: '3px 9px' }}>{t('取消')}</button>
+          <strong style={{ fontSize: 14 }}>Edit skill · {skill.slug}</strong>
+          <button type="button" onClick={onClose} style={{ marginLeft: 'auto', padding: '3px 9px' }}>Cancel</button>
         </div>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
-          {t('名称')}
+          Name
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -193,7 +190,7 @@ function SkillEditDialog({
           />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
-          {t('说明')}
+          Description
           <textarea
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
@@ -202,7 +199,7 @@ function SkillEditDialog({
           />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
-          {t('正文（Markdown，含 frontmatter）')}
+          Body (Markdown, including frontmatter)
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
@@ -216,9 +213,9 @@ function SkillEditDialog({
         </label>
         {error && <div style={{ fontSize: 12, color: theme.danger }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '5px 14px' }}>{t('取消')}</button>
+          <button type="button" onClick={onClose} style={{ padding: '5px 14px' }}>Cancel</button>
           <button type="button" onClick={() => void save()} disabled={saving} style={{ padding: '5px 14px' }}>
-            {saving ? t('保存中…') : t('保存')}
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>

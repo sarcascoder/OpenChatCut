@@ -42,7 +42,7 @@ function loadVideo(src: string): Promise<HTMLVideoElement> {
     };
     const onErr = (): void => {
       cleanup();
-      reject(new Error(`auto_reframe: 视频加载失败 (${src})`));
+      reject(new Error(`auto_reframe: failed to load video (${src})`));
     };
     video.addEventListener('loadedmetadata', onOk, { once: true });
     video.addEventListener('error', onErr, { once: true });
@@ -65,16 +65,16 @@ export async function execReframeTool(name: string, args: Args, ctx: AgentContex
 
   // —— Boundary verification: environment (pixel sampling requires a browser) ——
   if (typeof document === 'undefined' || typeof HTMLVideoElement === 'undefined') {
-    return { error: 'auto_reframe 需要浏览器环境(视频像素采样),当前无 DOM,无法运行。' };
+    return { error: 'auto_reframe needs a browser environment (video pixel sampling); there is no DOM here, so it cannot run.' };
   }
 
   const state: TimelineState = ctx.getState();
   const videos = state.items.filter((it) => it.kind === 'video');
   const item = findItem(videos, args.itemId);
   if (!item) {
-    return { error: `找不到视频 clip ${args.itemId ?? '(缺 itemId)'}`, available: videos.map((v) => ({ itemId: v.id, name: v.name })) };
+    return { error: `no video clip ${args.itemId ?? '(itemId missing)'}`, available: videos.map((v) => ({ itemId: v.id, name: v.name })) };
   }
-  if (!item.src) return { error: `clip ${item.id} 没有可采样的视频源(src 缺失)` };
+  if (!item.src) return { error: `clip ${item.id} has no samplable video source (src missing)` };
 
   // ——Parameter cleaning——
   const intervalFrames = Number.isFinite(Number(args.intervalFrames)) ? Math.max(1, Math.floor(Number(args.intervalFrames))) : undefined;
@@ -124,7 +124,7 @@ export async function execReframeTool(name: string, args: Args, ctx: AgentContex
       });
 
     if (!keyframes.length) {
-      return { error: `auto_reframe: 未能从 clip ${item.id} 采到任何帧(视频可能不可读)`, keyframes: 0 };
+      return { error: `auto_reframe: could not sample any frame from clip ${item.id} (the video may be unreadable)`, keyframes: 0 };
     }
 
     clearReframe(ctx, item);
@@ -139,12 +139,12 @@ export async function execReframeTool(name: string, args: Args, ctx: AgentContex
       smooth: smooth ?? DEFAULT_REFRAME_SMOOTH,
       source: usedGeometry ? 'geometry' : 'energy-grid',
       note: usedGeometry
-        ? '基于人像/人脸几何生成焦点（无需像素采样）。'
+        ? 'Focal points derived from person/face geometry (no pixel sampling needed).'
         : magnification <= 1.05
-          ? '画布与源画幅接近，裁切倍率≈1；关键帧已写入，换竖屏画布后更明显。'
-          : 'reframe 关键帧已写入；用 view_timeline_frames 自检裁切是否跟主体。',
+          ? 'Canvas and source aspect are close, so the crop factor is ≈1; keyframes were written and will show more clearly on a vertical canvas.'
+          : 'Reframe keyframes written; use view_timeline_frames to check the crop follows the subject.',
     };
   } catch (err: unknown) {
-    return { error: err instanceof Error ? err.message : 'auto_reframe 失败' };
+    return { error: err instanceof Error ? err.message : 'auto_reframe failed' };
   }
 }

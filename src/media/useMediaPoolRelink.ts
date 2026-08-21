@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
 import type { MediaAsset, MediaAssetRelinkPatch } from '../editor/types';
-import type { t as translate } from '../i18n/locale';
 import { matchRelinkFile } from './mediaRelinkMatch';
 import { importMedia } from './upload';
 
@@ -12,7 +11,6 @@ interface UseMediaPoolRelinkOptions {
   onRelinkAsset?: (id: string, next: MediaAssetRelinkPatch) => void;
   setBusy: (busy: boolean) => void;
   setError: (error: string | null) => void;
-  t: typeof translate;
 }
 
 interface MediaPoolRelinkState {
@@ -50,18 +48,14 @@ function relinkPatch(asset: MediaAsset): MediaAssetRelinkPatch {
 function relinkResultMessage(
   relinked: number,
   unmatched: readonly string[],
-  t: typeof translate,
 ): string {
   if (relinked > 0 && unmatched.length === 0) {
-    return t('已从文件夹按文件名重链 {n} 个素材', { n: relinked });
+    return `Relinked ${relinked} assets from the folder by filename`;
   }
   if (relinked > 0) {
-    return t('已重链 {n} 个素材；未找到匹配的文件：{list}', {
-      n: relinked,
-      list: unmatched.join('、'),
-    });
+    return `Relinked ${relinked} assets; no matching files found: ${unmatched.join(', ')}`;
   }
-  return t('未找到与丢失素材匹配的文件：{list}', { list: unmatched.join('、') });
+  return `No files matching the lost assets: ${unmatched.join(', ')}`;
 }
 
 async function relinkMatches(
@@ -150,7 +144,7 @@ function useBatchRelink(
   clearMissing: (id: string) => void,
 ): Pick<MediaPoolRelinkState,
 'directoryInputRef' | 'relinkBusy' | 'relinkMessage' | 'relinkFromFolder'> {
-  const { fps, onRelinkAsset, setError, t } = options;
+  const { fps, onRelinkAsset, setError } = options;
   const [relinkBusy, setRelinkBusy] = useState(false);
   const [relinkMessage, setRelinkMessage] = useState<string | null>(null);
   const directoryInputRef = useRef<HTMLInputElement>(null);
@@ -163,14 +157,14 @@ function useBatchRelink(
       const result = await relinkMatches(
         missingList, Array.from(files), fps, onRelinkAsset, clearMissing,
       );
-      setRelinkMessage(relinkResultMessage(result.relinked, result.unmatched, t));
+      setRelinkMessage(relinkResultMessage(result.relinked, result.unmatched));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
       setRelinkBusy(false);
       if (directoryInputRef.current) directoryInputRef.current.value = '';
     }
-  }, [clearMissing, fps, missingList, onRelinkAsset, setError, t]);
+  }, [clearMissing, fps, missingList, onRelinkAsset, setError]);
   return { directoryInputRef, relinkBusy, relinkMessage, relinkFromFolder };
 }
 

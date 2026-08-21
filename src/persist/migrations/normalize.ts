@@ -236,10 +236,11 @@ function withCaptionTrack(timeline: Timeline): Timeline {
     const { name, ...rest } = config ?? {};
     const nextConfig = {
       ...rest,
-      ...(name && name !== '字幕' ? { name } : {}),
+      // '\u5b57\u5e55' = "Subtitles": the legacy default caption-track name in saved projects
+      ...(name && name !== '\u5b57\u5e55' ? { name } : {}),
       ...(config?.captions === undefined && timeline.captions ? { captions: timeline.captions } : {}),
     };
-    if (config?.name !== '字幕' && config?.captions !== undefined) return timeline;
+    if (config?.name !== '\u5b57\u5e55' && config?.captions !== undefined) return timeline;
     return { ...timeline, tracks: { ...timeline.tracks, [existingId]: nextConfig } };
   }
   if (!timeline.captions) return timeline;
@@ -389,7 +390,7 @@ export function timelineToV1(value: TimelineState): LooseProjectShape & { versio
   const timeline: Timeline = {
     ...raw,
     id,
-    name: typeof raw.name === 'string' && raw.name ? raw.name : '序列 1',
+    name: typeof raw.name === 'string' && raw.name ? raw.name : 'Sequence 1',
     order: typeof raw.order === 'number' ? raw.order : 0,
   };
   return { version: 1, timelines: [timeline], activeTimelineId: id };

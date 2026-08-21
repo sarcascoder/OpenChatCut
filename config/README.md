@@ -31,7 +31,7 @@ Notes:
 | `.nvmrc` | Node version-manager convention (root lookup) |
 | `.mcp.json` | MCP clients (Claude Code etc.) discover it at the repo root; README documents this path |
 | `index.html` | Vite entry convention (project root) |
-| `README.md` / `README_ZH.md` / `CHANGELOG.md` / `LICENSE` | GitHub landing page, release notes, and license conventions |
+| `README.md` / `CHANGELOG.md` / `LICENSE` | GitHub landing page, release notes, and license conventions |
 | `.gitignore` | Git root-level convention |
 | `assets/` | README/product static assets (the website and release tooling may reference these paths) |
 

@@ -169,12 +169,12 @@ assert.deepEqual(serialized.map(({ url, body, provider }) => ({
 ]);
 
 const legacy = normalizeLlmMessages([
-  { role: 'user', content: '把第一段放到时间线' },
+  { role: 'user', content: 'Put the first clip on the timeline' },
   {
     role: 'assistant',
     content: [
       { type: 'thinking', thinking: 'private reasoning', signature: 'sig' },
-      { type: 'text', text: '开始处理。' },
+      { type: 'text', text: 'Starting now.' },
       { type: 'tool_use', id: 'tool_1', name: 'edit_item', input: { itemId: 'a' } },
     ],
   },
@@ -187,11 +187,11 @@ const legacy = normalizeLlmMessages([
 ]);
 
 assert.deepEqual(legacy, [
-  { role: 'user', content: '把第一段放到时间线' },
+  { role: 'user', content: 'Put the first clip on the timeline' },
   {
     role: 'assistant',
     content: [
-      { type: 'text', text: '开始处理。' },
+      { type: 'text', text: 'Starting now.' },
       { type: 'tool-call', toolCallId: 'tool_1', toolName: 'edit_item', input: { itemId: 'a' } },
     ],
   },
@@ -582,8 +582,8 @@ assert.strictEqual(nativeMediaHistory[0], compatibleFileToolA);
     tools: { edit_track: { inputSchema: jsonSchema({ type: 'object' }) } },
     maxRetries: 0,
   });
-  assert.ok(urls[0].includes('/models/gemini-test:generateContent'), '原生模型路径');
-  assert.equal(headerKeys[0], 'test-key', '鉴权走 x-goog-api-key(代理端将覆盖为真实 key)');
+  assert.ok(urls[0].includes('/models/gemini-test:generateContent'), 'native model path');
+  assert.equal(headerKeys[0], 'test-key', 'auth goes through x-goog-api-key (the proxy overwrites it with the real key)');
   const captured = first.response.messages.find((m) => m.role === 'assistant');
   assert.ok(captured, 'first hop yields an assistant message');
   // Second hop: Replay + tool results through our history pipeline (same vendor reserved providerOptions)
@@ -641,10 +641,10 @@ assert.strictEqual(nativeMediaHistory[0], compatibleFileToolA);
       }) as typeof fetch,
     });
     await assert.rejects(generateText({ model: provider('test-model'), prompt: 'hi', maxRetries: 0 }));
-    assert.ok(url.endsWith('/llm/chat/completions'), `${label}: /chat/completions 路径(got ${url})`);
-    assert.equal(auth, 'Bearer proxy-key', `${label}: Bearer 鉴权`);
-    assert.equal(body.model, 'test-model', `${label}: model 字段`);
-    assert.ok(Array.isArray(body.messages), `${label}: messages 数组`);
+    assert.ok(url.endsWith('/llm/chat/completions'), `${label}: /chat/completions path (got ${url})`);
+    assert.equal(auth, 'Bearer proxy-key', `${label}: Bearer auth`);
+    assert.equal(body.model, 'test-model', `${label}: model field`);
+    assert.ok(Array.isArray(body.messages), `${label}: messages array`);
   }
 }
 
@@ -885,7 +885,7 @@ assert.match(
   'API history must keep assistant text after an unresolved tool error',
 );
 assert.match(JSON.stringify(apiFailureResult.at(-1)), /Removed the clip successfully/, 'final reply is the model\'s own text');
-assert.doesNotMatch(JSON.stringify(apiFailureResult), /couldn't complete the requested operation|有工具调用失败/, 'no failure-report template is injected; the model replies freely');
+assert.doesNotMatch(JSON.stringify(apiFailureResult), /couldn't complete the requested operation|\u6709\u5de5\u5177\u8c03\u7528\u5931\u8d25/, 'no failure-report template is injected; the model replies freely');
 assert.match(
   apiFailureEvents
     .filter((event): event is Extract<AgentEvent, { type: 'text-delta' }> => event.type === 'text-delta')
@@ -931,7 +931,7 @@ assert.equal(
   true,
   'repeated failed tools must terminate at the tool-turn limit',
 );
-assert.doesNotMatch(JSON.stringify(maxTurnResult), /couldn't complete the requested operation|有工具调用失败/, 'max-turn close emits no failure-report template');
+assert.doesNotMatch(JSON.stringify(maxTurnResult), /couldn't complete the requested operation|\u6709\u5de5\u5177\u8c03\u7528\u5931\u8d25/, 'max-turn close emits no failure-report template');
 assert.equal(maxTurnFailures.hasUnresolved, false, 'max-turn failure reporting must close the tracker');
 
 const abortFailures = new ToolFailureTracker();

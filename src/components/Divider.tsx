@@ -1,11 +1,9 @@
 import { useRef, useState } from 'react';
 import { theme } from '../theme';
-import { useT } from '../i18n/locale';
 
 // A thin drag handle for resizing adjacent panels. Reports the pointer delta
 // (along its axis) on each move; the parent clamps and applies it to a size.
 export function Divider({ onResize, orientation = 'vertical' }: { onResize: (delta: number) => void; orientation?: 'vertical' | 'horizontal' }) {
-  const t = useT();
   const last = useRef<number | null>(null);
   const [active, setActive] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -18,7 +16,7 @@ export function Divider({ onResize, orientation = 'vertical' }: { onResize: (del
       role="separator"
       tabIndex={0}
       aria-orientation={horiz ? 'horizontal' : 'vertical'}
-      aria-label={t('拖动调整大小')}
+      aria-label="Drag to resize"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         last.current = axis(e);
@@ -45,7 +43,7 @@ export function Divider({ onResize, orientation = 'vertical' }: { onResize: (del
         event.preventDefault();
         onResize(delta);
       }}
-      title={t('拖动调整大小')}
+      title="Drag to resize"
       style={{
         position: 'relative', zIndex: 20,
         width: horiz ? '100%' : 9, height: horiz ? 9 : '100%',

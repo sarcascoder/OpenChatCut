@@ -53,7 +53,7 @@ const versionDoc = (name: string): ProjectDoc => ({
 resetProjectStoreMemory();
 assert.equal(await hasProjectHistory(), false, 'brand-new store has no project history');
 
-const project = await createProject('仅有工程', emptyDoc);
+const project = await createProject('Solo Project', emptyDoc);
 assert.equal(await hasProjectHistory(), true, 'creating a project initializes the store');
 await saveChat(project.id, {
   messages: [],

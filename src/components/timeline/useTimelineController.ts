@@ -42,7 +42,6 @@ import {
 import {
   emitSelectionRef, itemRef, timerangeRef, useSelectionRefMode,
 } from '../../agent/selection-refs';
-import { getLocale, useT } from '../../i18n/locale';
 import type { TimelineProps } from './timelineTypes';
 import { useTimelineTrackMenus } from './useTimelineTrackMenus';
 import { useTimelineMediaActions } from './useTimelineMediaActions';
@@ -53,8 +52,6 @@ export function useTimelineController({
   selectedCaptions = [], onSelectCaption = () => {}, onMarqueeCaptionSelect = () => {},
   onDropExternalFiles,
 }: TimelineProps) {
-  const t = useT();
-  const locale = getLocale();
   const total = useMemo(() => timelineFitTotalFrames(state), [state]);
   const empty = total === 0;
   const liveStateRef = useRef(state);
@@ -142,7 +139,7 @@ export function useTimelineController({
     captionError, setCaptionError, duckMenu, setDuckMenu,
     moveCaptionCue, openCaptionTrackMenu, openDuckTrackMenu,
     closeTrackDrillMenu, backFromTrackDrillMenu,
-  } = useTimelineTrackMenus({ state, commands, t });
+  } = useTimelineTrackMenus({ state, commands });
   // mic voiceover recording (recording narration). Toggle to start/stop; the blob
   // is uploaded + dropped on an audio track by the parent.
   const recorder = useRecorder(onRecordVoiceover ?? (() => {}));
@@ -201,7 +198,7 @@ export function useTimelineController({
         const startFrame = Math.max(0, Math.round(cue.start * state.fps / 1000));
         const endFrame = Math.max(startFrame + 1, Math.round(cue.end * state.fps / 1000));
         const base = timerangeRef(startFrame, endFrame, state, { trackId: resolved.trackId });
-        return [{ ...base, id: `caption:${captionSelectionKey(captionSelection) ?? base.id}`, name: `字幕：${cue.text}` }];
+        return [{ ...base, id: `caption:${captionSelectionKey(captionSelection) ?? base.id}`, name: `Caption: ${cue.text}` }];
       }),
     ];
     for (const reference of references) emitSelectionRef(reference);
@@ -283,9 +280,9 @@ export function useTimelineController({
     if (!captions) return false;
     const trackId = `track_${crypto.randomUUID()}`;
     commands.batch([
-      { type: 'track.create', track: { id: trackId, kind: 'caption', name: t('复制字幕') } },
+      { type: 'track.create', track: { id: trackId, kind: 'caption', name: 'Copy captions' } },
       { type: 'setCaptions', captions, track: trackId },
-    ], t('粘贴字幕'));
+    ], 'Paste captions');
     return true;
   };
 
@@ -334,7 +331,7 @@ export function useTimelineController({
     beginTrackInsert, insertTrackFiles, exportMg, convertToVideo,
     applyLibraryToClip, applyLibraryToTrack,
   } = useTimelineMediaActions({
-    state, commands, liveStateRef, onDropExternalFiles, placeMode, t,
+    state, commands, liveStateRef, onDropExternalFiles, placeMode,
   });
 
   const seekPointerFrame = (frame: number) => {
@@ -444,8 +441,7 @@ export function useTimelineController({
 
   return {
     state, commands, playerRef, onRecordVoiceover, onReviewItem, onDropExternalFiles,
-    selectedCaptions, onSelectCaption, onMarqueeCaptionSelect,
-    t, locale, total, empty, trackIds, indexes, innerRef, scrollRef,
+    selectedCaptions, onSelectCaption, onMarqueeCaptionSelect, total, empty, trackIds, indexes, innerRef, scrollRef,
     relinkInputRef, trackInsertInputRef, seekGestureRef,
     hoverPreviewFrame, captionSelectionMovePreview, setCaptionSelectionMovePreview,
     commitTimelineSelectionMove, zoom, setZoom, px, trackScale, metaOf,

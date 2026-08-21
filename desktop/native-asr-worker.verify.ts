@@ -46,16 +46,18 @@ assert.equal(noisy.chunks.length, 0, 'no chunks from special tokens');
 console.log('native-asr-worker.verify: whisper token projection OK');
 
 // whisper-server verbose_json words projection (seconds -> ms).
+// CJK kept as escapes: "hello everyone" (leading space trimmed) / "welcome" —
+// non-ASCII ASR words must survive the ms projection intact.
 const serverWords = whisperWordsToChunks([
-  { word: ' 大家好', start: 0.01, end: 0.73 },
+  { word: ' \u5927\u5bb6\u597d', start: 0.01, end: 0.73 },
   { word: ',', start: 1.13, end: 1.22 },
-  { word: '歡迎', start: 1.22, end: 1.64 },
+  { word: '\u6b61\u8fce', start: 1.22, end: 1.64 },
 ] as never);
 assert.deepEqual(
   serverWords,
   [
-    { text: '大家好', start: 10, end: 730 },
-    { text: '歡迎', start: 1220, end: 1640 },
+    { text: '\u5927\u5bb6\u597d', start: 10, end: 730 },
+    { text: '\u6b61\u8fce', start: 1220, end: 1640 },
   ],
   'server words project to ms chunks with punctuation dropped',
 );

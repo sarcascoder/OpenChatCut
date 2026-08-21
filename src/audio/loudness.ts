@@ -55,7 +55,7 @@ function mixToMono(buffer: AudioBuffer): Float32Array {
  * →Measure integrated loudness. Browser-specific; it should not be adjusted in the node environment (OfflineAudioContext does not exist). */
 export async function analyzeClipLoudness(src: string): Promise<number> {
   const res = await fetch(src);
-  if (!res.ok) throw new Error(`加载音频失败: ${src} (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Failed to load audio: ${src} (HTTP ${res.status})`);
   const arrayBuffer = await res.arrayBuffer();
   // The length is just a placeholder; the actual sampling rate/number of channels is subject to the decoding result of decodeAudioData.
   const ctx = new OfflineAudioContext(1, 1, 44100);

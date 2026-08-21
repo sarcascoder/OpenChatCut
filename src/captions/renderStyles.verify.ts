@@ -6,8 +6,8 @@ import { mapCaptionStyle } from './styleMap';
 const preset: CaptionStyle = {
   id: 'plain',
   label: 'Test',
-  labelZh: '测试',
-  hint: '测试',
+  labelZh: 'Test',
+  hint: 'Test',
   fontFamily: 'Inter',
   fontSize: 0.04,
   fontWeight: 700,

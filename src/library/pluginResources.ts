@@ -34,7 +34,7 @@ export function pluginResourceItems(
       out.push({
         id: pluginAssetId(pack.id, item.id),
         name: item.name,
-        badge: '扩展',
+        badge: 'Extension',
         ...(item.thumb ? { thumb: item.thumb } : {}),
         ...(item.type === 'zoom'
           ? { data: {
@@ -107,8 +107,8 @@ export function pluginTemplates(packs: InstalledPack[]): Tpl[] {
       out.push({
         id: pluginAssetId(pack.id, item.id),
         name: item.name,
-        category: '扩展',
-        description: item.desc ?? `${pack.name} 扩展模板`,
+        category: 'Extension',
+        description: item.desc ?? `${pack.name} extension template`,
         width: item.width ?? 1920,
         height: item.height ?? 1080,
         fps: 30,
@@ -146,7 +146,7 @@ export function asPluginTpl(data: unknown): Tpl | null {
   return {
     id: template.id,
     name: template.name,
-    category: '扩展',
+    category: 'Extension',
     description: typeof template.description === 'string' ? template.description : undefined,
     width: num(template.width, 1920),
     height: num(template.height, 1080),

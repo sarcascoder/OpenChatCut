@@ -7,8 +7,8 @@ const partsSource = await readFile(new URL('./ExtensionCenterParts.tsx', import.
 
 assert.match(installedSource, /expandedId: string \| null/);
 assert.match(installedSource, /pack\.items\.map/);
-assert.match(installedSource, /查看内容/);
-assert.match(installedSource, /确认卸载/);
+assert.match(installedSource, /View contents/);
+assert.match(installedSource, /Confirm uninstall/);
 assert.match(centerSource, /const \[expandedId, setExpandedId\]/);
 assert.match(centerSource, /onExpand=\{setExpandedId\}/);
 assert.match(partsSource, /role="switch"/);

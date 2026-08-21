@@ -176,7 +176,7 @@ async function poll(
     }
     if (d.status === 'error') throw new Error(d.error ?? 'transcription error');
     const waited = Math.max(0, Math.round((ASSEMBLYAI_POLL_DEADLINE_MS - (deadline - Date.now())) / 1000));
-    onWait?.(`云端转写中（${String(d.status)}，已等待 ${waited}s）`);
+    onWait?.(`Cloud transcription in progress (${String(d.status)}, waited ${waited}s)`);
     await new Promise((res) => setTimeout(res, 2500));
   }
 }
@@ -222,7 +222,7 @@ export async function extractAudioForAsr(src: string): Promise<string | null> {
     });
     if (res.status === 422) {
       const data = (await res.json().catch(() => null)) as { noAudio?: boolean } | null;
-      if (data?.noAudio) throw new TranscriptionError('no-audio', `该片段没有音轨，无法转写：${src}`);
+      if (data?.noAudio) throw new TranscriptionError('no-audio', `This clip has no audio track and cannot be transcribed: ${src}`);
     }
     if (!res.ok) return null;
     const data = (await res.json()) as { path?: string; ok?: boolean };

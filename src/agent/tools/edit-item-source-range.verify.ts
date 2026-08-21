@@ -14,11 +14,11 @@ const state = {
 } as unknown as TimelineState;
 
 const assets = [
-  { id: 'asset-v', name: '素材.mp4', kind: 'video', src: '/media/uploads/v.mp4', durationInFrames: 900, width: 1920, height: 1080 },
-  { id: 'asset-a', name: '音乐.mp3', kind: 'audio', src: '/media/uploads/m.mp3', durationInFrames: 6000 },
+  { id: 'asset-v', name: 'footage.mp4', kind: 'video', src: '/media/uploads/v.mp4', durationInFrames: 900, width: 1920, height: 1080 },
+  { id: 'asset-a', name: 'music.mp3', kind: 'audio', src: '/media/uploads/m.mp3', durationInFrames: 6000 },
   {
     id: 'asset-at',
-    name: '访谈.mp3',
+    name: 'interview.mp3',
     kind: 'audio',
     src: '/media/uploads/interview.mp3',
     durationInFrames: 6000,
@@ -27,7 +27,7 @@ const assets = [
       { text: 'second', start: 4_000, end: 5_000 },
     ],
   },
-  { id: 'asset-g', name: '动图.gif', kind: 'gif', src: '/media/uploads/a.gif', durationInFrames: 300, width: 640, height: 360 },
+  { id: 'asset-g', name: 'animation.gif', kind: 'gif', src: '/media/uploads/a.gif', durationInFrames: 300, width: 640, height: 360 },
 ] as MediaAsset[];
 
 async function main(): Promise<void> {

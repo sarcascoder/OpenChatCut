@@ -10,8 +10,8 @@ the configured MiniMax model determines which mode matrix is valid. Multi-ref
 is not a Hailuo API mode and is rejected.
 
 Default settings model is `MiniMax-Hailuo-02` (Settings may switch to
-`MiniMax-Hailuo-2.3` / `MiniMax-Hailuo-2.3-Fast`). Call it **海螺 / Hailuo /
-MiniMax video** for the user.
+`MiniMax-Hailuo-2.3` / `MiniMax-Hailuo-2.3-Fast`). Call it **Hailuo / MiniMax
+video** for the user.
 
 ## Capabilities (as wired)
 
@@ -69,7 +69,7 @@ For those → `seedance2` / `kling` when configured.
 
 ## When to choose Hailuo
 
-- User named **MiniMax / 海螺 / Hailuo**
+- User named **MiniMax / Hailuo**
 - Short **single** clip (6s or 10s), T2V / I2V / simple first→last morph
 - Only MiniMax video key is on
 

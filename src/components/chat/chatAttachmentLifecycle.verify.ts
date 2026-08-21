@@ -100,18 +100,18 @@ assert.equal(
 
 const chipOnlyReferences = [existing];
 assert.equal(
-  referencesAfterComposerTextEdit(chipOnlyReferences, '先选引用', '先选引用，再输入需求'),
+  referencesAfterComposerTextEdit(chipOnlyReferences, 'pick a reference first', 'pick a reference first, then type the request'),
   chipOnlyReferences,
   'typing after selecting a chip-only reference must preserve the reference',
 );
 const inlineToken = refPromptToken(existing);
 assert.deepEqual(
-  referencesAfterComposerTextEdit(chipOnlyReferences, `${inlineToken} 需求`, '需求'),
+  referencesAfterComposerTextEdit(chipOnlyReferences, `${inlineToken} request`, 'request'),
   [],
   'deleting a previously embedded prompt token must still remove its reference',
 );
 assert.deepEqual(
-  referencesAfterComposerTextEdit(chipOnlyReferences, `${inlineToken} 需求`, `${inlineToken} 新需求`),
+  referencesAfterComposerTextEdit(chipOnlyReferences, `${inlineToken} request`, `${inlineToken} new request`),
   chipOnlyReferences,
   'editing around an embedded prompt token must preserve its reference',
 );

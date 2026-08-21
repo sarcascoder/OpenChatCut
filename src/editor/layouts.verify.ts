@@ -19,53 +19,53 @@ for (const layout of LAYOUT_IDS) {
   const slots = layoutSlots(layout as LayoutId);
   for (const [name, slot] of Object.entries(slots)) {
     const t = placeInSlot(slot, 'cover');
-    assert.ok(rectNear(visibleRectOf(t), slot), `${layout}/${name} cover 可视矩形应等于槽位`);
+    assert.ok(rectNear(visibleRectOf(t), slot), `${layout}/${name} cover visible rect should equal the slot`);
     assert.ok((t.scale ?? 0) > 0, `${layout}/${name} scale > 0`);
     const c = t.crop;
     if (c) {
-      for (const v of [c.left, c.top, c.right, c.bottom]) assert.ok((v ?? 0) >= 0 && (v ?? 0) < 1, '裁切分数在界内');
-      assert.ok((c.left ?? 0) + (c.right ?? 0) < 1 && (c.top ?? 0) + (c.bottom ?? 0) < 1, '裁切不吃光整层');
+      for (const v of [c.left, c.top, c.right, c.bottom]) assert.ok((v ?? 0) >= 0 && (v ?? 0) < 1, 'crop fractions stay in range');
+      assert.ok((c.left ?? 0) + (c.right ?? 0) < 1 && (c.top ?? 0) + (c.bottom ?? 0) < 1, 'cropping never consumes the whole layer');
     }
   }
 }
 
 // ── Specific values: Left half screen = original size, middle half cropped, left shift 25%; grid angle = half size without cropping ──
 const left = placeInSlot(layoutSlots('2up-horizontal').left!, 'cover');
-assert.ok(near(left.scale!, 1) && near(left.x!, -25) && near(left.y!, 0), '左半屏 scale1/x-25');
-assert.ok(near(left.crop!.left!, 0.25) && near(left.crop!.right!, 0.25), '左半屏左右各裁 1/4');
+assert.ok(near(left.scale!, 1) && near(left.x!, -25) && near(left.y!, 0), 'left half-screen scale1/x-25');
+assert.ok(near(left.crop!.left!, 0.25) && near(left.crop!.right!, 0.25), 'left half-screen crops 1/4 off each side');
 const tl = placeInSlot(layoutSlots('grid-4')['top-left']!, 'cover');
-assert.equal(tl.crop, undefined, '同比槽(grid 角)无需裁切');
-assert.ok(near(tl.scale!, 0.5) && near(tl.x!, -25) && near(tl.y!, -25), 'grid 角半尺寸居角');
+assert.equal(tl.crop, undefined, 'a same-ratio slot (grid corner) needs no cropping');
+assert.ok(near(tl.scale!, 0.5) && near(tl.x!, -25) && near(tl.y!, -25), 'grid corner sits in the corner at half size');
 
 // ── Anchor: 0 keeps left/top (left is not cropped), 1 keeps right/bottom; the visible rectangle is still exactly equal to the slot ──
 const keepLeft = placeInSlot(layoutSlots('2up-horizontal').left!, 'cover', 0, 0.5);
-assert.ok(near(keepLeft.crop!.left!, 0) && near(keepLeft.crop!.right!, 0.5), 'anchorX=0 只裁右侧');
-assert.ok(rectNear(visibleRectOf(keepLeft), layoutSlots('2up-horizontal').left!), 'anchor 不破坏槽位对齐');
+assert.ok(near(keepLeft.crop!.left!, 0) && near(keepLeft.crop!.right!, 0.5), 'anchorX=0 crops only the right side');
+assert.ok(rectNear(visibleRectOf(keepLeft), layoutSlots('2up-horizontal').left!), 'anchor does not break slot alignment');
 const keepBottom = placeInSlot(layoutSlots('2up-vertical').top!, 'cover', 0.5, 1);
-assert.ok(near(keepBottom.crop!.top!, 0.5) && near(keepBottom.crop!.bottom!, 0), 'anchorY=1 只裁上侧');
+assert.ok(near(keepBottom.crop!.top!, 0.5) && near(keepBottom.crop!.bottom!, 0), 'anchorY=1 crops only the top side');
 
 // ── fit: The mailbox is not cut, the box is contained in the slot and centered ──
 const fitLeft = placeInSlot(layoutSlots('2up-horizontal').left!, 'fit');
-assert.equal(fitLeft.crop, undefined, 'fit 不裁切');
-assert.ok(near(fitLeft.scale!, 0.5), 'fit 取 min(slot.w, slot.h)');
+assert.equal(fitLeft.crop, undefined, 'fit never crops');
+assert.ok(near(fitLeft.scale!, 0.5), 'fit takes min(slot.w, slot.h)');
 const fitBox = visibleRectOf(fitLeft);
 const slotL = layoutSlots('2up-horizontal').left!;
-assert.ok(fitBox.x >= slotL.x - 1e-6 && fitBox.x + fitBox.w <= slotL.x + slotL.w + 1e-6, 'fit 盒子横向含于槽');
-assert.ok(near(fitBox.x + fitBox.w / 2, slotL.x + slotL.w / 2), 'fit 居中');
+assert.ok(fitBox.x >= slotL.x - 1e-6 && fitBox.x + fitBox.w <= slotL.x + slotL.w + 1e-6, 'the fit box is horizontally contained in the slot');
+assert.ok(near(fitBox.x + fitBox.w / 2, slotL.x + slotL.w / 2), 'fit is centered');
 
 // ── full = reset:scale1 / no displacement / no cropping ──
 const full = placeInSlot(layoutSlots('full').full!, 'cover');
-assert.ok(near(full.scale!, 1) && near(full.x!, 0) && near(full.y!, 0) && full.crop === undefined && full.rotation === 0, 'full 即复位');
+assert.ok(near(full.scale!, 1) && near(full.x!, 0) && near(full.y!, 0) && full.crop === undefined && full.rotation === 0, 'full is a reset');
 
 // ── pip: corner/size/margin parameters take effect and are clamped ──
 const pip = layoutSlots('pip', { corner: 'top-left', size: 0.25, margin: 0.05 });
-assert.ok(rectNear(pip.inset!, { x: 0.05, y: 0.05, w: 0.25, h: 0.25 }), 'pip 左上角小窗');
+assert.ok(rectNear(pip.inset!, { x: 0.05, y: 0.05, w: 0.25, h: 0.25 }), 'pip inset window in the top-left corner');
 const clamped = layoutSlots('pip', { size: 5, margin: -1 });
-assert.ok(near(clamped.inset!.w, 0.6) && near(clamped.inset!.x, 0.4), 'pip 参数越界被钳制');
+assert.ok(near(clamped.inset!.w, 0.6) && near(clamped.inset!.x, 0.4), 'out-of-range pip parameters are clamped');
 
 // ──Illegal slot rejection──
-assert.throws(() => placeInSlot({ x: 0.8, y: 0, w: 0.5, h: 1 }), /invalid slot/, '越出画布的槽拒绝');
-assert.throws(() => placeInSlot({ x: 0, y: 0, w: 0, h: 1 }), /invalid slot/, '零宽槽拒绝');
+assert.throws(() => placeInSlot({ x: 0.8, y: 0, w: 0.5, h: 1 }), /invalid slot/, 'a slot running off the canvas is rejected');
+assert.throws(() => placeInSlot({ x: 0, y: 0, w: 0, h: 1 }), /invalid slot/, 'a zero-width slot is rejected');
 
 // ── Tool layer: verification, batch output, pip stacking and time overlap reminder ──
 assert.ok(LAYOUT_TOOL_NAMES.has('apply_layout'));
@@ -93,28 +93,28 @@ const ok = execLayoutTool('apply_layout', {
   layout: '2up-horizontal',
   assignments: [{ slot: 'left', itemId: 'a' }, { slot: 'right', itemId: 'b' }],
 }, ctx) as { applied: Array<{ itemId: string; transform: { x?: number } }>; notes?: string[] };
-assert.equal(recorded.actions.length, 2, '一次 batch 两条 setTransform');
+assert.equal(recorded.actions.length, 2, 'one batch with two setTransform actions');
 assert.equal(recorded.actions[0]!.type, 'setTransform');
-assert.ok(near(ok.applied[0]!.transform.x!, -25), '左槽 x=-25');
-assert.equal(ok.notes, undefined, '时间重叠正常 → 无提醒');
+assert.ok(near(ok.applied[0]!.transform.x!, -25), 'left slot x=-25');
+assert.equal(ok.notes, undefined, 'normal time overlap → no note');
 
 const bad = execLayoutTool('apply_layout', { layout: 'grid-4', assignments: [{ slot: 'middle', itemId: 'a' }] }, ctx) as { error?: string };
-assert.match(bad.error ?? '', /unknown slot/, '未知槽名报错');
+assert.match(bad.error ?? '', /unknown slot/, 'an unknown slot name errors');
 const dup = execLayoutTool('apply_layout', { layout: '2up-horizontal', assignments: [{ slot: 'left', itemId: 'a' }, { slot: 'left', itemId: 'b' }] }, ctx) as { error?: string };
-assert.match(dup.error ?? '', /assigned twice/, '重复槽报错');
+assert.match(dup.error ?? '', /assigned twice/, 'a duplicate slot errors');
 const audio = execLayoutTool('apply_layout', { layout: 'full', assignments: [{ slot: 'full', itemId: 'snd' }] }, ctx) as { error?: string };
-assert.match(audio.error ?? '', /visual clips/, '音频片段拒绝');
+assert.match(audio.error ?? '', /visual clips/, 'audio clips are rejected');
 
 // trackOrder V2 in front (upstream) → inset V1 (downstream) should be reminded; if the time does not overlap, it should also be reminded
 const warn = execLayoutTool('apply_layout', {
   layout: 'pip',
   assignments: [{ slot: 'main', itemId: 'b' }, { slot: 'inset', itemId: 'a' }],
 }, ctx) as { notes?: string[] };
-assert.ok(warn.notes?.some((n) => n.includes('BEHIND')), 'inset 低于 main → 叠放提醒');
+assert.ok(warn.notes?.some((n) => n.includes('BEHIND')), 'inset below main → stacking note');
 const never = execLayoutTool('apply_layout', {
   layout: '2up-horizontal',
   assignments: [{ slot: 'left', itemId: 'a' }, { slot: 'right', itemId: 'late' }],
 }, ctx) as { notes?: string[] };
-assert.ok(never.notes?.some((n) => n.includes('overlap in time')), '时间不重叠 → 提醒');
+assert.ok(never.notes?.some((n) => n.includes('overlap in time')), 'no time overlap → note');
 
-console.log('layouts.verify: ok (cover 槽位恒等/anchor/fit/pip/复位/工具校验)');
+console.log('layouts.verify: ok (cover slot identity/anchor/fit/pip/reset/tool validation)');

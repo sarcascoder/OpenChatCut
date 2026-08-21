@@ -245,7 +245,7 @@ assert.throws(
     prompt: 'short',
     referenceAudioPath: '/media/uploads/source.mp3',
   }),
-  /10–300 characters/,
+  /10\u2013300 characters/,
 );
 assert.throws(
   () => validateMusicRequest({

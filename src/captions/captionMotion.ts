@@ -2,11 +2,11 @@ import type { CSSProperties } from 'react';
 import type { CaptionMotionPreset, CaptionPage } from './types';
 
 export const CAPTION_MOTION_OPTIONS = [
-  { id: 'none', label: '无动效' },
-  { id: 'fade-up', label: '淡入上浮' },
-  { id: 'pop', label: '弹性入场' },
-  { id: 'word-pop', label: '逐词弹出' },
-  { id: 'karaoke-pulse', label: '卡拉 OK 脉冲' },
+  { id: 'none', label: 'None' },
+  { id: 'fade-up', label: 'Fade up' },
+  { id: 'pop', label: 'Pop in' },
+  { id: 'word-pop', label: 'Word pop' },
+  { id: 'karaoke-pulse', label: 'Karaoke pulse' },
 ] as const satisfies ReadonlyArray<{ id: CaptionMotionPreset; label: string }>;
 
 const PRESETS = new Set<CaptionMotionPreset>(CAPTION_MOTION_OPTIONS.map((option) => option.id));

@@ -35,7 +35,8 @@ const options = (
   summarize,
 });
 
-assert.equal(estimateTextTokens('abcd中文'), 3, 'ASCII and CJK use separate conservative ratios');
+// '\u4e2d\u6587' is "Chinese text" — CJK chars must use the CJK token ratio, not the ASCII one
+assert.equal(estimateTextTokens('abcd\u4e2d\u6587'), 3, 'ASCII and CJK use separate conservative ratios');
 assert.equal(estimateContextTokens([message('user', 'abcd')]), 5, 'message framing overhead is counted');
 
 let summaryCalls = 0;

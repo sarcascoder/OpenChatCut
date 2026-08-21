@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { TranscriptWord } from '../transcript/types';
-import { useT } from '../i18n/locale';
 import { Icon } from '../components/icons';
 import { transcriptParagraphs, transcriptTimestamp } from './transcriptParagraphs';
 
@@ -45,7 +44,6 @@ export function PoolTranscriptViewer({ asset, entries, onClose, onStep }: PoolTr
 }
 
 export function TranscriptViewerDialog({ asset, entries, onClose, onStep }: TranscriptViewerProps) {
-  const t = useT();
   const [copied, setCopied] = useState(false);
   const [position, setPosition] = useState<PanelPosition | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -93,7 +91,7 @@ export function TranscriptViewerDialog({ asset, entries, onClose, onStep }: Tran
       className="cc-transcript-viewer-panel"
       style={position ? { left: position.left, top: position.top, right: 'auto', bottom: 'auto' } : undefined}
       role="region"
-      aria-label={t('文字稿：{name}', { name: asset.name })}
+      aria-label={`Transcript: ${asset.name}`}
       onClick={stop}
     >
       <div
@@ -105,16 +103,16 @@ export function TranscriptViewerDialog({ asset, entries, onClose, onStep }: Tran
       >
         <strong title={asset.name}>{asset.name}</strong>
         <div className="cc-transcript-viewer-actions">
-          <button type="button" className="primary" onClick={() => void copy()}>{copied ? t('已复制') : t('复制全文')}</button>
-          <button type="button" disabled={entries.length < 2} onClick={() => onStep(-1)} aria-label={t('上一条')} title={t('上一条')}><Icon name="prev" size={15} /></button>
+          <button type="button" className="primary" onClick={() => void copy()}>{copied ? 'Copied' : 'Copy full text'}</button>
+          <button type="button" disabled={entries.length < 2} onClick={() => onStep(-1)} aria-label="Previous" title="Previous"><Icon name="prev" size={15} /></button>
           <span className="cc-transcript-viewer-count">{index >= 0 ? `${index + 1} / ${entries.length}` : '1 / 1'}</span>
-          <button type="button" disabled={entries.length < 2} onClick={() => onStep(1)} aria-label={t('下一条')} title={t('下一条')}><Icon name="next" size={15} /></button>
-          <button type="button" onClick={onClose} aria-label={t('关闭')}><Icon name="x" size={15} /></button>
+          <button type="button" disabled={entries.length < 2} onClick={() => onStep(1)} aria-label="Next" title="Next"><Icon name="next" size={15} /></button>
+          <button type="button" onClick={onClose} aria-label="Close"><Icon name="x" size={15} /></button>
         </div>
       </div>
       <div className="cc-transcript-viewer-body">
         {paragraphs.length === 0
-          ? <p className="cc-transcript-viewer-empty">{t('暂无文字稿')}</p>
+          ? <p className="cc-transcript-viewer-empty">No transcript yet</p>
           : paragraphs.map((paragraph, i) => (
             <p key={`${paragraph.start}-${i}`} className="cc-transcript-viewer-paragraph">
               <span className="cc-transcript-viewer-time">{transcriptTimestamp(paragraph.start)}</span>

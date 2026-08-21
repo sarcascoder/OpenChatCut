@@ -236,7 +236,7 @@ assert.strictEqual(blockedJobPosts, 0, 'revoked reachable media must block Agent
 assert.strictEqual(blockedSubmit.code, 'export_media_not_ready');
 assert.strictEqual(blockedSubmit.retryable, false);
 assert.match(blockedSubmit.error ?? '', /revoked\.png/);
-assert.match(blockedSubmit.error ?? '', /重新导入|re-import/);
+assert.match(blockedSubmit.error ?? '', /re-import/);
 
 // 4) track_export status maps a single snapshot to the tool result (no downloadUrl mid-flight).
 globalThis.fetch = (async () => new Response(JSON.stringify({ id: 'r-123', status: 'running', progress: 10, params: {} }), { status: 200 })) as typeof fetch;

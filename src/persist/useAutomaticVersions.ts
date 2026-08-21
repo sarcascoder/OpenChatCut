@@ -20,7 +20,7 @@ function captureAutomaticVersion(state: CaptureState): Promise<void> {
   const snapshotProject = state.project.current;
   const snapshot = state.latestDoc.current;
   state.dirty.current = false;
-  const run = saveAutomaticVersion(snapshotProject, '自动保存', snapshot).then(
+  const run = saveAutomaticVersion(snapshotProject, 'Auto-save', snapshot).then(
     () => {
       if (state.project.current === snapshotProject && state.latestDoc.current !== snapshot) {
         state.dirty.current = true;
@@ -65,7 +65,7 @@ export function useAutomaticVersions(projectId: string, doc: ProjectDoc): void {
       clearTimeout(idleTimer.current ?? undefined);
       idleTimer.current = null;
       if (shouldCapture) {
-        void saveAutomaticVersion(previousProject, '自动保存', pendingDoc).catch(() => undefined);
+        void saveAutomaticVersion(previousProject, 'Auto-save', pendingDoc).catch(() => undefined);
       }
       return;
     }

@@ -1,27 +1,25 @@
 import { theme } from '../../theme';
 import type { SelectedPreviewStatus } from '../../gl/previewAdapter';
-import { t, useT } from '../../i18n/locale';
 
 function fallbackReasonText(status: SelectedPreviewStatus): string {
-  if (status.fallbackReason === 'webgl-unavailable') return t('WebGL2 不可用');
-  if (status.fallbackReason === 'unsupported-media') return t('素材类型不支持纹理预览');
-  if (status.fallbackReason === 'missing-shader') return t('着色器资源缺失');
-  if (status.fallbackReason === 'shader-error') return t('着色器编译或运行失败');
-  if (status.fallbackReason === 'unsupported-transition') return t('转场不支持 GL');
-  return t('资源尚未就绪');
+  if (status.fallbackReason === 'webgl-unavailable') return 'WebGL2 unavailable';
+  if (status.fallbackReason === 'unsupported-media') return 'Media type does not support texture preview';
+  if (status.fallbackReason === 'missing-shader') return 'Shader resource missing';
+  if (status.fallbackReason === 'shader-error') return 'Shader compilation or runtime failure';
+  if (status.fallbackReason === 'unsupported-transition') return 'Transition does not support GL';
+  return 'Resource not ready yet';
 }
 
 export function PreviewFidelityStatus({ status }: { status?: SelectedPreviewStatus }) {
-  const t = useT();
   if (!status || status.phase === 'inactive') return null;
   const fallback = status.phase === 'fallback';
   const label = status.phase === 'ready'
-    ? t('真实 GL 预览 · 与导出共用参数')
+    ? 'Real GL preview · shares parameters with export'
     : status.phase === 'waiting'
-      ? t('正在准备真实 GL 预览…')
+      ? 'Preparing real GL preview…'
       : status.adapter === 'css-transition'
-        ? t('CSS 回退预览 · 不代表导出效果')
-        : t('源画面回退 · 当前未显示特效');
+        ? 'CSS fallback preview · does not represent the export'
+        : 'Source fallback · effects not shown';
   return (
     <div role="status" aria-live="polite" style={{
       display: 'flex', alignItems: 'center', gap: 6, minHeight: 24,
@@ -30,7 +28,7 @@ export function PreviewFidelityStatus({ status }: { status?: SelectedPreviewStat
       background: theme.panelAlt, fontSize: 10.5, lineHeight: 1.35,
     }}>
       <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', flex: '0 0 auto', background: fallback ? theme.accent : status.phase === 'ready' ? theme.success : theme.textDim }} />
-      <span>{label}{fallback ? ` · ${t(fallbackReasonText(status))}` : ''}</span>
+      <span>{label}{fallback ? ` · ${fallbackReasonText(status)}` : ''}</span>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import type { CaptionMotionPreset } from './types';
 import { CAPTION_MOTION_OPTIONS } from './captionMotion';
-import { useT } from '../i18n/locale';
 
 interface CaptionMotionControlsProps {
   value: CaptionMotionPreset | undefined;
@@ -8,12 +7,11 @@ interface CaptionMotionControlsProps {
 }
 
 export function CaptionMotionControls({ value, onChange }: CaptionMotionControlsProps) {
-  const t = useT();
   const selected = value ?? 'none';
   return (
     <div className="cc-cap-field">
-      <div className="cc-cap-label">{t('字幕动效')}</div>
-      <div className="cc-cap-pills" role="listbox" aria-label={t('字幕动效')}>
+      <div className="cc-cap-label">Caption motion</div>
+      <div className="cc-cap-pills" role="listbox" aria-label="Caption motion">
         {CAPTION_MOTION_OPTIONS.map((option) => (
           <button
             key={option.id}
@@ -23,11 +21,11 @@ export function CaptionMotionControls({ value, onChange }: CaptionMotionControls
             className={`cc-cap-pill${selected === option.id ? ' selected' : ''}`}
             onClick={() => onChange(option.id)}
           >
-            {t(option.label)}
+            {option.label}
           </button>
         ))}
       </div>
-      <p className="cc-cap-hint">{t('动效按时间线帧计算，预览与导出保持一致。')}</p>
+      <p className="cc-cap-hint">Motion is timeline-frame driven, so preview and export stay aligned.</p>
     </div>
   );
 }

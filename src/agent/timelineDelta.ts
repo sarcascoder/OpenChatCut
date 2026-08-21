@@ -381,14 +381,14 @@ export function describeTimelineDelta(
 
   const notes: string[] = [];
   if (allChanged.length > clips.length) {
-    notes.push(`共 ${allChanged.length} 个片段变更,这里只列前 ${clips.length} 个;其余请重新读取时间线。`);
+    notes.push(`${allChanged.length} clips changed in total; only the first ${clips.length} are listed here — read the timeline again for the rest.`);
   }
   const trackOrderChanged = after.trackIds.some((id, index) => {
     const previousIndex = before.trackIds.indexOf(id);
     return previousIndex !== -1 && previousIndex !== index;
   });
   if (createdTracks.length || trackOrderChanged || after.trackIds.length !== before.trackIds.length) {
-    notes.push('轨道构成已变化（包含顺序变化），按轨道定位前请重新确认。');
+    notes.push('The track layout changed (including track order); confirm it again before locating anything by track.');
   }
 
   const delta: TimelineDelta = {};

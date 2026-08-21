@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Icon } from '../components/icons';
 import type { TimelineState } from '../editor/types';
-import { useT } from '../i18n/locale';
 import { EXPORT_TABS } from './useExportDialogModel';
 import type { ExportTab } from './useExportWorkflow';
 
@@ -13,14 +12,13 @@ interface ExportDialogShellProps {
 }
 
 function ExportDialogHeader({ base, state, onClose }: Omit<ExportDialogShellProps, 'children'>) {
-  const t = useT();
   return (
     <header className="cc-export-header">
       <div>
-        <h2 id="cc-export-title">{t('导出')}</h2>
+        <h2 id="cc-export-title">Export</h2>
         <p>{base} · {state.width}×{state.height} · {state.fps} fps</p>
       </div>
-      <button type="button" className="cc-export-close" onClick={onClose} title={t('关闭')}>
+      <button type="button" className="cc-export-close" onClick={onClose} title="Close">
         <Icon name="x" size={16} />
       </button>
     </header>
@@ -51,11 +49,10 @@ interface ExportSidebarProps {
 }
 
 export function ExportSidebar({ tab, busy, onTabChange }: ExportSidebarProps) {
-  const t = useT();
   return (
     <aside className="cc-export-sidebar">
-      <span className="cc-export-sidebar-label">{t('输出类型')}</span>
-      <div className="cc-export-tabs" role="tablist" aria-label={t('输出类型')}>
+      <span className="cc-export-sidebar-label">Output type</span>
+      <div className="cc-export-tabs" role="tablist" aria-label="Output type">
         {EXPORT_TABS.map((entry) => (
           <button
             type="button"
@@ -69,7 +66,7 @@ export function ExportSidebar({ tab, busy, onTabChange }: ExportSidebarProps) {
             disabled={busy}
           >
             <span className="cc-export-tab-icon"><Icon name={entry.icon} size={15} /></span>
-            <span><strong>{t(entry.label)}</strong><small>{entry.summary}</small></span>
+            <span><strong>{entry.label}</strong><small>{entry.summary}</small></span>
           </button>
         ))}
       </div>

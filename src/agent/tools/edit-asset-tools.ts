@@ -62,7 +62,7 @@ async function update(asset: MediaAsset, args: Args, ctx: AgentContext): Promise
 function remove(asset: MediaAsset, args: Args, ctx: AgentContext): unknown {
   const refs = referencingItems(ctx.getState().items, asset);
   if (refs > 0 && args.confirm !== true) {
-    return { needsConfirm: true, referencedBy: refs, note: `${refs} 个时间线片段引用了「${asset.name}」。删除只移除媒体池条目,不影响已放置片段。确认请带 confirm:true 重发。` };
+    return { needsConfirm: true, referencedBy: refs, note: `${refs} timeline clips reference "${asset.name}". Deleting only removes the media pool entry; placed clips are unaffected. To confirm, resend with confirm:true.` };
   }
   ctx.commands.removeMediaAsset(asset.id);
   return { ok: true, deleted: asset.id, name: asset.name, wasReferencedBy: refs };

@@ -11,7 +11,6 @@ import {
   removeManualCue,
   updateManualCue,
 } from '../../captions/manualCaptions';
-import { t as translate } from '../../i18n/locale';
 
 interface TrackMenuLocation {
   trackId: TrackId;
@@ -23,10 +22,9 @@ interface TrackMenuLocation {
 interface UseTimelineTrackMenusOptions {
   state: TimelineState;
   commands: EditorCommands;
-  t: typeof translate;
 }
 
-export function useTimelineTrackMenus({ state, commands, t }: UseTimelineTrackMenusOptions) {
+export function useTimelineTrackMenus({ state, commands }: UseTimelineTrackMenusOptions) {
   const [captionMenu, setCaptionMenu] = useState<{ id: TrackId; left: number; top: number; translate?: boolean } | null>(null);
   const [trackMenu, setTrackMenu] = useState<TrackMenuLocation | null>(null);
   const [transitionMenu, setTransitionMenu] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -64,7 +62,7 @@ export function useTimelineTrackMenus({ state, commands, t }: UseTimelineTrackMe
     commands.batch([
       { type: 'updateCaptions', patch: removeManualCue(source, move.laneId, move.index), track: sourceTrackId },
       { type: 'setCaptions', captions: { ...target, ...targetPatch }, track: targetTrackId },
-    ], t('移动字幕'));
+    ], 'Move captions');
   };
 
   useEffect(() => {
