@@ -46,5 +46,52 @@ assert.equal(
   'a.mp4',
   'a trailing separator on the root is tolerated',
 );
+assert.equal(
+  projectRelativePath('/Users/me/Proj', '/Users/me/Proj/media/../a.mp4'),
+  'a.mp4',
+  '.. sequences are normalized before the containment check',
+);
+assert.equal(
+  projectRelativePath('/Users/me/Proj', '/Users/me/Proj/../Proj2/a.mp4'),
+  null,
+  '.. sequences that escape the root are still rejected',
+);
+
+// -- project-relative resolution: Windows paths --
+assert.equal(
+  projectRelativePath('C:\\Users\\me\\Proj', 'C:\\Users\\me\\Proj\\media\\a.mp4'),
+  'media/a.mp4',
+  'a Windows-style absolute path under the root is relative, with forward slashes on output',
+);
+assert.equal(
+  projectRelativePath('C:\\a\\Proj', 'C:\\a\\Proj2\\clip.mp4'),
+  null,
+  'a Windows sibling folder with a shared prefix is not inside the root',
+);
+assert.equal(
+  projectRelativePath('C:\\Users\\me\\Proj', 'C:/Users/me/Proj/media/a.mp4'),
+  'media/a.mp4',
+  'mixed separators (root backslash-style, target forward-slash-style) still resolve',
+);
+assert.equal(
+  projectRelativePath('C:\\Users\\me\\Proj', 'D:\\Users\\me\\Proj\\a.mp4'),
+  null,
+  'a different drive letter is a different volume, never containment',
+);
+assert.equal(
+  projectRelativePath('c:\\Users\\me\\Proj', 'C:\\Users\\me\\Proj\\a.mp4'),
+  'a.mp4',
+  'the drive letter is compared case-insensitively',
+);
+assert.equal(
+  projectRelativePath('\\\\server\\share\\Proj', '\\\\server\\share\\Proj\\media\\a.mp4'),
+  'media/a.mp4',
+  'a UNC path under the root is relative',
+);
+assert.equal(
+  projectRelativePath('C:\\Users\\me\\Proj', '/Users/me/Proj/a.mp4'),
+  null,
+  'a POSIX path is never contained by a Windows-drive root',
+);
 
 console.log('projectFolder.verify: layout and relative-path rules OK');
