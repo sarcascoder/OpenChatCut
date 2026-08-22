@@ -290,7 +290,7 @@ function ExpandedPanel({ controller, hidden, tab, setTab }: {
         <ComposerSection controller={controller} />
       </div>
       <div style={{ display: tab === 'terminal' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <TerminalView projectRoot={projectRoot} />
+        <TerminalView projectId={controller.props.projectId} projectRoot={projectRoot} />
       </div>
     </aside>;
 }

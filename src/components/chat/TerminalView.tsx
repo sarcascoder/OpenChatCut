@@ -1,28 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FitAddon } from '@xterm/addon-fit';
-import { Terminal } from '@xterm/xterm';
-import '@xterm/xterm/css/xterm.css';
 import { theme } from '../../theme';
+import {
+  acquire,
+  disposeProject,
+  rememberRoot,
+  rememberedRoot,
+  release,
+  safeFit,
+} from './terminalSessions';
 
 /**
- * Hosts one PTY-backed terminal. The session lives in the main process, so this
- * component may be hidden and re-shown without killing a running `claude`.
- * It is only mounted on desktop; the browser build has no window.openChatCutDesktop.
+ * Shows the terminal belonging to a project. The Terminal instance, its
+ * scrollback and its PTY subscription live in `terminalSessions`, outside the
+ * React tree, so this component can unmount -- on collapse, on a tab switch, or
+ * when the user navigates home -- without the session ending or output being
+ * lost. This component only attaches the existing DOM node and keeps it fitted.
  *
  * The working directory comes from `projectRoot` once folder-backed projects
- * supply one. Until then the user can pick a folder here: `selectProjectFolder`
- * opens the trusted OS dialog AND records the grant (desktop/project-root-grants.ts),
- * which is exactly what the main process's cwd check requires -- so a folder
- * chosen here is admitted for the same reason an opened project would be, not
- * by any weakening of the guard.
+ * supply one, otherwise from the folder the user picked, which is remembered per
+ * project. `selectProjectFolder` opens the trusted OS dialog AND records the
+ * grant (desktop/project-root-grants.ts), which is exactly what the main
+ * process's cwd check requires -- so a folder chosen here is admitted for the
+ * same reason an opened project would be, not by any weakening of the guard.
+ *
+ * Grants are per app run. After a restart the remembered folder is still shown,
+ * but it must be re-picked once before a shell can open in it.
  */
-export function TerminalView({ projectRoot }: { projectRoot: string | null }) {
+export function TerminalView({ projectId, projectRoot }: {
+  projectId: string;
+  projectRoot: string | null;
+}) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const sessionRef = useRef<string | null>(null);
-  const [chosenRoot, setChosenRoot] = useState<string | null>(null);
+  const [chosenRoot, setChosenRoot] = useState<string | null>(() => rememberedRoot(projectId));
   const [picking, setPicking] = useState(false);
+  const [refused, setRefused] = useState(false);
 
-  // An open project wins; the manual pick is the fallback while none exists.
+  // An open project wins; the remembered pick is the fallback while none exists.
   const root = projectRoot ?? chosenRoot;
 
   const chooseFolder = useCallback(async () => {
@@ -31,87 +44,87 @@ export function TerminalView({ projectRoot }: { projectRoot: string | null }) {
     setPicking(true);
     try {
       const picked = await desktop.selectProjectFolder();
-      if (picked) setChosenRoot(picked);
+      if (!picked) return;
+      // Changing folder is the one case that must end the old shell: its cwd is
+      // no longer the one the user means by "this project's terminal".
+      await disposeProject(projectId);
+      rememberRoot(projectId, picked);
+      setRefused(false);
+      setChosenRoot(picked);
     } finally {
       setPicking(false);
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     const desktop = window.openChatCutDesktop;
     const host = hostRef.current;
     if (!desktop || !host) return;
 
-    // xterm paints to a canvas and cannot resolve CSS custom properties, so
-    // `theme.panel` ("var(--cc-panel)") must be resolved to a real colour first.
-    const resolved = getComputedStyle(host).getPropertyValue('--cc-panel').trim();
-    const term = new Terminal({
-      fontSize: 12,
-      fontFamily: 'Menlo, Consolas, "DejaVu Sans Mono", monospace',
-      theme: resolved ? { background: resolved } : undefined,
-      cursorBlink: true,
-    });
-    const fit = new FitAddon();
-    term.loadAddon(fit);
-    term.open(host);
+    const entry = acquire(projectId, host);
+    safeFit(entry, host);
 
-    // The panel can be collapsed or on the chat tab, in which case this host is
-    // display:none and measures 0x0. Fitting then would compute nonsense
-    // dimensions (or throw), so only fit when the element actually has a box.
-    // The ResizeObserver below fires when it becomes visible again and refits.
-    const safeFit = () => {
-      if (!host.offsetWidth || !host.offsetHeight) return false;
-      try { fit.fit(); return true; } catch { return false; }
-    };
-    safeFit();
-
-    // Build the xterm shell first either way: a bare `return` before term.open()
-    // would leave a silently blank pane rather than a readable message.
-    if (!root) {
-      term.write('\r\nChoose a folder above to open a terminal there.\r\n');
-      return () => { term.dispose(); };
+    // Wire input and output exactly once per live terminal. Doing this per
+    // mount would attach a second handler on every remount, so one keystroke
+    // would reach the shell twice.
+    if (!entry.unsubscribe) {
+      entry.term.onData((data) => {
+        if (entry.sessionId) void desktop.writeTerminal(entry.sessionId, data);
+      });
+      entry.unsubscribe = desktop.subscribeTerminal((event) => {
+        if (event.id !== entry.sessionId) return;
+        if (event.type === 'data') entry.term.write(event.chunk);
+        else {
+          entry.term.write(`\r\n[process exited with code ${event.code}]\r\n`);
+          entry.sessionId = null;
+        }
+      });
     }
 
-    let disposed = false;
-    const unsubscribe = desktop.subscribeTerminal((event) => {
-      if (event.id !== sessionRef.current) return;
-      if (event.type === 'data') term.write(event.chunk);
-      else term.write(`\r\n[process exited with code ${event.code}]\r\n`);
-    });
-
-    void desktop.startTerminal(root, term.cols, term.rows).then((id) => {
-      if (disposed) { if (id) void desktop.stopTerminal(id); return; }
-      sessionRef.current = id;
-      if (!id) {
-        // The main process refuses with a deliberately uniform error, so this
-        // cannot say WHY -- only that the folder was not usable.
-        term.write('\r\nThat folder is not available for a terminal. Choose another.\r\n');
+    if (!root) {
+      if (!entry.greeted) {
+        entry.greeted = true;
+        entry.term.write('\r\nChoose a folder above to open a terminal here.\r\n');
       }
-    });
-
-    term.onData((data) => {
-      const id = sessionRef.current;
-      if (id) void desktop.writeTerminal(id, data);
-    });
+    } else if (entry.root !== root) {
+      // A different folder than this terminal was started for: start fresh.
+      // Stop the previous shell first -- `chooseFolder` disposes the whole
+      // terminal, but a root arriving from an opened project does not, and
+      // leaving the old PTY running would strand it with no way to reach it.
+      const previous = entry.sessionId;
+      entry.sessionId = null;
+      if (previous) void desktop.stopTerminal(previous);
+      entry.root = root;
+      entry.starting = true;
+      void desktop.startTerminal(root, entry.term.cols, entry.term.rows).then((id) => {
+        entry.starting = false;
+        entry.sessionId = id;
+        if (!id) {
+          setRefused(true);
+          // The main process refuses with a deliberately uniform error, so this
+          // cannot say WHY. After an app restart the commonest cause is simply
+          // that the grant is gone, which re-picking the folder restores.
+          entry.term.write('\r\nThis folder is not open for a terminal. Choose it again to reopen.\r\n');
+        }
+      });
+    }
 
     const observer = new ResizeObserver(() => {
       // Skips while hidden, and runs on the transition back to visible.
-      if (!safeFit()) return;
-      const id = sessionRef.current;
-      if (id) void desktop.resizeTerminal(id, term.cols, term.rows);
+      if (!safeFit(entry, host)) return;
+      if (entry.sessionId) {
+        void desktop.resizeTerminal(entry.sessionId, entry.term.cols, entry.term.rows);
+      }
     });
     observer.observe(host);
 
     return () => {
-      disposed = true;
       observer.disconnect();
-      unsubscribe();
-      const id = sessionRef.current;
-      if (id) void desktop.stopTerminal(id);
-      sessionRef.current = null;
-      term.dispose();
+      // Detach only. The session, its scrollback and its subscription outlive
+      // this component so navigating away and back returns to it unchanged.
+      release(entry);
     };
-  }, [root]);
+  }, [projectId, root]);
 
   return <>
     <div style={{
@@ -126,9 +139,10 @@ export function TerminalView({ projectRoot }: { projectRoot: string | null }) {
         title="Choose the folder this terminal opens in"
         style={{
           flexShrink: 0, padding: '3px 8px', fontSize: 11, borderRadius: 5,
-          border: `0.5px solid ${theme.border}`, background: 'transparent',
+          border: `0.5px solid ${theme.border}`,
+          background: refused ? theme.hover : 'transparent',
           color: theme.text, cursor: picking ? 'default' : 'pointer', opacity: picking ? 0.5 : 1,
-        }}>{root ? 'Change folder' : 'Choose folder'}</button>
+        }}>{!root ? 'Choose folder' : refused ? 'Reopen folder' : 'Change folder'}</button>
     </div>
     <div ref={hostRef} style={{ flex: 1, minHeight: 0, padding: 8, background: theme.panel }} />
   </>;
