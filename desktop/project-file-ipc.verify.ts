@@ -184,6 +184,29 @@ await assert.rejects(
   'a .occ symlink pointing outside every root must be refused',
 );
 
+// -- a .occ symlink pointing at a NON-.occ file INSIDE the same registered root is refused --
+// The extension check on the REQUESTED path cannot catch this (the request ends
+// in .occ) and the allowlist cannot either (the target resolves inside the root).
+// Only the extension check on the CANONICAL path returned by
+// resolveAllowedMediaPath refuses it. Without that check this read succeeds and
+// returns the target's bytes, making the channel a general file-read of anything
+// inside a registered root. Mutation-proven: delete the canonical-path extension
+// check in guardedReadProjectFile and this assertion fails. --
+await writeFile(join(project, 'not-a-document.txt'), 'NOT-A-PROJECT-DOCUMENT-SECRET\n');
+await symlink(join(project, 'not-a-document.txt'), join(project, 'InsideAlias.occ'));
+await assert.rejects(
+  () => guardedReadProjectFile(join(project, 'InsideAlias.occ')),
+  (error: Error) => {
+    assert.equal(
+      error.message,
+      refusalMessage,
+      'a .occ symlink to a non-.occ file inside the root must read as the identical refusal message',
+    );
+    return true;
+  },
+  'a .occ symlink whose target is a non-.occ file inside the same registered root must be refused',
+);
+
 // -- write through a symlinked directory component must land via the CANONICALISED
 // parent, not the raw path. This is the regression test for the fix at
 // project-file-ipc.ts's guardedWriteProjectFile: it must call

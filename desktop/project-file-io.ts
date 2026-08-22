@@ -2,16 +2,34 @@
 // filesystem access, so every read and write funnels through here.
 //
 // Reachable only through desktop/project-file-ipc.ts's guards (allowlist,
-// extension check, root grants, scrubbed errors). This module additionally
+// extension checks, root grants, scrubbed errors). This module additionally
 // checks, with O_NOFOLLOW + fstat()/lstat() dev+ino comparisons (mirroring
-// server/plugins/upload-routes.ts's verifyLocalMediaTarget), that neither the
-// immediate parent directory nor the target itself is a symlink at the
-// moment of the call. Read PRECISELY what this does and does not buy you:
-//   - It rejects, with no timing and no race involved, a call whose IMMEDIATE
-//     PARENT directory, or whose target file, was ALREADY a symlink before the
-//     call started. That is the common case: a hostile archive or a
+// server/plugins/upload-routes.ts's verifyLocalMediaTarget), that the
+// IMMEDIATE PARENT DIRECTORY is not a symlink at the moment of the call.
+//
+// EVERY symlink claim below describes POSIX. O_NOFOLLOW and O_DIRECTORY do not
+// exist on Windows, so NO_FOLLOW and DIRECTORY_ONLY are 0 there: the directory
+// check is skipped outright on win32 (see assertDirectoryNotSymlinked below)
+// and the target opens do not themselves refuse a symlinked final component.
+// On win32 the containment defence is the realpath() canonicalisation in
+// server/media-roots.ts, applied by the guards one layer above.
+//
+// The TARGET FILE is treated differently by the two entry points, and the
+// difference matters: readProjectFile REJECTS a symlinked target (O_NOFOLLOW
+// makes its open() fail with ELOOP), while writeProjectFile does NOT reject
+// one — it rename()s its temp file over the symlink, which REPLACES the
+// symlink with a regular file and leaves whatever it pointed at untouched
+// (executed, on macOS).
+//
+// Read PRECISELY what this does and does not buy you:
+//   - On POSIX it rejects, with no timing and no race involved, a call whose
+//     IMMEDIATE PARENT directory was ALREADY a symlink before the call
+//     started, and — on the READ path only — a call whose TARGET FILE was
+//     already a symlink. That is the common case: a hostile archive or a
 //     co-operating local process that pre-arranges a symlink and then triggers
-//     a read/write through it.
+//     a read/write through it. On the WRITE path a pre-arranged symlinked
+//     target is replaced rather than refused, so it likewise does not redirect
+//     the write to the link's target.
 //   - It checks exactly ONE directory level. A symlinked component HIGHER in
 //     the path — a grandparent or above — is NOT detected: the kernel walks
 //     such a component transparently for both the open() and the lstat(), so
@@ -43,8 +61,9 @@ import {
   type ProjectFolderLayout,
 } from '../src/persist/projectFolder.ts';
 
-const NO_FOLLOW = process.platform === 'win32' ? 0 : fsConstants.O_NOFOLLOW;
-const DIRECTORY_ONLY = process.platform === 'win32' ? 0 : fsConstants.O_DIRECTORY;
+const IS_WIN32 = process.platform === 'win32';
+const NO_FOLLOW = IS_WIN32 ? 0 : fsConstants.O_NOFOLLOW;
+const DIRECTORY_ONLY = IS_WIN32 ? 0 : fsConstants.O_DIRECTORY;
 
 /** Create the folder structure for a project. Never destructive: existing files stay. */
 export async function scaffoldProjectFolder(
@@ -63,8 +82,27 @@ export async function scaffoldProjectFolder(
  * Throws if `dir` is, at this moment, a symlink rather than a real directory.
  * This is a point-in-time check, not a hold: see the module doc comment for
  * exactly what it does and does not close.
+ *
+ * POSIX-ONLY, and skipped outright on win32 rather than silently degraded.
+ * Two independent reasons, either one sufficient:
+ *   - No benefit there. O_NOFOLLOW and O_DIRECTORY do not exist on Windows,
+ *     so NO_FOLLOW and DIRECTORY_ONLY are both 0 and the open() below would
+ *     reduce to a plain O_RDONLY — which follows a reparse point like any
+ *     other path and therefore detects nothing. The dev+ino comparison then
+ *     compares two equally-followed views of the same object.
+ *   - Pure cost there. Node cannot open a directory with fs.open on Windows
+ *     (hence fs.opendir), so the call would reject for every path, making
+ *     readProjectFile and writeProjectFile fail unconditionally; the
+ *     deliberate error scrubbing in desktop/project-file-ipc.ts would then
+ *     collapse a platform-wide break into the same generic refusal.
+ * On win32 the containment defence is the realpath() canonicalisation in
+ * server/media-roots.ts, applied by the guards one layer above, which does
+ * resolve reparse points. This branch is reasoned from the Node and Win32
+ * APIs and from the zeroed constants above; it has not been executed on a
+ * Windows machine.
  */
 async function assertDirectoryNotSymlinked(dir: string): Promise<void> {
+  if (IS_WIN32) return;
   const dirHandle = await open(dir, fsConstants.O_RDONLY | DIRECTORY_ONLY | NO_FOLLOW);
   try {
     const [fdStat, diskStat] = await Promise.all([dirHandle.stat(), lstat(dir)]);
@@ -77,7 +115,8 @@ async function assertDirectoryNotSymlinked(dir: string): Promise<void> {
 }
 
 /**
- * Read the document. Two checks, in order:
+ * Read the document. Two checks, in order (both POSIX — see the module doc
+ * comment for what runs on win32):
  *   1. The immediate parent directory must not be a symlink (assertDirectoryNotSymlinked).
  *      Without this, a directory component being a symlink is invisible to
  *      the check below: both open(documentPath, O_NOFOLLOW) and
@@ -123,8 +162,13 @@ export async function readProjectFile(documentPath: string): Promise<string> {
  *
  * Before creating the temp file, assertDirectoryNotSymlinked rejects a `dir`
  * that is, at this moment, a symlink rather than a real directory (the
- * DETERMINISTIC case). The temp file itself is then created with
+ * DETERMINISTIC case) — on POSIX; that check is skipped on win32, see the
+ * module doc comment. The temp file itself is then created with
  * O_CREAT|O_EXCL|O_NOFOLLOW, so it cannot be a pre-existing symlink either.
+ * The TARGET is treated differently from readProjectFile: a symlinked target
+ * is not rejected here. The rename() below replaces the symlink itself with
+ * the new regular file, so the write does not reach whatever the link pointed
+ * at.
  * None of this closes a race: the open(temp) and rename() calls below are
  * themselves path-based and re-resolve `dir` from scratch, so a swap timed
  * between the directory check above and either of those calls is not caught.

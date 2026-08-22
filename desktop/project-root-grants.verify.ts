@@ -36,8 +36,10 @@ assert.equal(
   'a directory that was never granted must not become eligible',
 );
 
-// -- a symlink to a granted directory is not itself granted: the grant is per-canonical-path,
-//    but resolves through realpath, so this checks the grant does not widen via aliasing --
+// -- a symlink to a granted directory IS granted: the grant is stored per canonical path and
+//    isProjectRootGranted resolves through realpath, so an alias lands on the same canonical
+//    path. Aliasing therefore neither widens the grant nor lets a granted directory be
+//    reached under a name that escapes the check --
 const alias = join(base, 'Alias');
 await symlink(granted, alias);
 assert.equal(

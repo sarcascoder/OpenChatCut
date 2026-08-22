@@ -23,22 +23,32 @@ export class ProjectFileAccessError extends Error {
 
 export async function guardedReadProjectFile(documentPath: string): Promise<string> {
   try {
-    // Narrows this channel to the project document extension, so it is not a
-    // general file-read of anything inside a registered root. This is an
-    // EXTENSION check, not a content check: any *.occ file under a root is
-    // exposed regardless of what it actually contains.
+    // TWO extension checks, and both are needed. The first tests the path the
+    // renderer ASKED BY; the second tests the CANONICAL path that is actually
+    // opened. Testing only the requested path left a hole: a `*.occ` symlink
+    // inside a registered root whose target is a non-`.occ` file inside that
+    // same root passed the first check and then read the target, because
+    // resolveAllowedMediaPath returns the realpath()'d target and the read
+    // opens that. The second check refuses it. It cannot reject a legitimate
+    // call: the realpath of an `X.occ` regular file still ends in `.occ`.
+    // Both are EXTENSION checks, not content checks: any file whose canonical
+    // path ends in `.occ` and resolves inside a root is exposed by this
+    // channel, regardless of what it contains. Non-`.occ` files under a root
+    // are not exposed, by name or through a `.occ` symlink.
     if (!documentPath.endsWith(PROJECT_FILE_EXTENSION)) throw new ProjectFileAccessError();
     const allowed = await resolveAllowedMediaPath(documentPath);
     if (!allowed) throw new ProjectFileAccessError();
+    if (!allowed.endsWith(PROJECT_FILE_EXTENSION)) throw new ProjectFileAccessError();
     // resolveAllowedMediaPath is a point-in-time check, not a hold (see its
     // doc comment in server/media-roots.ts): `allowed` is canonical AT THE
     // MOMENT OF THIS CHECK, but open() and lstat() inside readProjectFile are
     // themselves path-based and re-resolve it from scratch, so a swap timed
     // between this check and those calls is not caught here. readProjectFile
-    // separately rejects the target's IMMEDIATE PARENT directory, or the
-    // target itself, being ALREADY a symlink when it runs (see its doc comment
-    // in project-file-io.ts). That check is one level deep: it does NOT detect
-    // a symlinked component higher up the path. Such a path is still refused
+    // separately rejects the target ITSELF being ALREADY a symlink when it
+    // runs, and on POSIX also its IMMEDIATE PARENT directory being one (that
+    // parent check is skipped on win32 — see its doc comment in
+    // project-file-io.ts). The parent check is one level deep: it does NOT
+    // detect a symlinked component higher up the path. Such a path is still refused
     // on this channel, but by the resolveAllowedMediaPath call above, which
     // canonicalises first, so a path escaping every root fails containment —
     // pinned by an executed test in project-file-ipc.verify.ts. Neither check
@@ -68,13 +78,15 @@ export async function guardedWriteProjectFile(documentPath: string, contents: st
     // path being swapped for a symlink again after this call returns and
     // before writeProjectFile's mkdir/open(temp)/rename run, all three of
     // which are path-based and re-resolve the directory from scratch.
-    // writeProjectFile DOES deterministically reject a `dir` that is ALREADY
-    // a symlink when it runs (see its doc comment in project-file-io.ts).
-    // That holds unconditionally but only for ONE level -- `dir` is the
-    // immediate parent; a symlinked component higher up the path is not
-    // detected there (pinned by an executed test in project-file-io.verify.ts,
-    // and refused on this channel by the resolveAllowedMediaPath call above).
-    // It is NOT a narrowing of the
+    // On POSIX, writeProjectFile DOES deterministically reject a `dir` that is
+    // ALREADY a symlink when it runs (see its doc comment in
+    // project-file-io.ts; that check is skipped on win32, which relies on the
+    // realpath() canonicalisation above instead). Where it runs it needs no
+    // timing luck, but it covers only ONE level -- `dir` is the immediate
+    // parent; a symlinked component higher up the path is not detected there
+    // (pinned by an executed test in project-file-io.verify.ts, and refused on
+    // this channel by the resolveAllowedMediaPath call above). It is NOT a
+    // narrowing of the
     // race: measured, a concurrent swap wins the race in as few attempts
     // post-fix as pre-fix, because the check's own open(temp)/rename() calls
     // afterward re-resolve `dir` by path just like before it existed. Node's

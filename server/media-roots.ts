@@ -7,6 +7,34 @@
 // check and a later open, the path on disk can change (e.g. the checked file
 // can be replaced by a symlink pointing outside every root) — see the TOCTOU
 // note on resolveAllowedMediaPath below for what a caller must do about it.
+//
+// WARNING — ONE REGISTRY, TWO MEANINGS. Read this before adding a caller of
+// registerMediaRoot. Despite the name and the paragraph above, this set is not
+// consulted only for media serving. Its production consumers today are:
+//   - server/media-handles.ts (createMediaHandle) — media serving, the
+//     meaning this module is named for.
+//   - desktop/project-file-ipc.ts — the gate for project document READS AND
+//     WRITES from the untrusted renderer (guardedReadProjectFile /
+//     guardedWriteProjectFile), narrowed there to the `.occ` extension.
+// So membership in this set is not only "may be served as media"; it is also
+// "the renderer may read and write `.occ` files here".
+//
+// That coupling is tolerable only because of how the set is populated today:
+// registerMediaRoot has exactly ONE production caller,
+// guardedScaffoldProjectFolder in desktop/project-file-ipc.ts, and it runs
+// only for a directory the user picked through a trusted OS dialog
+// (desktop/project-root-grants.ts). Every root therefore is a project folder
+// the user deliberately chose. (The other callers are .verify.ts files.)
+//
+// IF YOU ARE ADDING A SECOND POPULATOR — for example the planned "roots the
+// user has explicitly added", on the AGENT_IMPORT_ROOTS model — that premise
+// stops holding, and the two meanings come apart: a user adding an external
+// drive as a MEDIA root would, with no further action and no further prompt,
+// also hand the renderer `.occ` read and write access across that whole
+// drive. Consider splitting the registries (a media-serving set and a
+// project-document set, populated separately) BEFORE adding the populator,
+// and update this comment either way. This note is documentation only: no
+// split is implemented here.
 import { realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { isPathInside } from '../desktop/directory-watch-import.ts';
