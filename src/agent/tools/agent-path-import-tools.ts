@@ -8,20 +8,34 @@ import type { AgentToolSchema } from '../tool-schema';
 import { directoryFileToAsset } from '../../media/directoryImportAsset';
 import type { DirectoryImportedFile } from '../../../shared/directory-import';
 
+/**
+ * Bounds one call. Each import commits to the project and advances its revision,
+ * so batching is what keeps an MCP edit session alive across a multi-file import
+ * -- but an unbounded list would hold the editor in a single call indefinitely.
+ */
+export const MAX_IMPORT_PATHS = 200;
+
 export const AGENT_PATH_IMPORT_SCHEMAS: AgentToolSchema[] = [
   {
     name: 'import_asset',
     description: [
-      'Import ONE local media file (video/audio/image) by its absolute disk path into the media pool.',
-      'Desktop app only; the path must be inside the allowed import roots configured via AGENT_IMPORT_ROOTS.',
-      'Returns the imported pool asset(s); duplicates already in the pool are skipped.',
+      'Import local media files (video/audio/image) by absolute disk path into the media pool.',
+      'PASS EVERY FILE YOU WANT IN ONE CALL via `paths`: each call commits to the project and',
+      'advances its revision, which ends an open MCP edit session, so importing N files as N',
+      'calls forces N sessions while one call with N paths costs one.',
+      'Desktop app only; every path must be inside the allowed import roots configured via AGENT_IMPORT_ROOTS.',
+      'Returns the imported pool assets; duplicates already in the pool are skipped.',
     ].join(' '),
     input_schema: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'Absolute path to the media file.' },
+        paths: {
+          type: 'array',
+          items: { type: 'string' },
+          description: `Absolute paths to media files. Preferred: batch up to ${MAX_IMPORT_PATHS} per call.`,
+        },
+        path: { type: 'string', description: 'Absolute path to a single media file. Prefer `paths`.' },
       },
-      required: ['path'],
     },
   },
   {
@@ -68,8 +82,26 @@ export async function execAgentPathImportTool(
   args: Record<string, unknown>,
   ctx: AgentContext,
 ): Promise<Record<string, unknown>> {
-  const rawPath = typeof args.path === 'string' ? args.path.trim() : '';
-  if (!rawPath) return { error: 'path is required and must be a non-empty string' };
+  // `paths` is the batching form; `path` stays accepted so existing callers and
+  // import_folder (which is inherently single-directory) keep working.
+  const requested = Array.isArray(args.paths)
+    ? args.paths
+    : (typeof args.path === 'string' ? [args.path] : []);
+  const seen = new Set<string>();
+  const rawPaths: string[] = [];
+  for (const entry of requested) {
+    if (typeof entry !== 'string') continue;
+    const trimmed = entry.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    rawPaths.push(trimmed);
+  }
+  if (!rawPaths.length) {
+    return { error: 'paths (or path) is required and must contain at least one non-empty string' };
+  }
+  if (rawPaths.length > MAX_IMPORT_PATHS) {
+    return { error: `too many paths in one call: ${rawPaths.length} (max ${MAX_IMPORT_PATHS})` };
+  }
   const api = desktopApi();
   if (!api) {
     return {
@@ -86,7 +118,7 @@ export async function execAgentPathImportTool(
   void name; // one executor serves both import_asset and import_folder
   let result;
   try {
-    result = await api.importAgentPaths({ paths: [rawPath], projectId, knownHashes });
+    result = await api.importAgentPaths({ paths: rawPaths, projectId, knownHashes });
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
   }
