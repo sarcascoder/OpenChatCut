@@ -10,6 +10,7 @@ import { ChatMessage } from './ChatMessage';
 import { ChatRunStatus } from './ChatRunStatus.tsx';
 import { ExternalProposalCard } from './ExternalProposalCard';
 import { ProposalCard } from './ProposalCard';
+import { TerminalView } from './TerminalView';
 import { ToolGroupRow } from './ToolGroupRow';
 import { groupMessages } from './message-groups';
 import { EMPTY_PROJECT_STARTERS, QUICK_ACTIONS } from './chatPanelPresets';
@@ -64,7 +65,11 @@ export function CapabilityBanner({ controller }: { controller: ChatPanelControll
 }
 
 
-function ChatHeader({ controller }: { controller: ChatPanelController }) {
+function ChatHeader({ controller, tab, onToggleTab }: {
+  controller: ChatPanelController;
+  tab: 'chat' | 'terminal';
+  onToggleTab: () => void;
+}) {
   const { props, agent } = controller;
   return <div className="cc-chat-header">
     <div className="cc-chat-brand">
@@ -78,6 +83,11 @@ function ChatHeader({ controller }: { controller: ChatPanelController }) {
     <button type="button" onClick={agent.clearHistory} disabled={agent.running} title={'Clear chat'}
       style={{ background: 'none', border: 'none', color: theme.textDim, cursor: agent.running ? 'default' : 'pointer', opacity: agent.running ? 0.4 : 1, padding: 2, lineHeight: 0 }}>
       <Icon name="trash" size={14} />
+    </button>
+    <button type="button" onClick={onToggleTab}
+      title={tab === 'chat' ? 'Switch to terminal' : 'Switch to chat'}
+      style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', padding: 2, lineHeight: 0 }}>
+      <Icon name={tab === 'chat' ? 'keyboard' : 'sparkles'} size={14} />
     </button>
     <button type="button" onClick={props.onToggleCollapse} title={'Collapse OpenChatCut Agent'}
       style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 13 }}>
@@ -250,6 +260,8 @@ function ComposerSection({ controller }: { controller: ChatPanelController }) {
 
 function ExpandedPanel({ controller }: { controller: ChatPanelController }) {
   const { scroll } = controller;
+  const [tab, setTab] = useState<'chat' | 'terminal'>('chat');
+  const projectRoot = controller.props.projectRoot ?? null;
   return <>
     <ChangeLogPortal controller={controller} />
     <aside className="cc-chat-panel" data-cc-chat-popover-boundary data-cc-shortcut-surface="agent-chat"
@@ -261,10 +273,20 @@ function ExpandedPanel({ controller }: { controller: ChatPanelController }) {
         }
       }}
       style={{ gridColumn: 1, gridRow: '2 / 5', display: 'flex', flexDirection: 'column', borderRight: `0.5px solid ${theme.border}`, background: theme.panel, minHeight: 0, minWidth: 0 }}>
-      <ChatHeader controller={controller} />
-      <CapabilityBanner controller={controller} />
-      <MessageWorkspace controller={controller} />
-      <ComposerSection controller={controller} />
+      <ChatHeader controller={controller} tab={tab} onToggleTab={() => setTab((t) => (t === 'chat' ? 'terminal' : 'chat'))} />
+      {/* Both panes stay mounted: unmounting the terminal would kill a running
+          `claude`, and unmounting chat would drop its scroll position. The chat
+          pane's own markup is unchanged -- it is only wrapped so it can be
+          hidden, and `display: contents` means the wrapper adds no box of its
+          own, so chat layout and spacing stay byte-for-byte what they were. */}
+      <div style={{ display: tab === 'chat' ? 'contents' : 'none' }}>
+        <CapabilityBanner controller={controller} />
+        <MessageWorkspace controller={controller} />
+        <ComposerSection controller={controller} />
+      </div>
+      <div style={{ display: tab === 'terminal' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <TerminalView projectRoot={projectRoot} />
+      </div>
     </aside>
   </>;
 }

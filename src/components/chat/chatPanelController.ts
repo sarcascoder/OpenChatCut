@@ -65,6 +65,12 @@ export interface ChatPanelProps {
   onImportMedia: ChatMediaImporter;
   /** Open the settings dialog (used by the capability-gap banner). */
   onOpenSettings?: () => void;
+  /**
+   * The open project's folder, for the terminal pane's cwd. Folder-backed
+   * projects (Stage 3) has not landed yet, so no caller can supply this
+   * today; the terminal activates once Stage 3 supplies a project root.
+   */
+  projectRoot?: string | null;
 }
 
 export interface ChatComposerController {
