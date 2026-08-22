@@ -33,10 +33,14 @@ export async function guardedReadProjectFile(documentPath: string): Promise<stri
     // MOMENT OF THIS CHECK, but open() and lstat() inside readProjectFile are
     // themselves path-based and re-resolve it from scratch, so a swap timed
     // between this check and those calls is not caught here. readProjectFile
-    // DOES deterministically reject a directory component or the target
-    // itself that is ALREADY a symlink when it runs (see its doc comment in
-    // project-file-io.ts) — that is a real, unconditional guarantee, not a
-    // narrowing of the race. This residual is accepted because it is not
+    // separately rejects the target's IMMEDIATE PARENT directory, or the
+    // target itself, being ALREADY a symlink when it runs (see its doc comment
+    // in project-file-io.ts). That check is one level deep: it does NOT detect
+    // a symlinked component higher up the path. Such a path is still refused
+    // on this channel, but by the resolveAllowedMediaPath call above, which
+    // canonicalises first, so a path escaping every root fails containment —
+    // pinned by an executed test in project-file-ipc.verify.ts. Neither check
+    // is a narrowing of the race. This residual is accepted because it is not
     // renderer-reachable: exploiting the race needs a co-operating local
     // process or a hostile archive racing the main process's own filesystem
     // calls, not anything the sandboxed, network-facing renderer can trigger.

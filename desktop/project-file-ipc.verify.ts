@@ -243,4 +243,38 @@ try {
   await chmod(scaffoldLocked, 0o700);
 }
 
-console.log('project-file-ipc.verify: allowlist, extension checks, root grants, TOCTOU narrowing and scrubbed refusals hold');
+// -- a symlinked GRANDparent escaping every root is refused HERE, at the guard layer --
+// project-file-io.ts's directory check is exactly one level deep, so it does NOT
+// catch this case (pinned as a documented limit in project-file-io.verify.ts). This
+// asserts the other half of that story by execution: the guard refuses it anyway,
+// because resolveAllowedMediaPath canonicalises the candidate before the io layer
+// sees it, and the canonical path lands outside every registered root. So the
+// defence-in-depth story is pinned by execution at both layers: the io layer lets
+// this through, this layer refuses it. (No mutation claim is made for the
+// resolveAllowedMediaPath call here — the allowlist-gate test above already fires
+// first when it is removed.) --
+const gpOutside = join(outside, 'GrandSub');
+await mkdir(gpOutside, { recursive: true });
+await writeFile(join(gpOutside, 'Secret.occ'), 'GRANDPARENT-SECRET\n');
+// project/GrandAlias -> Outside, so in project/GrandAlias/GrandSub/Secret.occ the
+// GRANDparent is the symlink and the immediate parent, GrandSub, is a real directory.
+await symlink(outside, join(project, 'GrandAlias'));
+await assert.rejects(
+  () => guardedReadProjectFile(join(project, 'GrandAlias', 'GrandSub', 'Secret.occ')),
+  (error: Error) => {
+    assert.equal(error.message, refusalMessage, 'a symlinked grandparent must read as the identical refusal message');
+    return true;
+  },
+  'a target reached through a symlinked GRANDparent escaping every root must be refused',
+);
+await assert.rejects(
+  () => guardedWriteProjectFile(join(project, 'GrandAlias', 'GrandSub', 'Pwned.occ'), 'x'),
+  'a write through a symlinked GRANDparent escaping every root must be refused',
+);
+assert.equal(
+  (await readdir(gpOutside)).includes('Pwned.occ'),
+  false,
+  'the refused write must not have created anything outside every root',
+);
+
+console.log('project-file-ipc.verify: allowlist, extension checks, root grants, symlink escapes (including a symlinked grandparent) and scrubbed refusals hold');

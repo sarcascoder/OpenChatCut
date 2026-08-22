@@ -7,11 +7,24 @@
 // server/plugins/upload-routes.ts's verifyLocalMediaTarget), that neither the
 // immediate parent directory nor the target itself is a symlink at the
 // moment of the call. Read PRECISELY what this does and does not buy you:
-//   - It DETERMINISTICALLY rejects a call where a directory component or the
-//     target was ALREADY a symlink before the call started — no timing, no
-//     race, no attacker skill required. This is the common case: a hostile
-//     archive or a co-operating local process that pre-arranges a symlink and
-//     then triggers a read/write through it.
+//   - It rejects, with no timing and no race involved, a call whose IMMEDIATE
+//     PARENT directory, or whose target file, was ALREADY a symlink before the
+//     call started. That is the common case: a hostile archive or a
+//     co-operating local process that pre-arranges a symlink and then triggers
+//     a read/write through it.
+//   - It checks exactly ONE directory level. A symlinked component HIGHER in
+//     the path — a grandparent or above — is NOT detected: the kernel walks
+//     such a component transparently for both the open() and the lstat(), so
+//     their dev/ino agree and nothing here notices. Executed and pinned as a
+//     known limit in project-file-io.verify.ts. Callers arriving through
+//     desktop/project-file-ipc.ts are covered regardless, because
+//     resolveAllowedMediaPath canonicalises the candidate with realpath()
+//     before this module ever sees a path; the one-level check is
+//     defence-in-depth for future callers that do not pre-canonicalise. It is
+//     deliberately NOT extended to walk every component: this module does not
+//     know the granted root, so it has no boundary to stop at, and walking up
+//     to / would refuse legitimate paths on macOS, where /tmp and /var are
+//     themselves symlinks (to /private/tmp and /private/var).
 //   - It does NOT close a genuine TOCTOU race, where an attacker swaps a
 //     directory component for a symlink IN THE WINDOW between this check and
 //     a later path-based call (open(temp), rename(), or even this function's
@@ -78,9 +91,14 @@ async function assertDirectoryNotSymlinked(dir: string): Promise<void> {
  *      HANDLE once its fstat() is confirmed to match a fresh lstat() of the
  *      path — closing the case where the FILE ITSELF (not a directory
  *      component) is a symlink.
- * Together these close the DETERMINISTIC case for both a symlinked directory
- * component and a symlinked target file. Neither closes a genuine race: see
- * the module doc comment.
+ * Between them they cover a symlinked IMMEDIATE PARENT and a symlinked target
+ * file. Check 1 looks at one level only: a symlinked component higher up the
+ * path — a grandparent or above — is detected by NEITHER check, and reads
+ * through it succeed. That limit is deliberate and is pinned by an executed
+ * test in project-file-io.verify.ts; callers coming through
+ * desktop/project-file-ipc.ts are covered anyway, because
+ * resolveAllowedMediaPath canonicalises the path before this function runs.
+ * And neither check closes a genuine race: see the module doc comment.
  */
 export async function readProjectFile(documentPath: string): Promise<string> {
   await assertDirectoryNotSymlinked(dirname(documentPath));
