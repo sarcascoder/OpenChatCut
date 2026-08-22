@@ -26,6 +26,7 @@ import {
   guardedScaffoldProjectFolder,
   guardedWriteProjectFile,
 } from './project-file-ipc.ts';
+import { grantProjectRoot } from './project-root-grants.ts';
 import { installEditorAuthIpc } from './editor-auth-ipc.ts';
 import { installDesktopUpdateIpc } from './update-ipc.ts';
 import { supportsDirectDesktopUpdates } from './update-service.ts';
@@ -135,7 +136,12 @@ function registerDesktopHandlers(trustedOrigin: string): void {
     const result = parent
       ? await dialog.showOpenDialog(parent, options)
       : await dialog.showOpenDialog(options);
-    return result.canceled ? null : (result.filePaths[0] ?? null);
+    if (result.canceled || !result.filePaths[0]) return null;
+    const selected = result.filePaths[0];
+    // The user chose this directory through a trusted OS dialog, so it (and
+    // only it) becomes eligible as a project-scaffold root.
+    await grantProjectRoot(selected).catch(() => {});
+    return selected;
   }));
   ipcMain.handle('openchatcut:project-file-read', trustedDesktopHandler(trustedOrigin, async (_event, documentPath: unknown) => (
     guardedReadProjectFile(String(documentPath))
