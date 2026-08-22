@@ -89,15 +89,18 @@ function handleMediaRead(
 }
 
 /**
- * The handle id in `/media/local/<id>`, or null. Ids are opaque hex, so anything
- * containing a separator, an escape or a traversal sequence is rejected here —
- * before any filesystem access happens.
+ * The handle id from a request's `req.url`, or null. By the time this runs, connect
+ * (vite's middleware dispatcher — `server.middlewares.use('/media/local', ...)`)
+ * has already stripped the `/media/local` mount prefix and rewritten `req.url` to be
+ * mount-relative, e.g. `/<id>` or `/<id>?query` — never the full `/media/local/<id>`
+ * path. This mirrors `mediaName()` in `./upload-route-http.ts`, which makes the same
+ * assumption for the sibling `/media/uploads` mount. Ids are opaque hex, so anything
+ * containing a separator, an escape or a traversal sequence is rejected here — before
+ * any filesystem access happens.
  */
 export function mediaLocalHandleFromUrl(url: string): string | null {
-  const path = url.split('?')[0] ?? '';
-  const prefix = '/media/local/';
-  if (!path.startsWith(prefix)) return null;
-  const id = path.slice(prefix.length);
+  const path = (url ?? '/').split('?')[0] ?? '';
+  const id = path.replace(/^\/+/, '');
   return /^[a-f0-9]{16,64}$/.test(id) ? id : null;
 }
 
