@@ -46,7 +46,7 @@ export function exportPlugin(): Plugin {
       // The headless renderer is a separate process and reads media over HTTP from
       // its own serve bundle, so it cannot call resolveMediaHandle itself. Hand it
       // the resolver here, where the uploads directory is already injected — without
-      // this an export silently loses every /media/local asset the preview showed.
+      // this an export loses every /media/local asset the preview showed.
       setMediaHandleResolver(resolveMediaHandle);
       const cleanStaleExports = () => cleanupStaleExportFiles(uploadDir(), {
           shouldRetain: retainUnresolvedExportRecovery,

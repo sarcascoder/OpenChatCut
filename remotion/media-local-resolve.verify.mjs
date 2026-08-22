@@ -1,14 +1,15 @@
 // The headless renderer runs in its own process and reads every asset over HTTP
 // from Remotion's static serve bundle, which knows nothing about the web
 // server's /media/local/<id> route. Missing resolution is a 404, and a 404 is
-// not reliably loud — render.mjs documents the sibling stale-uploads case
-// arriving as a blank still rather than an error. So the end-to-end case here
+// not reliably loud: measured on 4.0.509 the picture paths threw, but render.mjs
+// documents the sibling stale-uploads 404 arriving as a blank still instead. So
+// the end-to-end case here
 // never asserts "nothing was thrown": it decodes the exported file and asserts
 // real non-blank pixels and audible audio, matching the same source served the
 // /media/uploads way.
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { copyFile, lstat, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -87,8 +88,9 @@ try {
   // ── 2. What gets materialized into the serve bundle ──────────────────────
   // Remotion's bundled static file server lstat()s the final path component and
   // answers 404 for a symlink, and derives Content-Type from the extension
-  // alone. Both were measured directly; a regression on either is the silent
-  // blank-frame failure again, so pin the shape here as well as end to end.
+  // alone. Only the symlink property is load-bearing — an extensionless entry
+  // was measured to render identically — but the extension keeps Content-Type
+  // correct, so pin both shapes here as well as end to end.
   const materialized = await materializeMediaLocalSrcs({
     serveUrl: serveDir,
     srcs: [`/media/local/${id}`, `/media/local/${id}?v=2`],
@@ -96,10 +98,12 @@ try {
   });
   const entries = await readdir(materialized.directory);
   assert.deepEqual(entries, [`${id}.mp4`], 'one entry per id, carrying the source extension');
+  const sourceStat = await lstat(source);
   const entry = await lstat(join(materialized.directory, `${id}.mp4`));
   assert.ok(entry.isFile(), 'the entry must be a regular file');
   assert.ok(!entry.isSymbolicLink(), 'a symlink here is served as 404, whatever it looks like on disk');
-  assert.equal(entry.size, (await lstat(source)).size, 'the entry must hold the source bytes');
+  assert.equal(entry.size, sourceStat.size, 'the entry must hold the source bytes');
+  assert.equal(entry.ino, sourceStat.ino, 'same filesystem must hard-link, not copy the bytes');
   assert.equal(
     materialized.urlBySrc.get(`/media/local/${id}?v=2`),
     materialized.urlBySrc.get(`/media/local/${id}`),
@@ -109,13 +113,37 @@ try {
   assert.deepEqual(
     await readdir(join(serveDir, 'media', 'local-render')),
     [],
-    'per-render entries must be removed, so concurrent renders cannot outlive each other',
+    'per-render entries must be removed rather than accumulate in the serve bundle',
   );
 
   await assert.rejects(
     materializeMediaLocalSrcs({ serveUrl: serveDir, srcs: [`/media/local/${unknownId}`], resolveHandle: resolveMediaHandle }),
     /is not registered/,
     'an unknown id must fail loudly instead of leaving a hole in the picture',
+  );
+
+  // ── 2b. The copy fallback ────────────────────────────────────────────────
+  // Media on a second filesystem — the spec's own headline case, footage on an
+  // external SSD — makes link() fail with EXDEV, and materialization has to
+  // stream the file from the verified descriptor instead. A real second volume
+  // proved that end to end once; stubbing link() keeps the branch covered here
+  // for the price of a few milliseconds.
+  const crossDevice = await materializeMediaLocalSrcs({
+    serveUrl: serveDir,
+    srcs: [`/media/local/${id}`],
+    resolveHandle: resolveMediaHandle,
+    createHardLink: () => Promise.reject(Object.assign(new Error('EXDEV: cross-device link not permitted'), { code: 'EXDEV' })),
+  });
+  const copyPath = join(crossDevice.directory, `${id}.mp4`);
+  const copyStat = await lstat(copyPath);
+  assert.ok(copyStat.isFile() && !copyStat.isSymbolicLink(), 'the fallback must produce a regular file');
+  assert.notEqual(copyStat.ino, sourceStat.ino, 'the fallback is a copy, so it must be a different inode');
+  assert.deepEqual(await readFile(copyPath), await readFile(source), 'the copy must be byte-identical to the source');
+  await crossDevice.dispose();
+  assert.deepEqual(
+    await readdir(join(serveDir, 'media', 'local-render')),
+    [],
+    'a copied entry must be cleaned up like a linked one',
   );
 
   // ── 3. End to end: the exported file has to contain the media ────────────
@@ -188,7 +216,7 @@ try {
       outputLocation: join(directory, 'unknown.mp4'), codec: 'h264', h264Profile: softwareH264,
     }),
     new RegExp(unknownId),
-    'an unresolvable id must fail the export, not render it blank',
+    'an unresolvable id must fail the export rather than produce one missing the clip',
   );
 
   console.log(

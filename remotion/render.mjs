@@ -176,10 +176,10 @@ export function setUploadsDirProvider(fn) { uploadsDirProvider = fn; }
 // Handle ids are minted and owned by the server process (server/media-handles.ts).
 // Injected rather than imported for the same reason uploadsDirProvider is: this
 // module is loaded by plain `node` in some verifies and by the desktop prebuild,
-// neither of which can resolve the server's TypeScript module graph. Left unset
-// it resolves nothing, and any /media/local src then fails the render loudly —
-// never silently, which for media is the whole point. server/plugins/export
-// injects the real resolver.
+// neither of which can resolve the server's TypeScript module graph. Left unset,
+// a /media/local src throws below before the render starts, so a missing
+// injection surfaces as a failed export rather than a missing clip.
+// server/plugins/export injects the real resolver.
 let mediaHandleResolver = null;
 /** @param {(id: string) => string | null} fn resolves a handle id to an admitted absolute path */
 export function setMediaHandleResolver(fn) { mediaHandleResolver = fn; }

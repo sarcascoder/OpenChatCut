@@ -11,8 +11,8 @@
 // Instead each render materializes only the ids its own input props reference,
 // into a private per-render directory under the serve root, and the srcs are
 // rewritten to point at it. Two properties of Remotion's bundled static file
-// server (node_modules/@remotion/renderer/dist/serve-handler/index.js) dictate
-// the shape, and both were confirmed by serving real files through it:
+// server (node_modules/@remotion/renderer/dist/serve-handler/index.js) were
+// measured by serving real files through it. Only the first dictates the shape:
 //
 //   1. It lstat()s the final path component and answers 404 for a symlink
 //      ("symlinks" is off and not configurable from here). A per-file symlink —
@@ -20,12 +20,17 @@
 //      renderer. Only an intermediate *directory* component may be a symlink,
 //      which is why the uploads link works. So the entry has to be a real
 //      directory entry for the file: a hard link, or a copy when the source
-//      lives on another filesystem.
+//      lives on another filesystem. This one is load-bearing: a symlink here
+//      404s, and that was reproduced through a real render.
 //   2. Content-Type comes from the file extension alone. A bare handle id has
-//      none, and the server then sends no Content-Type header at all. The
-//      materialized name therefore carries the source file's extension.
+//      none, and the server then sends no Content-Type header at all. This one
+//      is NOT load-bearing on 4.0.509 — mp4, png and wav all rendered
+//      byte-identically from extensionless entries, because @remotion/media
+//      sniffs the container, <img> sniffs, and the server-side audio download
+//      does too. The materialized name carries the source extension anyway, to
+//      keep Content-Type correct for a future consumer that does need it.
 //
-// Getting either wrong is a 404, and a 404 is not reliably loud: what surfaces
+// A missing entry is a 404, and a 404 is not reliably loud: what surfaces
 // depends on which element holds the src and on the Remotion version. Measured
 // on 4.0.509 the picture paths did throw (<Img> after retrying, <Video> after
 // falling back to <OffthreadVideo>), but render.mjs documents the same 404
@@ -64,7 +69,7 @@ export function mediaLocalIdFromSrc(value) {
  *
  * Membership is `startsWith(MEDIA_LOCAL_PREFIX)`, not "is a valid handle URL",
  * on purpose: a malformed one must reach materializeMediaLocalSrcs and throw
- * there rather than be quietly skipped and render as a blank frame.
+ * there rather than be quietly skipped.
  */
 export function collectMediaLocalSrcs(value) {
   const found = new Set();
@@ -83,9 +88,10 @@ export function collectMediaLocalSrcs(value) {
 }
 
 /**
- * A copy of `value` with every src in `urlBySrc` replaced. Input props are
- * always JSON-serializable (Remotion serializes them into the browser), so a
- * plain recursive rebuild is safe and preserves structure.
+ * A copy of `value` with every src in `urlBySrc` replaced. Remotion serializes
+ * input props into the browser, so they have to be JSON-shaped to reach a
+ * render at all; this rebuild relies on that and would recurse forever on a
+ * cyclic object rather than detecting one.
  */
 export function rewriteMediaLocalSrcs(value, urlBySrc) {
   if (typeof value === 'string') return urlBySrc.get(value) ?? value;
@@ -131,16 +137,18 @@ async function openVerifiedTarget(absolutePath, id) {
  * Put the verified file at `destination` as a real directory entry.
  *
  * A hard link is preferred: it costs no bytes, which is the whole reason the
- * uploads path uses a symlink rather than a per-render copy. It is not always
- * available (another filesystem, or one without hard links), and on some
- * platforms link() follows a final symlink, so the result is checked against
- * the inode that was verified. Anything other than "this is exactly that
- * inode" falls back to copying from the already-open, already-verified
- * descriptor, which no on-disk substitution can influence.
+ * uploads path uses a symlink rather than a per-render copy. It is not
+ * available everywhere (another filesystem, or one without hard links), and
+ * link()'s treatment of a final symlink is platform-dependent, so the created
+ * entry is checked against the inode that was verified rather than assumed.
+ * Anything other than "this is exactly that inode" falls back to copying from
+ * the already-open descriptor, whose bytes a later on-disk substitution cannot
+ * change. `createHardLink` is injectable so the verify can force the fallback
+ * without a second filesystem.
  */
-async function placeVerifiedFile(source, destination, verified) {
+async function placeVerifiedFile(source, destination, verified, createHardLink) {
   try {
-    await link(source, destination);
+    await createHardLink(source, destination);
     const placed = await lstat(destination);
     if (placed.isFile() && placed.dev === verified.dev && placed.ino === verified.ino) return;
     await rm(destination, { force: true });
@@ -158,16 +166,17 @@ async function placeVerifiedFile(source, destination, verified) {
  * renderer should request instead. Throws on anything it cannot resolve — an
  * unresolvable id must fail the render, never leave a hole in the picture.
  *
- * The per-render directory is what makes this safe under concurrent renders:
- * disposing one render's entries can never remove a file another render is
- * still streaming.
+ * Each render gets its own mkdtemp directory so that disposing one render's
+ * entries does not touch another's. That follows from the directory being
+ * unique per call; no test exercises two concurrent renders.
  *
  * @param {object} args
  * @param {string} args.serveUrl  absolute path of the serve bundle directory
  * @param {Iterable<string>} args.srcs
  * @param {(id: string) => string | null} args.resolveHandle
+ * @param {(source: string, destination: string) => Promise<void>} [args.createHardLink]
  */
-export async function materializeMediaLocalSrcs({ serveUrl, srcs, resolveHandle }) {
+export async function materializeMediaLocalSrcs({ serveUrl, srcs, resolveHandle, createHardLink = link }) {
   const root = path.join(serveUrl, 'media', 'local-render');
   await mkdir(root, { recursive: true });
   const directory = await mkdtemp(path.join(root, 'render-'));
@@ -186,7 +195,7 @@ export async function materializeMediaLocalSrcs({ serveUrl, srcs, resolveHandle 
         name = `${id}${SAFE_EXTENSION.test(extension) ? extension : ''}`;
         const verified = await openVerifiedTarget(target, id);
         try {
-          await placeVerifiedFile(target, path.join(directory, name), verified);
+          await placeVerifiedFile(target, path.join(directory, name), verified, createHardLink);
         } finally {
           await verified.handle.close().catch(() => undefined);
         }
