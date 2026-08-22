@@ -17,6 +17,7 @@ import {
   withEncoderProfileFallback,
 } from './performance.mjs';
 import { renderDirectHardware } from './direct-hardware.mjs';
+import { collectMediaLocalSrcs, materializeMediaLocalSrcs, rewriteMediaLocalSrcs } from './media-local.mjs';
 import { assertMaterializedRenderSnapshot, normalizeH264Profile } from './render-contract.mjs';
 import { resolveRenderTimeout } from './render-timeout.mjs';
 
@@ -172,6 +173,41 @@ let linkedDir = null; // <serveUrl>/media/uploads symlink currently points to; r
 /** @param {() => string} fn returns the absolute path of the current asset directory*/
 export function setUploadsDirProvider(fn) { uploadsDirProvider = fn; }
 
+// Handle ids are minted and owned by the server process (server/media-handles.ts).
+// Injected rather than imported for the same reason uploadsDirProvider is: this
+// module is loaded by plain `node` in some verifies and by the desktop prebuild,
+// neither of which can resolve the server's TypeScript module graph. Left unset
+// it resolves nothing, and any /media/local src then fails the render loudly —
+// never silently, which for media is the whole point. server/plugins/export
+// injects the real resolver.
+let mediaHandleResolver = null;
+/** @param {(id: string) => string | null} fn resolves a handle id to an admitted absolute path */
+export function setMediaHandleResolver(fn) { mediaHandleResolver = fn; }
+
+/**
+ * Resolve the `/media/local/<id>` srcs in `inputProps` into files the headless
+ * renderer's static server can actually read, run `run` with the rewritten
+ * props, and drop the materialized entries afterwards. See media-local.mjs for
+ * why the renderer cannot just be pointed at the paths.
+ */
+async function withMediaLocalResolved(serveUrl, inputProps, run) {
+  const srcs = collectMediaLocalSrcs(inputProps);
+  if (!srcs.size) return run(inputProps);
+  if (!mediaHandleResolver) {
+    throw new Error('render: /media/local srcs need setMediaHandleResolver() — no resolver is configured');
+  }
+  const materialized = await materializeMediaLocalSrcs({
+    serveUrl,
+    srcs,
+    resolveHandle: mediaHandleResolver,
+  });
+  try {
+    return await run(rewriteMediaLocalSrcs(inputProps, materialized.urlBySrc));
+  } finally {
+    await materialized.dispose();
+  }
+}
+
 async function buildServeUrl() {
   const serveUrl = await buildBundle(undefined);
   // Live-link runtime uploads: push_asset / upload / paste / image-gen write files
@@ -307,12 +343,12 @@ export async function renderTimeline({
   const proresOptions = codec === 'prores'
     ? { proResProfile: 'hq', imageFormat: 'png' }
     : {};
-  const rendered = await withAbortableCompositionSelection({
+  const rendered = await withMediaLocalResolved(serveUrl, inputProps, (props) => withAbortableCompositionSelection({
     signal,
     selectionOptions: {
       serveUrl,
       id: COMPOSITION_ID,
-      inputProps,
+      inputProps: props,
       browserExecutable: browserExecutable(),
       timeoutInMilliseconds: renderTimeoutInMilliseconds(),
     },
@@ -321,7 +357,7 @@ export async function renderTimeline({
       composition,
       codec,
       frameRange,
-      inputProps,
+      inputProps: props,
       outputLocation,
       h264Profile,
       vaapiDevice,
@@ -340,7 +376,7 @@ export async function renderTimeline({
       abortSignal: signal,
       timeoutInMilliseconds: renderTimeoutInMilliseconds(),
     }),
-  });
+  }));
   signal?.throwIfAborted();
   return {
     outputLocation,
@@ -380,12 +416,12 @@ export async function renderClip({
   const serveUrl = await getServeUrl();
   signal?.throwIfAborted();
   const inputProps = { state, transparent };
-  await withAbortableCompositionSelection({
+  await withMediaLocalResolved(serveUrl, inputProps, (props) => withAbortableCompositionSelection({
     signal,
     selectionOptions: {
       serveUrl,
       id: COMPOSITION_ID,
-      inputProps,
+      inputProps: props,
       browserExecutable: browserExecutable(),
       timeoutInMilliseconds: renderTimeoutInMilliseconds(),
     },
@@ -393,7 +429,7 @@ export async function renderClip({
       serveUrl,
       composition,
       codec,
-      inputProps,
+      inputProps: props,
       outputLocation,
       h264Profile,
       vaapiDevice,
@@ -407,7 +443,7 @@ export async function renderClip({
       cancelSignal,
       abortSignal: signal,
     }),
-  });
+  }));
   signal?.throwIfAborted();
   return outputLocation;
 }
@@ -440,52 +476,53 @@ export async function renderTimelineStills({
   if (project) assertMaterializedRenderSnapshot(project, 'renderTimelineStills', timelineId);
   const serveUrl = await getServeUrl();
   signal?.throwIfAborted();
-  const inputProps = { state, project, timelineId };
-  // Reuse one browser for the batch when caller doesn't pass one — opening Chrome
-  // per frame was the dominant cost of view_*_frames.
-  const ownBrowser = !puppeteerInstance;
-  const browser = puppeteerInstance ?? await openBrowser('chrome', {
-    browserExecutable: browserExecutable(),
-    chromiumOptions: { gl: resolveRenderGlBackend() },
-  });
-  const closeOnAbort = () => {
-    if (ownBrowser) void browser.close({ silent: true }).catch(() => undefined);
-  };
-  signal?.addEventListener('abort', closeOnAbort, { once: true });
-  try {
-    signal?.throwIfAborted();
-    const composition = await selectComposition({
-      serveUrl, id: COMPOSITION_ID, inputProps,
-      puppeteerInstance: browser,
+  return withMediaLocalResolved(serveUrl, { state, project, timelineId }, async (inputProps) => {
+    // Reuse one browser for the batch when caller doesn't pass one — opening Chrome
+    // per frame was the dominant cost of view_*_frames.
+    const ownBrowser = !puppeteerInstance;
+    const browser = puppeteerInstance ?? await openBrowser('chrome', {
       browserExecutable: browserExecutable(),
-      timeoutInMilliseconds: renderTimeoutInMilliseconds(),
+      chromiumOptions: { gl: resolveRenderGlBackend() },
     });
-    signal?.throwIfAborted();
-    const out = [];
-    const list = frames.slice(0, STILL_MAX_FRAMES);
-    for (const frame of list) {
+    const closeOnAbort = () => {
+      if (ownBrowser) void browser.close({ silent: true }).catch(() => undefined);
+    };
+    signal?.addEventListener('abort', closeOnAbort, { once: true });
+    try {
       signal?.throwIfAborted();
-      const f = Math.max(0, Math.min(composition.durationInFrames - 1, Math.round(frame)));
-      const { buffer } = await renderStill({
-        serveUrl, composition, inputProps, frame: f,
-        imageFormat: 'jpeg', jpegQuality: 72,
-        // Slightly smaller cells when many frames → cheaper vision payload
-        scale: (list.length > 6 ? 480 : 640) / composition.width,
-        chromiumOptions: { gl: resolveRenderGlBackend() },
-        browserExecutable: browserExecutable(),
-        offthreadVideoThreads: offthreadVideoThreads(),
-        output: null,
+      const composition = await selectComposition({
+        serveUrl, id: COMPOSITION_ID, inputProps,
         puppeteerInstance: browser,
+        browserExecutable: browserExecutable(),
         timeoutInMilliseconds: renderTimeoutInMilliseconds(),
       });
       signal?.throwIfAborted();
-      out.push({ frame: f, base64: buffer.toString('base64') });
+      const out = [];
+      const list = frames.slice(0, STILL_MAX_FRAMES);
+      for (const frame of list) {
+        signal?.throwIfAborted();
+        const f = Math.max(0, Math.min(composition.durationInFrames - 1, Math.round(frame)));
+        const { buffer } = await renderStill({
+          serveUrl, composition, inputProps, frame: f,
+          imageFormat: 'jpeg', jpegQuality: 72,
+          // Slightly smaller cells when many frames → cheaper vision payload
+          scale: (list.length > 6 ? 480 : 640) / composition.width,
+          chromiumOptions: { gl: resolveRenderGlBackend() },
+          browserExecutable: browserExecutable(),
+          offthreadVideoThreads: offthreadVideoThreads(),
+          output: null,
+          puppeteerInstance: browser,
+          timeoutInMilliseconds: renderTimeoutInMilliseconds(),
+        });
+        signal?.throwIfAborted();
+        out.push({ frame: f, base64: buffer.toString('base64') });
+      }
+      return out;
+    } finally {
+      signal?.removeEventListener('abort', closeOnAbort);
+      if (ownBrowser) {
+        try { await browser.close({ silent: true }); } catch { /* ignore */ }
+      }
     }
-    return out;
-  } finally {
-    signal?.removeEventListener('abort', closeOnAbort);
-    if (ownBrowser) {
-      try { await browser.close({ silent: true }); } catch { /* ignore */ }
-    }
-  }
+  });
 }

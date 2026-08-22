@@ -31,6 +31,7 @@ export const {
   renderTimeline,
   renderTimelineStills,
   renderClip,
+  setMediaHandleResolver,
   setUploadsDirProvider,
 } = remotionRender;
 

@@ -12,7 +12,8 @@ import {
 import { getStoredEntry } from './project-store.ts';
 import { isUnresolvedExportRecovery } from './project-store-export-recovery.ts';
 import { resolveUploadFile, uploadDir } from '../media-dir.ts';
-import { setUploadsDirProvider } from './export-rendering.ts';
+import { resolveMediaHandle } from '../media-handles.ts';
+import { setMediaHandleResolver, setUploadsDirProvider } from './export-rendering.ts';
 import {
   registerRenderClipRoute,
   registerRenderStillRoute,
@@ -42,6 +43,11 @@ export function exportPlugin(): Plugin {
     name: 'openchatcut-export',
     configureServer(server) {
       setUploadsDirProvider(uploadDir);
+      // The headless renderer is a separate process and reads media over HTTP from
+      // its own serve bundle, so it cannot call resolveMediaHandle itself. Hand it
+      // the resolver here, where the uploads directory is already injected — without
+      // this an export silently loses every /media/local asset the preview showed.
+      setMediaHandleResolver(resolveMediaHandle);
       const cleanStaleExports = () => cleanupStaleExportFiles(uploadDir(), {
           shouldRetain: retainUnresolvedExportRecovery,
           onError: (path, error) => server.config.logger.warn(
