@@ -26,7 +26,7 @@ import {
   guardedScaffoldProjectFolder,
   guardedWriteProjectFile,
 } from './project-file-ipc.ts';
-import { grantProjectRoot } from './project-root-grants.ts';
+import { grantProjectRoot, loadProjectRootGrants } from './project-root-grants.ts';
 import { installEditorAuthIpc } from './editor-auth-ipc.ts';
 import { installDesktopUpdateIpc } from './update-ipc.ts';
 import { supportsDirectDesktopUpdates } from './update-service.ts';
@@ -178,6 +178,19 @@ function registerDesktopHandlers(trustedOrigin: string): void {
   ipcMain.handle('openchatcut:project-folder-scaffold', trustedDesktopHandler(trustedOrigin, async (_event, root: unknown, projectName: unknown) => (
     guardedScaffoldProjectFolder(String(root), String(projectName))
   )));
+  // Restore folders the user granted through the project-folder dialog in an
+  // earlier run, so a project's terminal reopens without re-picking every launch.
+  // Entries whose directory no longer exists are dropped during the load.
+  // registerDesktopHandlers is synchronous and its caller does not await it, so
+  // the restore runs as a tracked promise. Every consumer of a grant already
+  // awaits `isProjectRootGranted`, and a request arriving before the load
+  // finishes is simply refused -- the failure mode is "not yet granted", never
+  // "granted by mistake".
+  void loadProjectRootGrants(join(app.getPath('userData'), 'project-root-grants.json'))
+    .then((count) => {
+      if (count) console.log(`[desktop] restored ${count} granted project folder(s)`);
+    })
+    .catch(() => {});
   const exportStatePath = join(app.getPath('userData'), 'export-destination.json');
   let activeExportDirectory: {
     directory: string;

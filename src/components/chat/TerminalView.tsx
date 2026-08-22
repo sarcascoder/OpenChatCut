@@ -23,8 +23,10 @@ import {
  * process's cwd check requires -- so a folder chosen here is admitted for the
  * same reason an opened project would be, not by any weakening of the guard.
  *
- * Grants are per app run. After a restart the remembered folder is still shown,
- * but it must be re-picked once before a shell can open in it.
+ * Grants persist across app restarts (desktop/project-root-grants.ts), so a
+ * remembered folder reopens without re-picking. A refusal therefore means the
+ * folder is genuinely unusable now -- moved, deleted, or never granted -- not
+ * merely that the app was restarted.
  */
 export function TerminalView({ projectId, projectRoot }: {
   projectId: string;
@@ -102,9 +104,9 @@ export function TerminalView({ projectId, projectRoot }: {
         if (!id) {
           setRefused(true);
           // The main process refuses with a deliberately uniform error, so this
-          // cannot say WHY. After an app restart the commonest cause is simply
-          // that the grant is gone, which re-picking the folder restores.
-          entry.term.write('\r\nThis folder is not open for a terminal. Choose it again to reopen.\r\n');
+          // cannot say WHY. Since grants now survive restarts, the likely cause
+          // is that the folder moved or was deleted.
+          entry.term.write('\r\nThis folder is not available. Choose it again, or pick another.\r\n');
         }
       });
     }
