@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ViteDevServer } from 'vite';
-import { readdir, stat } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { lstat, open as openFile, readdir, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
@@ -10,6 +11,7 @@ import {
   isSafeUploadName, resolveOrHydrateUploadFile, serveDiskFile, syncLegacyUploads,
   uploadReadDirs,
 } from '../media-dir.ts';
+import { resolveMediaHandle } from '../media-handles.ts';
 import { isIsolatedDevProfile } from '../runtime-profile.ts';
 import { sha256File } from '../../shared/node-content-hash.ts';
 import { editorCredentialAuthorized } from '../editor-auth.ts';
@@ -84,6 +86,75 @@ function handleMediaRead(
     if (!res.headersSent) sendError(res, 500, 'media read failed');
     else res.end();
   });
+}
+
+/**
+ * The handle id in `/media/local/<id>`, or null. Ids are opaque hex, so anything
+ * containing a separator, an escape or a traversal sequence is rejected here —
+ * before any filesystem access happens.
+ */
+export function mediaLocalHandleFromUrl(url: string): string | null {
+  const path = url.split('?')[0] ?? '';
+  const prefix = '/media/local/';
+  if (!path.startsWith(prefix)) return null;
+  const id = path.slice(prefix.length);
+  return /^[a-f0-9]{16,64}$/.test(id) ? id : null;
+}
+
+/**
+ * Re-verifies an already-admitted media path immediately before it is opened for
+ * serving. `resolveMediaHandle` only proves the path was inside a registered media
+ * root at handle-creation time (see the TOCTOU note on `resolveAllowedMediaPath` in
+ * ../media-roots.ts) — arbitrarily long before this request. Between then and now the
+ * path can have been replaced, e.g. by a symlink pointing outside every root, so this
+ * function opens it with O_NOFOLLOW (a substituted symlink fails to open rather than
+ * being followed) and additionally compares the opened descriptor's device+inode
+ * against a fresh lstat of the same path (defense in depth for the narrower window
+ * between that open and this check). Fails closed on any error, including a missing
+ * or non-regular file, so an unverifiable path is never served.
+ */
+export async function verifyLocalMediaTarget(path: string): Promise<boolean> {
+  const noFollow = process.platform === 'win32' ? 0 : fsConstants.O_NOFOLLOW;
+  let handle;
+  try {
+    handle = await openFile(path, fsConstants.O_RDONLY | noFollow);
+  } catch {
+    return false;
+  }
+  try {
+    const [fdStat, diskStat] = await Promise.all([handle.stat(), lstat(path)]);
+    return fdStat.isFile() && fdStat.dev === diskStat.dev && fdStat.ino === diskStat.ino;
+  } catch {
+    return false;
+  } finally {
+    await handle.close().catch(() => undefined);
+  }
+}
+
+async function readLocalMedia(
+  req: IncomingMessage,
+  res: ServerResponse,
+  id: string,
+  logger: Logger,
+): Promise<void> {
+  const local = resolveMediaHandle(id);
+  // Unknown id and denied/unverifiable path are indistinguishable to the caller, on purpose.
+  if (!local || !(await verifyLocalMediaTarget(local))) { sendError(res, 404, 'media not found'); return; }
+  res.setHeader(MEDIA_AUTHORITY_HEADER, 'server');
+  try {
+    await serveDiskFile(req, res, local);
+  } catch (error) {
+    logger.error(`[media-local] ${id}: ${error instanceof Error ? error.message : String(error)}`);
+    if (!res.headersSent) sendError(res, 500, 'media read failed');
+    else res.end();
+  }
+}
+
+function handleLocalMediaRead(req: IncomingMessage, res: ServerResponse, next: () => void, logger: Logger): void {
+  if (req.method !== 'GET' && req.method !== 'HEAD') { next(); return; }
+  const id = mediaLocalHandleFromUrl(req.url ?? '');
+  if (!id) { sendError(res, 404, 'media not found'); return; }
+  void readLocalMedia(req, res, id, logger);
 }
 
 async function handleUploadList(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -226,6 +297,7 @@ export function registerUploadRoutes(
 ): void {
   const logger = server.config.logger;
   void dependencies.syncLegacy((message) => logger.info(message));
+  server.middlewares.use('/media/local', (req, res, next) => handleLocalMediaRead(req, res, next, logger));
   server.middlewares.use('/media/uploads', (req, res, next) => (
     handleMediaRead(req, res, next, logger, dependencies)
   ));
