@@ -23,8 +23,10 @@ export class ProjectFileAccessError extends Error {
 
 export async function guardedReadProjectFile(documentPath: string): Promise<string> {
   try {
-    // This channel exposes project documents only, never arbitrary files
-    // inside a registered root.
+    // Narrows this channel to the project document extension, so it is not a
+    // general file-read of anything inside a registered root. This is an
+    // EXTENSION check, not a content check: any *.occ file under a root is
+    // exposed regardless of what it actually contains.
     if (!documentPath.endsWith(PROJECT_FILE_EXTENSION)) throw new ProjectFileAccessError();
     const allowed = await resolveAllowedMediaPath(documentPath);
     if (!allowed) throw new ProjectFileAccessError();
@@ -67,8 +69,12 @@ export async function guardedWriteProjectFile(documentPath: string, contents: st
     // before writeProjectFile's mkdir/open(temp)/rename run, all three of
     // which are path-based and re-resolve the directory from scratch.
     // writeProjectFile DOES deterministically reject a `dir` that is ALREADY
-    // a symlink when it runs (see its doc comment in project-file-io.ts) —
-    // that is a real, unconditional guarantee. It is NOT a narrowing of the
+    // a symlink when it runs (see its doc comment in project-file-io.ts).
+    // That holds unconditionally but only for ONE level -- `dir` is the
+    // immediate parent; a symlinked component higher up the path is not
+    // detected there (pinned by an executed test in project-file-io.verify.ts,
+    // and refused on this channel by the resolveAllowedMediaPath call above).
+    // It is NOT a narrowing of the
     // race: measured, a concurrent swap wins the race in as few attempts
     // post-fix as pre-fix, because the check's own open(temp)/rename() calls
     // afterward re-resolve `dir` by path just like before it existed. Node's
