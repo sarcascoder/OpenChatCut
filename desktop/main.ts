@@ -136,10 +136,35 @@ function registerDesktopHandlers(trustedOrigin: string): void {
     const result = parent
       ? await dialog.showOpenDialog(parent, options)
       : await dialog.showOpenDialog(options);
+    return result.canceled ? null : (result.filePaths[0] ?? null);
+  }));
+  // Deliberately a SEPARATE dialog from openchatcut:select-directory above:
+  // that one is titled/used for picking a generic "media storage directory"
+  // (its only renderer caller is the vendor-settings pane), so granting it as
+  // a project-scaffold root would let a user who innocently points media
+  // storage at $HOME or ~/Documents hand the renderer recursive .occ
+  // read/write across it. Only a directory chosen through THIS dialog, whose
+  // title makes clear the user is picking the project folder itself (not a
+  // parent to hold projects under — isProjectRootGranted is exact-match, not
+  // prefix), becomes eligible.
+  ipcMain.handle('openchatcut:select-project-folder', trustedDesktopHandler(trustedOrigin, async (event, requestedPath: unknown) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const requested = typeof requestedPath === 'string' && isAbsolute(requestedPath)
+      ? requestedPath
+      : app.getPath('documents');
+    const options: OpenDialogOptions = {
+      title: 'Choose or create the project folder',
+      buttonLabel: 'Use This Folder as the Project',
+      defaultPath: requested,
+      properties: ['openDirectory', 'createDirectory'],
+    };
+    const result = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options);
     if (result.canceled || !result.filePaths[0]) return null;
     const selected = result.filePaths[0];
-    // The user chose this directory through a trusted OS dialog, so it (and
-    // only it) becomes eligible as a project-scaffold root.
+    // The user chose this exact directory through a trusted OS dialog, so it
+    // (and only it) becomes eligible as a project-scaffold root.
     await grantProjectRoot(selected).catch(() => {});
     return selected;
   }));

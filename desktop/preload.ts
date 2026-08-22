@@ -87,6 +87,7 @@ export interface OpenChatCutDesktopApi {
   getPathForFile(file: File): string | undefined;
   platform: NodeJS.Platform;
   selectDirectory(defaultPath?: string): Promise<string | null>;
+  selectProjectFolder(defaultPath?: string): Promise<string | null>;
   selectExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
   selectExportFile(suggestedFilename: string): Promise<DesktopExportFileGrant | null>;
   restoreExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
@@ -139,6 +140,8 @@ const api: OpenChatCutDesktopApi = {
   platform: process.platform,
   selectDirectory: (defaultPath) =>
     ipcRenderer.invoke('openchatcut:select-directory', defaultPath) as Promise<string | null>,
+  selectProjectFolder: (defaultPath) =>
+    ipcRenderer.invoke('openchatcut:select-project-folder', defaultPath) as Promise<string | null>,
   selectExportDirectory: () =>
     ipcRenderer.invoke('openchatcut:select-export-directory') as Promise<DesktopExportDirectoryGrant | null>,
   selectExportFile: (suggestedFilename) =>

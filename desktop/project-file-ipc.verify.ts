@@ -6,7 +6,7 @@
 // renderer never gets a file-existence oracle.
 // How to run: npx tsx desktop/project-file-ipc.verify.ts (wired into verify:desktop-window).
 import assert from 'node:assert/strict';
-import { chmod, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { clearMediaRoots, listMediaRoots, registerMediaRoot } from '../server/media-roots.ts';
@@ -156,4 +156,75 @@ await assert.rejects(
   },
 );
 
-console.log('project-file-ipc.verify: allowlist, extension checks, root grants and scrubbed refusals hold');
+// -- a .occ symlink inside a registered root pointing outside every root is refused --
+// (the extension check alone is not enough: the target itself must resolve inside a root)
+await symlink(join(outside, 'secret.txt'), join(project, 'Escape.occ'));
+await assert.rejects(
+  () => guardedReadProjectFile(join(project, 'Escape.occ')),
+  (error: Error) => {
+    assert.equal(error.message, refusalMessage, 'a symlink escaping every root must read as the identical refusal message');
+    return true;
+  },
+  'a .occ symlink pointing outside every root must be refused',
+);
+
+// -- write through a symlinked directory component must land via the CANONICALISED
+// parent, not the raw path. This is the regression test for the fix at
+// project-file-ipc.ts's guardedWriteProjectFile: it must call
+// writeProjectFile(join(parent, basename(documentPath)), contents), not
+// writeProjectFile(documentPath, contents). Proof: `aliasLink` below is a
+// symlink, so if the raw (symlink) path were passed through, writeProjectFile's
+// own O_NOFOLLOW directory-open guard (project-file-io.ts) would reject it —
+// this test would then fail with a rejection instead of succeeding. --
+const aliasTarget = join(project, 'RealSubdir');
+const aliasLink = join(project, 'AliasSubdir');
+await mkdir(aliasTarget, { recursive: true });
+await symlink(aliasTarget, aliasLink);
+await guardedWriteProjectFile(join(aliasLink, 'Aliased.occ'), '{"aliased":true}\n');
+assert.equal(
+  await readFile(join(aliasTarget, 'Aliased.occ'), 'utf8'),
+  '{"aliased":true}\n',
+  'a write via a symlinked directory component must land through the canonicalised parent',
+);
+
+// -- a raw filesystem failure on the WRITE path is scrubbed identically to a refusal --
+// (mutation check: deleting guardedWriteProjectFile's try/catch survives a
+// green suite unless a RAW fs error, not just a guard refusal, is asserted here)
+const writeLocked = join(base, 'WriteLocked');
+await mkdir(writeLocked, { recursive: true });
+await registerMediaRoot(writeLocked);
+await chmod(writeLocked, 0o500); // r-x: traversable and readable, not writable
+try {
+  await assert.rejects(
+    () => guardedWriteProjectFile(join(writeLocked, 'Doc.occ'), 'x'),
+    (error: Error) => {
+      assert.equal(error.message, refusalMessage, 'a raw EACCES on write must read as the identical refusal message');
+      return true;
+    },
+    'writing into a permission-denied registered root must be refused, not throw a raw EACCES',
+  );
+} finally {
+  await chmod(writeLocked, 0o700);
+}
+
+// -- a raw filesystem failure on the SCAFFOLD path is scrubbed identically to a refusal --
+// (mutation check: deleting guardedScaffoldProjectFolder's try/catch survives a
+// green suite unless a RAW fs error, not just a guard refusal, is asserted here)
+const scaffoldLocked = join(base, 'ScaffoldLocked');
+await mkdir(scaffoldLocked, { recursive: true });
+await grantProjectRoot(scaffoldLocked);
+await chmod(scaffoldLocked, 0o500); // r-x: cannot mkdir exports/cache subdirectories inside it
+try {
+  await assert.rejects(
+    () => guardedScaffoldProjectFolder(scaffoldLocked, 'ScaffoldLocked'),
+    (error: Error) => {
+      assert.equal(error.message, refusalMessage, 'a raw EACCES on scaffold must read as the identical refusal message');
+      return true;
+    },
+    'scaffolding a permission-denied granted root must be refused, not throw a raw EACCES',
+  );
+} finally {
+  await chmod(scaffoldLocked, 0o700);
+}
+
+console.log('project-file-ipc.verify: allowlist, extension checks, root grants, TOCTOU narrowing and scrubbed refusals hold');

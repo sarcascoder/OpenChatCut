@@ -63,6 +63,7 @@ declare global {
       getPathForFile(file: File): string | undefined;
       platform: NodeJS.Platform;
       selectDirectory(defaultPath?: string): Promise<string | null>;
+      selectProjectFolder(defaultPath?: string): Promise<string | null>;
       selectExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
       selectExportFile(suggestedFilename: string): Promise<DesktopExportFileGrant | null>;
       restoreExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;

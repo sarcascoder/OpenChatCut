@@ -28,6 +28,11 @@ export async function guardedReadProjectFile(documentPath: string): Promise<stri
     if (!documentPath.endsWith(PROJECT_FILE_EXTENSION)) throw new ProjectFileAccessError();
     const allowed = await resolveAllowedMediaPath(documentPath);
     if (!allowed) throw new ProjectFileAccessError();
+    // readProjectFile opens `allowed` with O_NOFOLLOW and reads FROM THAT
+    // SAME HANDLE after confirming its fstat() matches a fresh lstat() of the
+    // path — there is no second path-based lookup after the allowlist check,
+    // so a symlink swapped in after resolveAllowedMediaPath ran is rejected
+    // rather than followed. See project-file-io.ts for the mechanism.
     return await readProjectFile(allowed);
   } catch {
     // Any failure — refusal, missing file, EACCES, EISDIR, a malformed path —
@@ -43,9 +48,20 @@ export async function guardedWriteProjectFile(documentPath: string, contents: st
     const parent = await resolveAllowedMediaPath(dirname(documentPath));
     if (!parent) throw new ProjectFileAccessError();
     // resolveAllowedMediaPath is a point-in-time check, not a hold (see its
-    // doc comment in server/media-roots.ts): use the canonicalised parent it
-    // returned, not the raw (potentially symlink-relative) documentPath, so a
-    // swap between the check and this write can't retarget the write.
+    // doc comment in server/media-roots.ts). Using the canonicalised `parent`
+    // it returned, rather than the raw documentPath, means an already-taken
+    // realpath()'d string is used, so `dirname` cannot itself be a symlink at
+    // that instant — but it is still just a string: nothing stops the same
+    // path being swapped for a symlink again after this call returns and
+    // before writeProjectFile's mkdir/open/rename run. writeProjectFile
+    // narrows that remaining window (re-opens the directory with O_NOFOLLOW
+    // and compares fstat()/lstat() dev+ino immediately before writing), but
+    // Node's fs module has no openat()/dirfd-relative write, so a swap of the
+    // parent directory ITSELF between that re-check and the rename cannot be
+    // fully closed from JS. This residual is accepted because it is not
+    // renderer-reachable: exploiting it needs a co-operating local process or
+    // a hostile archive racing the main process's own filesystem calls, not
+    // anything the sandboxed, network-facing renderer can trigger.
     await writeProjectFile(join(parent, basename(documentPath)), contents);
   } catch {
     throw new ProjectFileAccessError();
