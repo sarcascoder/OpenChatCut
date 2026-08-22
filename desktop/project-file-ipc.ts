@@ -28,11 +28,18 @@ export async function guardedReadProjectFile(documentPath: string): Promise<stri
     if (!documentPath.endsWith(PROJECT_FILE_EXTENSION)) throw new ProjectFileAccessError();
     const allowed = await resolveAllowedMediaPath(documentPath);
     if (!allowed) throw new ProjectFileAccessError();
-    // readProjectFile opens `allowed` with O_NOFOLLOW and reads FROM THAT
-    // SAME HANDLE after confirming its fstat() matches a fresh lstat() of the
-    // path — there is no second path-based lookup after the allowlist check,
-    // so a symlink swapped in after resolveAllowedMediaPath ran is rejected
-    // rather than followed. See project-file-io.ts for the mechanism.
+    // resolveAllowedMediaPath is a point-in-time check, not a hold (see its
+    // doc comment in server/media-roots.ts): `allowed` is canonical AT THE
+    // MOMENT OF THIS CHECK, but open() and lstat() inside readProjectFile are
+    // themselves path-based and re-resolve it from scratch, so a swap timed
+    // between this check and those calls is not caught here. readProjectFile
+    // DOES deterministically reject a directory component or the target
+    // itself that is ALREADY a symlink when it runs (see its doc comment in
+    // project-file-io.ts) — that is a real, unconditional guarantee, not a
+    // narrowing of the race. This residual is accepted because it is not
+    // renderer-reachable: exploiting the race needs a co-operating local
+    // process or a hostile archive racing the main process's own filesystem
+    // calls, not anything the sandboxed, network-facing renderer can trigger.
     return await readProjectFile(allowed);
   } catch {
     // Any failure — refusal, missing file, EACCES, EISDIR, a malformed path —
@@ -53,15 +60,20 @@ export async function guardedWriteProjectFile(documentPath: string, contents: st
     // realpath()'d string is used, so `dirname` cannot itself be a symlink at
     // that instant — but it is still just a string: nothing stops the same
     // path being swapped for a symlink again after this call returns and
-    // before writeProjectFile's mkdir/open/rename run. writeProjectFile
-    // narrows that remaining window (re-opens the directory with O_NOFOLLOW
-    // and compares fstat()/lstat() dev+ino immediately before writing), but
-    // Node's fs module has no openat()/dirfd-relative write, so a swap of the
-    // parent directory ITSELF between that re-check and the rename cannot be
-    // fully closed from JS. This residual is accepted because it is not
-    // renderer-reachable: exploiting it needs a co-operating local process or
-    // a hostile archive racing the main process's own filesystem calls, not
-    // anything the sandboxed, network-facing renderer can trigger.
+    // before writeProjectFile's mkdir/open(temp)/rename run, all three of
+    // which are path-based and re-resolve the directory from scratch.
+    // writeProjectFile DOES deterministically reject a `dir` that is ALREADY
+    // a symlink when it runs (see its doc comment in project-file-io.ts) —
+    // that is a real, unconditional guarantee. It is NOT a narrowing of the
+    // race: measured, a concurrent swap wins the race in as few attempts
+    // post-fix as pre-fix, because the check's own open(temp)/rename() calls
+    // afterward re-resolve `dir` by path just like before it existed. Node's
+    // fs module has no openat()/dirfd-relative write to hold the verified
+    // directory open across those calls, so this cannot be closed from JS.
+    // This residual is accepted because it is not renderer-reachable:
+    // exploiting the race needs a co-operating local process or a hostile
+    // archive racing the main process's own filesystem calls, not anything
+    // the sandboxed, network-facing renderer can trigger.
     await writeProjectFile(join(parent, basename(documentPath)), contents);
   } catch {
     throw new ProjectFileAccessError();

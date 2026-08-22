@@ -24,7 +24,7 @@ clearProjectRootGrants();
 // -- nothing is granted before a dialog pick --
 assert.equal(await isProjectRootGranted(granted), false, 'a directory is not granted until chosen');
 
-// -- grantProjectRoot (called by the select-directory dialog handler) admits it --
+// -- grantProjectRoot (called by the select-project-folder dialog handler) admits it --
 const canonicalGranted = await grantProjectRoot(granted);
 assert.equal(await isProjectRootGranted(granted), true, 'a directory the dialog granted is eligible');
 assert.ok(canonicalGranted.endsWith('Granted'), 'grantProjectRoot returns the canonicalised path');

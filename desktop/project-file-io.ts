@@ -3,15 +3,25 @@
 //
 // Reachable only through desktop/project-file-ipc.ts's guards (allowlist,
 // extension check, root grants, scrubbed errors). This module additionally
-// narrows the TOCTOU window between an allowlist check upstream and the
-// actual open/write here, mirroring server/plugins/upload-routes.ts's
-// verifyLocalMediaTarget: open with O_NOFOLLOW, then compare the open
-// handle's fstat() against a fresh lstat() of the same path, so a path whose
-// final component was swapped for a symlink between the check and this call
-// is rejected rather than silently followed. This narrows, but — because
-// Node's fs module exposes no openat()/dirfd-relative operations — cannot
-// fully close the window for a swap of a path component ABOVE the immediate
-// target; see the callers' doc comments for why that residual is accepted.
+// checks, with O_NOFOLLOW + fstat()/lstat() dev+ino comparisons (mirroring
+// server/plugins/upload-routes.ts's verifyLocalMediaTarget), that neither the
+// immediate parent directory nor the target itself is a symlink at the
+// moment of the call. Read PRECISELY what this does and does not buy you:
+//   - It DETERMINISTICALLY rejects a call where a directory component or the
+//     target was ALREADY a symlink before the call started — no timing, no
+//     race, no attacker skill required. This is the common case: a hostile
+//     archive or a co-operating local process that pre-arranges a symlink and
+//     then triggers a read/write through it.
+//   - It does NOT close a genuine TOCTOU race, where an attacker swaps a
+//     directory component for a symlink IN THE WINDOW between this check and
+//     a later path-based call (open(temp), rename(), or even this function's
+//     own lstat() a few lines below). Node's fs module has no openat() or
+//     dirfd-relative operations, so nothing here can hold a verified
+//     directory open across a subsequent path-based lookup that re-resolves
+//     it from scratch. Measured: racing the write path wins in as few
+//     attempts post-fix as pre-fix — the check does not measurably narrow
+//     that window, so no "narrows" claim is made about it anywhere in this
+//     file. See the callers' doc comments for why this residual is accepted.
 import { constants as fsConstants } from 'node:fs';
 import { lstat, mkdir, open, rename, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -35,14 +45,45 @@ export async function scaffoldProjectFolder(
 }
 
 /**
- * Read the document through a single verified handle: open with O_NOFOLLOW
- * (rejects if the final path component is a symlink), then confirm the open
- * handle's fstat() matches a fresh lstat() of the same path (dev+ino) before
- * reading FROM THAT HANDLE — never by reopening the path a second time. This
- * closes the read-side TOCTOU race for the target file itself: there is no
- * second path-based lookup for an attacker to win a race against.
+ * Open `dir` with O_NOFOLLOW and confirm the handle's fstat() matches a fresh
+ * lstat() of the same path (dev+ino) and that it is actually a directory.
+ * Throws if `dir` is, at this moment, a symlink rather than a real directory.
+ * This is a point-in-time check, not a hold: see the module doc comment for
+ * exactly what it does and does not close.
+ */
+async function assertDirectoryNotSymlinked(dir: string): Promise<void> {
+  const dirHandle = await open(dir, fsConstants.O_RDONLY | DIRECTORY_ONLY | NO_FOLLOW);
+  try {
+    const [fdStat, diskStat] = await Promise.all([dirHandle.stat(), lstat(dir)]);
+    if (!fdStat.isDirectory() || fdStat.dev !== diskStat.dev || fdStat.ino !== diskStat.ino) {
+      throw new Error('project directory target is not the expected directory');
+    }
+  } finally {
+    await dirHandle.close().catch(() => {});
+  }
+}
+
+/**
+ * Read the document. Two checks, in order:
+ *   1. The immediate parent directory must not be a symlink (assertDirectoryNotSymlinked).
+ *      Without this, a directory component being a symlink is invisible to
+ *      the check below: both open(documentPath, O_NOFOLLOW) and
+ *      lstat(documentPath) only refuse to follow a symlink at the FINAL path
+ *      component — a symlinked directory earlier in the path is transparently
+ *      walked by the kernel for both calls, so their dev/ino agree and the
+ *      swap goes undetected. This was exactly the round-3 review finding: a
+ *      directory component that is a symlink at call time leaked content
+ *      deterministically, with no race needed.
+ *   2. The target itself is opened with O_NOFOLLOW, then read FROM THAT SAME
+ *      HANDLE once its fstat() is confirmed to match a fresh lstat() of the
+ *      path — closing the case where the FILE ITSELF (not a directory
+ *      component) is a symlink.
+ * Together these close the DETERMINISTIC case for both a symlinked directory
+ * component and a symlinked target file. Neither closes a genuine race: see
+ * the module doc comment.
  */
 export async function readProjectFile(documentPath: string): Promise<string> {
+  await assertDirectoryNotSymlinked(dirname(documentPath));
   const handle = await open(documentPath, fsConstants.O_RDONLY | NO_FOLLOW);
   try {
     const [fdStat, diskStat] = await Promise.all([handle.stat(), lstat(documentPath)]);
@@ -62,26 +103,18 @@ export async function readProjectFile(documentPath: string): Promise<string> {
  * target (not in a system tmp dir) so the rename never crosses filesystems,
  * which would make it non-atomic or fail outright.
  *
- * Before creating the temp file, the parent directory is re-opened with
- * O_NOFOLLOW and its handle's fstat() is compared against a fresh lstat() of
- * the same path: if `dir` was swapped for a symlink between an earlier
- * allowlist check and this call, that swap is caught here rather than
- * silently followed. The temp file itself is then created with
+ * Before creating the temp file, assertDirectoryNotSymlinked rejects a `dir`
+ * that is, at this moment, a symlink rather than a real directory (the
+ * DETERMINISTIC case). The temp file itself is then created with
  * O_CREAT|O_EXCL|O_NOFOLLOW, so it cannot be a pre-existing symlink either.
+ * None of this closes a race: the open(temp) and rename() calls below are
+ * themselves path-based and re-resolve `dir` from scratch, so a swap timed
+ * between the directory check above and either of those calls is not caught.
  */
 export async function writeProjectFile(documentPath: string, contents: string): Promise<void> {
   const dir = dirname(documentPath);
   await mkdir(dir, { recursive: true });
-
-  const dirHandle = await open(dir, fsConstants.O_RDONLY | DIRECTORY_ONLY | NO_FOLLOW);
-  try {
-    const [fdStat, diskStat] = await Promise.all([dirHandle.stat(), lstat(dir)]);
-    if (!fdStat.isDirectory() || fdStat.dev !== diskStat.dev || fdStat.ino !== diskStat.ino) {
-      throw new Error('project directory target changed between check and write');
-    }
-  } finally {
-    await dirHandle.close().catch(() => {});
-  }
+  await assertDirectoryNotSymlinked(dir);
 
   const temp = join(dir, `.${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2)}.occ.tmp`);
   try {

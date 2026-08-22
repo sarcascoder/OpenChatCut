@@ -64,6 +64,22 @@ assert.equal(
   'a refused write must not have touched anything',
 );
 
+// -- a REAL .occ file outside every root (no symlink, correct extension) is refused
+// PURELY by the allowlist gate. The two cases above don't prove this: outside/secret.txt
+// is killed by the extension check before the allowlist ever runs, and a symlink target
+// (tested below) is killed by O_NOFOLLOW. Only this case isolates the allowlist gate
+// itself — see the round-3 review finding that this was, until now, completely untested,
+// so deleting the gate produced a fully green suite. --
+await writeFile(join(outside, 'Secret.occ'), 'TOP SECRET OUT OF ROOT\n');
+await assert.rejects(
+  () => guardedReadProjectFile(join(outside, 'Secret.occ')),
+  (error: Error) => {
+    assert.equal(error.message, refusalMessage, 'a real .occ file outside every root must read as the identical refusal message');
+    return true;
+  },
+  'a real, non-symlinked .occ file outside every root must be refused by the allowlist gate alone',
+);
+
 // -- a non-.occ target inside the root is refused: the allowlist alone is not enough --
 await assert.rejects(
   () => guardedWriteProjectFile(join(project, 'notes.txt'), 'x'),

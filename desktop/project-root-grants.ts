@@ -4,8 +4,12 @@
 // has exactly one production call site — the successful end of scaffolding —
 // so whatever root reaches it becomes readable/writable through the project
 // document channel. A root is only eligible once the user has chosen it
-// through a trusted OS directory-picker dialog (`openchatcut:select-directory`
-// in desktop/main.ts), which calls `grantProjectRoot` on a successful pick.
+// through the dedicated `openchatcut:select-project-folder` dialog (in
+// desktop/main.ts), which calls `grantProjectRoot` on a successful pick.
+// Deliberately NOT the same dialog as `openchatcut:select-directory` (a
+// generic "choose media storage directory" picker used elsewhere): granting
+// that one would let a user who merely points media storage at $HOME hand
+// the renderer recursive .occ read/write across it.
 //
 // Deliberately has no Electron import, so it stays testable headlessly with
 // `tsx`: a test calls `grantProjectRoot` directly in place of the dialog.
