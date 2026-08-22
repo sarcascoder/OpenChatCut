@@ -3,12 +3,28 @@
 // tested under tsx with no native binary and no real shell.
 import { randomBytes } from 'node:crypto';
 
+/**
+ * Matches `@homebridge/node-pty-prebuilt-multiarch`'s real `IPty.onExit`
+ * shape (typings/node-pty.d.ts): the library delivers `{ exitCode, signal }`,
+ * NOT a bare number. A prior version of this interface declared `onExit`
+ * with a bare `number` parameter; the real library's callback then matched
+ * structurally against `unknown`-erased `as` casts elsewhere, so `tsc` never
+ * caught the mismatch, and the exit event was silently dropped by the
+ * preload's payload guard on every real run. Keep this exact so a future
+ * library upgrade that changes the shape is a compile error here, not a
+ * silent drop at the preload boundary.
+ */
+export interface PtyExitEvent {
+  readonly exitCode: number;
+  readonly signal?: number;
+}
+
 export interface PtyLike {
   write(data: string): void;
   resize(cols: number, rows: number): void;
   kill(): void;
   onData(listener: (chunk: string) => void): void;
-  onExit(listener: (code: number) => void): void;
+  onExit(listener: (event: PtyExitEvent) => void): void;
 }
 
 export interface PtySpawnOptions {
@@ -51,9 +67,13 @@ export class TerminalRegistry {
     const pty = this.#options.spawn(options);
     this.#sessions.set(id, pty);
     pty.onData((chunk) => this.#options.onData(id, chunk));
-    pty.onExit((code) => {
+    pty.onExit((event) => {
       this.#sessions.delete(id);
-      this.#options.onExit(id, code);
+      // The registry's own callback contract stays a bare number: only the
+      // exit code is meaningful to callers (the renderer shows "exited",
+      // not a signal name), so the extraction happens once, here, rather
+      // than threading the whole event through every consumer.
+      this.#options.onExit(id, event.exitCode);
     });
     return id;
   }

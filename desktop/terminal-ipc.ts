@@ -168,9 +168,19 @@ export function terminalEnvironment(): NodeJS.ProcessEnv {
 function spawnRealPty(options: { cwd: string; cols: number; rows: number }): PtyLike {
   // Loaded lazily: the native binary is only pulled in when a terminal is
   // actually opened, so importing this module under tsx never touches it.
-  const pty = nodeRequire('@homebridge/node-pty-prebuilt-multiarch') as {
-    spawn: (file: string, args: string[], opts: Record<string, unknown>) => PtyLike;
-  };
+  //
+  // The cast below is unavoidable -- createRequire's CommonJS resolver
+  // returns `any`, and there is no static import of a module we deliberately
+  // load at runtime -- but it is cast to the PACKAGE'S OWN declared type
+  // (`typeof import(...)`), not a hand-written shape. That lets `tsc` check
+  // the real `spawn()` return type (`IPty`) against `PtyLike` at the `return`
+  // below: if the library's `onExit` shape ever drifts from `PtyLike.onExit`,
+  // this becomes a compile error instead of a silent runtime mismatch. A
+  // prior version of this cast asserted a hand-rolled `{ spawn: (...) =>
+  // PtyLike }` shape, which erased that check entirely and hid the real
+  // onExit contract (`{ exitCode, signal }`, not a bare number) from `tsc`.
+  const pty = nodeRequire('@homebridge/node-pty-prebuilt-multiarch') as
+    typeof import('@homebridge/node-pty-prebuilt-multiarch');
   const shell = defaultShell();
   return pty.spawn(shell.file, shell.args, {
     cols: options.cols,

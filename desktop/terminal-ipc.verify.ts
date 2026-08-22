@@ -15,19 +15,30 @@ import {
 } from '../shared/terminal-session.ts';
 import { clearProjectRootGrants, grantProjectRoot } from './project-root-grants.ts';
 import { TerminalAccessError, createTerminalController, terminalEnvironment } from './terminal-ipc.ts';
-import { MAX_TERMINAL_SESSIONS, type PtyLike, type PtySpawnOptions } from './terminal-session.ts';
+import {
+  MAX_TERMINAL_SESSIONS,
+  type PtyExitEvent,
+  type PtyLike,
+  type PtySpawnOptions,
+} from './terminal-session.ts';
 
 interface FakePty extends PtyLike {
   written: string[];
   resized: Array<{ cols: number; rows: number }>;
   killed: boolean;
   emitData(chunk: string): void;
-  emitExit(code: number): void;
+  // Takes the exit code as a plain number for test ergonomics, but hands the
+  // registered listener the library's REAL shape (`{ exitCode, signal }`),
+  // exactly like `@homebridge/node-pty-prebuilt-multiarch`'s `IPty.onExit`
+  // does. A fake that instead called `onExit(code)` with a bare number would
+  // encode the assumed contract rather than the library's real one -- which
+  // is exactly how this bug went uncaught the first time.
+  emitExit(exitCode: number, signal?: number): void;
 }
 
 function makeFakePty(): FakePty {
   let onData: (chunk: string) => void = () => {};
-  let onExit: (code: number) => void = () => {};
+  let onExit: (event: PtyExitEvent) => void = () => {};
   return {
     written: [],
     resized: [],
@@ -38,7 +49,7 @@ function makeFakePty(): FakePty {
     onData(listener) { onData = listener; },
     onExit(listener) { onExit = listener; },
     emitData(chunk) { onData(chunk); },
-    emitExit(code) { onExit(code); },
+    emitExit(exitCode, signal) { onExit({ exitCode, signal }); },
   } as FakePty;
 }
 

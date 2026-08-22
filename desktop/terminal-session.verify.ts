@@ -2,7 +2,13 @@
 // runs under tsx with no native module and no real shell.
 // How to run: npx tsx desktop/terminal-session.verify.ts (wired into verify:desktop-window).
 import assert from 'node:assert/strict';
-import { MAX_TERMINAL_SESSIONS, TerminalRegistry, type PtyLike, type PtySpawn } from './terminal-session.ts';
+import {
+  MAX_TERMINAL_SESSIONS,
+  TerminalRegistry,
+  type PtyExitEvent,
+  type PtyLike,
+  type PtySpawn,
+} from './terminal-session.ts';
 import { isTerminalSessionId } from '../shared/terminal-session.ts';
 
 interface FakePty extends PtyLike {
@@ -10,12 +16,18 @@ interface FakePty extends PtyLike {
   resized: Array<{ cols: number; rows: number }>;
   killed: boolean;
   emitData(chunk: string): void;
-  emitExit(code: number): void;
+  // Takes the exit code as a plain number for test ergonomics, but hands the
+  // registered listener the library's REAL shape (`{ exitCode, signal }`),
+  // exactly like `@homebridge/node-pty-prebuilt-multiarch`'s `IPty.onExit`
+  // does. A fake that instead called `onExit(code)` with a bare number would
+  // encode the assumed contract rather than the library's real one -- which
+  // is exactly how this bug went uncaught the first time.
+  emitExit(exitCode: number, signal?: number): void;
 }
 
 function makeFakePty(): FakePty {
   let onData: (chunk: string) => void = () => {};
-  let onExit: (code: number) => void = () => {};
+  let onExit: (event: PtyExitEvent) => void = () => {};
   return {
     written: [], resized: [], killed: false,
     write(data) { this.written.push(data); },
@@ -24,7 +36,7 @@ function makeFakePty(): FakePty {
     onData(listener) { onData = listener; },
     onExit(listener) { onExit = listener; },
     emitData(chunk) { onData(chunk); },
-    emitExit(code) { onExit(code); },
+    emitExit(exitCode, signal) { onExit({ exitCode, signal }); },
   } as FakePty;
 }
 
