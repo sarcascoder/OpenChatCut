@@ -33,6 +33,7 @@ import { supportsDirectDesktopUpdates } from './update-service.ts';
 import { installDesktopInferenceIpc } from './native-inference-ipc.ts';
 import { detectDesktopHardwareProfile } from './native-hardware-profile.ts';
 import { installDirectoryWatchIpc } from './directory-watch-ipc.ts';
+import { installTerminalIpc } from './terminal-ipc.ts';
 import { importAgentPaths } from './agent-path-import.ts';
 import { getKey, setKeys } from '../server/keystore.ts';
 import { AGENT_PATH_IMPORT_CHANNEL } from '../shared/directory-import.ts';
@@ -402,6 +403,23 @@ async function boot(): Promise<void> {
   win.once('closed', () => {
     mainWindow = null;
   });
+  // installTerminalIpc registers ipcMain.handle for each terminal channel; a
+  // second call would throw ("Attempted to register a second handler"), so
+  // this must run exactly once for the life of the app. boot() itself only
+  // ever runs once (single-instance lock, no window recreation on 'activate'),
+  // so calling it here -- once per boot -- satisfies that. The outbound `send`
+  // targets only this trusted window's webContents (never broadcasts), and
+  // checks isDestroyed() so a late PTY chunk arriving after the window closes
+  // cannot throw.
+  const terminals = installTerminalIpc(origin, (channel, payload) => {
+    if (!win.isDestroyed()) win.webContents.send(channel, payload);
+  });
+  // A shell must not outlive the window that owns it, nor the app. disposeAll()
+  // only kills live sessions -- it does not remove the ipcMain handlers -- so
+  // calling it from both listeners below is safe (the second call iterates an
+  // already-empty registry) and does not risk a duplicate-handler error.
+  win.once('closed', () => terminals.disposeAll());
+  app.once('before-quit', () => terminals.disposeAll());
   installDesktopPageGuards(win, origin);
   win.webContents.on('context-menu', (_event, params) => {
     const template = buildTextContextMenuTemplate(params);

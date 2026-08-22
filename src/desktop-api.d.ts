@@ -93,6 +93,15 @@ declare global {
       readProjectFile(documentPath: string): Promise<string>;
       writeProjectFile(documentPath: string, contents: string): Promise<void>;
       scaffoldProjectFolder(root: string, projectName: string): Promise<ProjectFolderLayout>;
+      startTerminal(cwd: string, cols: number, rows: number): Promise<string | null>;
+      writeTerminal(id: string, data: string): Promise<void>;
+      resizeTerminal(id: string, cols: number, rows: number): Promise<void>;
+      stopTerminal(id: string): Promise<void>;
+      subscribeTerminal(
+        listener: (event:
+          | { type: 'data'; id: string; chunk: string }
+          | { type: 'exit'; id: string; code: number }) => void,
+      ): () => void;
       updates: DesktopUpdateApi;
       inference: DesktopInferenceApi;
     };

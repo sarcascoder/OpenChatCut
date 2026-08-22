@@ -13,6 +13,7 @@ import {
   type EditorBootstrapInfo,
 } from '../shared/editor-auth-transport.ts';
 import type { ProjectFolderLayout } from '../src/persist/projectFolder.ts';
+import { TERMINAL_CHANNELS } from '../shared/terminal-session.ts';
 import {
   DESKTOP_UPDATE_CHANNELS,
   isDesktopUpdateState,
@@ -117,6 +118,15 @@ export interface OpenChatCutDesktopApi {
   readProjectFile(documentPath: string): Promise<string>;
   writeProjectFile(documentPath: string, contents: string): Promise<void>;
   scaffoldProjectFolder(root: string, projectName: string): Promise<ProjectFolderLayout>;
+  startTerminal(cwd: string, cols: number, rows: number): Promise<string | null>;
+  writeTerminal(id: string, data: string): Promise<void>;
+  resizeTerminal(id: string, cols: number, rows: number): Promise<void>;
+  stopTerminal(id: string): Promise<void>;
+  subscribeTerminal(
+    listener: (event:
+      | { type: 'data'; id: string; chunk: string }
+      | { type: 'exit'; id: string; code: number }) => void,
+  ): () => void;
   updates: DesktopUpdateApi;
   inference: DesktopInferenceApi;
 }
@@ -208,6 +218,41 @@ const api: OpenChatCutDesktopApi = {
     ipcRenderer.invoke('openchatcut:project-file-write', documentPath, contents) as Promise<void>,
   scaffoldProjectFolder: (root, projectName) =>
     ipcRenderer.invoke('openchatcut:project-folder-scaffold', root, projectName) as Promise<ProjectFolderLayout>,
+  startTerminal: async (cwd, cols, rows) => {
+    try {
+      return await ipcRenderer.invoke(TERMINAL_CHANNELS.start, cwd, cols, rows) as string;
+    } catch {
+      // The main process refuses with a deliberately uniform error; surface it
+      // as "no terminal" rather than leaking the message into the UI.
+      return null;
+    }
+  },
+  writeTerminal: (id, data) => ipcRenderer.invoke(TERMINAL_CHANNELS.write, id, data) as Promise<void>,
+  resizeTerminal: (id, cols, rows) =>
+    ipcRenderer.invoke(TERMINAL_CHANNELS.resize, id, cols, rows) as Promise<void>,
+  stopTerminal: (id) => ipcRenderer.invoke(TERMINAL_CHANNELS.stop, id) as Promise<void>,
+  subscribeTerminal: (listener) => {
+    const isTerminalDataPayload = (value: unknown): value is { id: string; chunk: string } =>
+      typeof value === 'object' && value !== null
+        && typeof (value as { id?: unknown }).id === 'string'
+        && typeof (value as { chunk?: unknown }).chunk === 'string';
+    const isTerminalExitPayload = (value: unknown): value is { id: string; code: number } =>
+      typeof value === 'object' && value !== null
+        && typeof (value as { id?: unknown }).id === 'string'
+        && typeof (value as { code?: unknown }).code === 'number';
+    const handleData = (_event: IpcRendererEvent, value: unknown): void => {
+      if (isTerminalDataPayload(value)) listener({ type: 'data', ...value });
+    };
+    const handleExit = (_event: IpcRendererEvent, value: unknown): void => {
+      if (isTerminalExitPayload(value)) listener({ type: 'exit', ...value });
+    };
+    ipcRenderer.on(TERMINAL_CHANNELS.data, handleData);
+    ipcRenderer.on(TERMINAL_CHANNELS.exit, handleExit);
+    return () => {
+      ipcRenderer.removeListener(TERMINAL_CHANNELS.data, handleData);
+      ipcRenderer.removeListener(TERMINAL_CHANNELS.exit, handleExit);
+    };
+  },
   inference: {
     setEnabled: (enabled) =>
       ipcRenderer.invoke(DESKTOP_INFERENCE_CHANNELS.setEnabled, enabled) as Promise<void>,
