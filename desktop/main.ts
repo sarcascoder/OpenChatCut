@@ -20,7 +20,6 @@ import {
   createLocalMediaImportHandler,
   LOCAL_MEDIA_IMPORT_CHANNEL,
 } from './local-media-bridge.ts';
-import { readProjectFile, scaffoldProjectFolder, writeProjectFile } from './project-file-io.ts';
 import { installProjectStoreIpc } from './project-store-ipc.ts';
 import { installEditorAuthIpc } from './editor-auth-ipc.ts';
 import { installDesktopUpdateIpc } from './update-ipc.ts';
@@ -133,15 +132,6 @@ function registerDesktopHandlers(trustedOrigin: string): void {
       : await dialog.showOpenDialog(options);
     return result.canceled ? null : (result.filePaths[0] ?? null);
   }));
-  ipcMain.handle('openchatcut:project-file-read', trustedDesktopHandler(trustedOrigin, async (_event, documentPath: string) => (
-    readProjectFile(documentPath)
-  )));
-  ipcMain.handle('openchatcut:project-file-write', trustedDesktopHandler(trustedOrigin, async (_event, documentPath: string, contents: string) => {
-    await writeProjectFile(documentPath, contents);
-  }));
-  ipcMain.handle('openchatcut:project-folder-scaffold', trustedDesktopHandler(trustedOrigin, async (_event, root: string, projectName: string) => (
-    scaffoldProjectFolder(root, projectName)
-  )));
   const exportStatePath = join(app.getPath('userData'), 'export-destination.json');
   let activeExportDirectory: {
     directory: string;

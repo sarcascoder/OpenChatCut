@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { CURRENT_PROJECT_VERSION } from '../../shared/project-version';
 import {
   PROJECT_FILE_FORMAT,
+  PROJECT_FILE_SCHEMA_VERSION,
   parseProjectFile,
   serializeProjectFile,
 } from './projectFile';
@@ -50,5 +51,25 @@ for (const [label, bad] of [
   assert.equal(result.ok, false, `${label} must be rejected`);
   assert.ok(typeof (result as { error: string }).error === 'string', `${label} must report a reason`);
 }
+
+// -- forward compatibility: a file from a newer build must be rejected, not silently downgraded --
+const newerResult = parseProjectFile(JSON.stringify({
+  format: PROJECT_FILE_FORMAT,
+  schemaVersion: PROJECT_FILE_SCHEMA_VERSION + 1,
+  doc,
+}));
+assert.equal(newerResult.ok, false, 'a newer schemaVersion must be rejected');
+assert.ok(
+  /newer version/i.test((newerResult as { error: string }).error),
+  'the rejection reason must mention a newer version',
+);
+
+// -- the current schemaVersion must still be accepted (do not break the happy path) --
+const currentResult = parseProjectFile(JSON.stringify({
+  format: PROJECT_FILE_FORMAT,
+  schemaVersion: PROJECT_FILE_SCHEMA_VERSION,
+  doc,
+}));
+assert.ok(currentResult.ok, 'the current schemaVersion must still be accepted');
 
 console.log('projectFile.verify: envelope round-trip and rejection OK');

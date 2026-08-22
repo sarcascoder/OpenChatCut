@@ -43,6 +43,9 @@ export function parseProjectFile(
   const value = raw as Record<string, unknown>;
   if (value.format !== PROJECT_FILE_FORMAT) return { ok: false, error: 'not an OpenChatCut project file' };
   if (typeof value.schemaVersion !== 'number') return { ok: false, error: 'missing schemaVersion' };
+  if (value.schemaVersion > PROJECT_FILE_SCHEMA_VERSION) {
+    return { ok: false, error: 'written by a newer version of OpenChatCut' };
+  }
   if (!value.doc || typeof value.doc !== 'object') return { ok: false, error: 'missing project document' };
 
   // Reuse the store's migration so an older document opens exactly as it would from the store.

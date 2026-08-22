@@ -1,5 +1,9 @@
 // Project document I/O for the Electron main process. The renderer has no
 // filesystem access, so every read and write funnels through here.
+//
+// NOT YET WIRED to IPC: the renderer is semi-untrusted (it evaluates AI/plugin
+// JSX behind a regex denylist, not a hard VM boundary), so this must not be
+// reachable with an unrestricted path until Stage 2 adds a path allowlist.
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import {

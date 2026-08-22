@@ -89,14 +89,6 @@ export interface OpenChatCutDesktopApi {
   selectExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
   selectExportFile(suggestedFilename: string): Promise<DesktopExportFileGrant | null>;
   restoreExportDirectory(): Promise<DesktopExportDirectoryGrant | null>;
-  readProjectFile(documentPath: string): Promise<string>;
-  writeProjectFile(documentPath: string, contents: string): Promise<void>;
-  scaffoldProjectFolder(root: string, projectName: string): Promise<{
-    root: string;
-    documentPath: string;
-    exportsDir: string;
-    cacheDir: string;
-  }>;
   importLocalMedia(file: File): Promise<{ src: string; storedName: string; contentHash: string } | null>;
   prepareTransparentMovProxy(storedName: string): Promise<{ src: string } | null>;
   startImportDirectoryWatch(
@@ -149,17 +141,6 @@ const api: OpenChatCutDesktopApi = {
     ipcRenderer.invoke('openchatcut:select-export-file', suggestedFilename) as Promise<DesktopExportFileGrant | null>,
   restoreExportDirectory: () =>
     ipcRenderer.invoke('openchatcut:restore-export-directory') as Promise<DesktopExportDirectoryGrant | null>,
-  readProjectFile: (documentPath) =>
-    ipcRenderer.invoke('openchatcut:project-file-read', documentPath) as Promise<string>,
-  writeProjectFile: (documentPath, contents) =>
-    ipcRenderer.invoke('openchatcut:project-file-write', documentPath, contents) as Promise<void>,
-  scaffoldProjectFolder: (root, projectName) =>
-    ipcRenderer.invoke('openchatcut:project-folder-scaffold', root, projectName) as Promise<{
-      root: string;
-      documentPath: string;
-      exportsDir: string;
-      cacheDir: string;
-    }>,
   importLocalMedia: (file) => importLocalMediaFromFile(file, localMediaPreloadDependencies),
   prepareTransparentMovProxy: (storedName) =>
     ipcRenderer.invoke('openchatcut:transparent-mov-proxy', storedName) as Promise<{ src: string } | null>,
