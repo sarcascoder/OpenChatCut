@@ -29,6 +29,7 @@ import type {
   DirectoryWatchStartResult,
 } from '../shared/directory-import';
 import type { TranscriptWindowPayload } from '../shared/transcript-window';
+import type { ProjectFolderLayout } from './persist/projectFolder';
 interface DesktopExportDirectoryGrant {
   readonly grantId: string;
   readonly label: string;
@@ -88,6 +89,9 @@ declare global {
       revealExport(destinationId: string, filename: string): Promise<void>;
       projectStore(request: ProjectStoreRequest): Promise<ProjectStoreResponse>;
       editorCredentials(): Promise<EditorBootstrapInfo>;
+      readProjectFile(documentPath: string): Promise<string>;
+      writeProjectFile(documentPath: string, contents: string): Promise<void>;
+      scaffoldProjectFolder(root: string, projectName: string): Promise<ProjectFolderLayout>;
       updates: DesktopUpdateApi;
       inference: DesktopInferenceApi;
     };

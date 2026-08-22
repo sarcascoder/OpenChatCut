@@ -21,6 +21,11 @@ import {
   LOCAL_MEDIA_IMPORT_CHANNEL,
 } from './local-media-bridge.ts';
 import { installProjectStoreIpc } from './project-store-ipc.ts';
+import {
+  guardedReadProjectFile,
+  guardedScaffoldProjectFolder,
+  guardedWriteProjectFile,
+} from './project-file-ipc.ts';
 import { installEditorAuthIpc } from './editor-auth-ipc.ts';
 import { installDesktopUpdateIpc } from './update-ipc.ts';
 import { supportsDirectDesktopUpdates } from './update-service.ts';
@@ -132,6 +137,15 @@ function registerDesktopHandlers(trustedOrigin: string): void {
       : await dialog.showOpenDialog(options);
     return result.canceled ? null : (result.filePaths[0] ?? null);
   }));
+  ipcMain.handle('openchatcut:project-file-read', trustedDesktopHandler(trustedOrigin, async (_event, documentPath: unknown) => (
+    guardedReadProjectFile(String(documentPath))
+  )));
+  ipcMain.handle('openchatcut:project-file-write', trustedDesktopHandler(trustedOrigin, async (_event, documentPath: unknown, contents: unknown) => {
+    await guardedWriteProjectFile(String(documentPath), String(contents));
+  }));
+  ipcMain.handle('openchatcut:project-folder-scaffold', trustedDesktopHandler(trustedOrigin, async (_event, root: unknown, projectName: unknown) => (
+    guardedScaffoldProjectFolder(String(root), String(projectName))
+  )));
   const exportStatePath = join(app.getPath('userData'), 'export-destination.json');
   let activeExportDirectory: {
     directory: string;

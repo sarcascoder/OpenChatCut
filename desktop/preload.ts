@@ -12,6 +12,7 @@ import {
   EDITOR_CREDENTIALS_CHANNEL,
   type EditorBootstrapInfo,
 } from '../shared/editor-auth-transport.ts';
+import type { ProjectFolderLayout } from '../src/persist/projectFolder.ts';
 import {
   DESKTOP_UPDATE_CHANNELS,
   isDesktopUpdateState,
@@ -112,6 +113,9 @@ export interface OpenChatCutDesktopApi {
   revealExport(destinationId: string, filename: string): Promise<void>;
   projectStore(request: ProjectStoreRequest): Promise<ProjectStoreResponse>;
   editorCredentials(): Promise<EditorBootstrapInfo>;
+  readProjectFile(documentPath: string): Promise<string>;
+  writeProjectFile(documentPath: string, contents: string): Promise<void>;
+  scaffoldProjectFolder(root: string, projectName: string): Promise<ProjectFolderLayout>;
   updates: DesktopUpdateApi;
   inference: DesktopInferenceApi;
 }
@@ -195,6 +199,12 @@ const api: OpenChatCutDesktopApi = {
     ipcRenderer.invoke(PROJECT_STORE_CHANNEL, request) as Promise<ProjectStoreResponse>,
   editorCredentials: () =>
     ipcRenderer.invoke(EDITOR_CREDENTIALS_CHANNEL) as Promise<EditorBootstrapInfo>,
+  readProjectFile: (documentPath) =>
+    ipcRenderer.invoke('openchatcut:project-file-read', documentPath) as Promise<string>,
+  writeProjectFile: (documentPath, contents) =>
+    ipcRenderer.invoke('openchatcut:project-file-write', documentPath, contents) as Promise<void>,
+  scaffoldProjectFolder: (root, projectName) =>
+    ipcRenderer.invoke('openchatcut:project-folder-scaffold', root, projectName) as Promise<ProjectFolderLayout>,
   inference: {
     setEnabled: (enabled) =>
       ipcRenderer.invoke(DESKTOP_INFERENCE_CHANNELS.setEnabled, enabled) as Promise<void>,
