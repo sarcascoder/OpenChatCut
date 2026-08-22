@@ -87,7 +87,7 @@ function ChatHeader({ controller, tab, onToggleTab }: {
     <button type="button" onClick={onToggleTab}
       title={tab === 'chat' ? 'Switch to terminal' : 'Switch to chat'}
       style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', padding: 2, lineHeight: 0 }}>
-      <Icon name={tab === 'chat' ? 'keyboard' : 'sparkles'} size={14} />
+      <Icon name={tab === 'chat' ? 'terminal' : 'sparkles'} size={14} />
     </button>
     <button type="button" onClick={props.onToggleCollapse} title={'Collapse OpenChatCut Agent'}
       style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 13 }}>

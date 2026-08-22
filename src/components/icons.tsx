@@ -8,7 +8,7 @@ export type IconName =
   | 'eye' | 'eyeOff' | 'volume' | 'volumeOff' | 'lock' | 'unlock'
   | 'home' | 'sparkles' | 'sliders' | 'bookOpen' | 'thumbUp' | 'thumbDown' | 'arrowUp'
   | 'paperclip' | 'cornerDownLeft' | 'filePlay' | 'fileHeadphone' | 'clock'
-  | 'undo' | 'redo' | 'history' | 'layoutPanel' | 'keyboard' | 'users'
+  | 'undo' | 'redo' | 'history' | 'layoutPanel' | 'keyboard' | 'terminal' | 'users'
   | 'download' | 'film' | 'clipboard' | 'plug' | 'github' | 'mail' | 'database'
   | 'music' | 'video' | 'image' | 'swap' | 'star' | 'pencil' | 'x' | 'diamond'
   | 'search' | 'upload' | 'folder' | 'folderPlus' | 'grid' | 'list' | 'sort' | 'filter' | 'more' | 'bug'
@@ -78,6 +78,7 @@ const P: Record<IconName, string> = {
   history: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5 M12 7v5l4 2',
   layoutPanel: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M15 3v18',
   keyboard: 'M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z M6 10h.01 M10 10h.01 M14 10h.01 M18 10h.01 M6 14h.01 M10 14h8',
+  terminal: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M6 9l3 3-3 3 M13 15h5',
   // `users` uses a path-only shape so the single-<path> Icon can render it.
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M16 3.128a4 4 0 0 1 0 7.744 M22 21v-2a4 4 0 0 0-3-3.87 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3',
