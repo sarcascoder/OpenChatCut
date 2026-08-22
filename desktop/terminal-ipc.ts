@@ -32,6 +32,7 @@ import {
   isTerminalSessionId,
   isTerminalWritePayload,
 } from '../shared/terminal-session.ts';
+import { CHILD_ENV_NAMES } from '../server/codex/app-server.ts';
 import { assertTrustedDesktopSenderUrl } from './page-origin.ts';
 import { isProjectRootGranted } from './project-root-grants.ts';
 import { TerminalRegistry, type PtyLike, type PtySpawn } from './terminal-session.ts';
@@ -123,6 +124,47 @@ function defaultShell(): { file: string; args: string[] } {
   return { file: process.env.SHELL ?? '/bin/zsh', args: ['-l'] };
 }
 
+/** Terminal-specific additions to the shared child allowlist. */
+const TERMINAL_ENV_NAMES = ['SHELL', 'TERM_PROGRAM'] as const;
+const TERMINAL_ENV_PREFIXES = ['LC_'] as const;
+
+/**
+ * Builds the PTY's environment from the same allowlist every other child this
+ * app spawns gets (CHILD_ENV_NAMES in server/codex/app-server.ts), rather than
+ * handing over all of `process.env`.
+ *
+ * This is hygiene and consistency with house policy, NOT a security boundary,
+ * and it does not narrow the residual above by one inch: the session runs as
+ * the user's own uid, so it can read anything the user can read, this file
+ * included. It is here because passing the main process's whole environment
+ * made this spawn the one place in the repo that ignored the policy
+ * codex-agent.verify.ts already pins by execution. The login shell (`-l`)
+ * rebuilds the rest from the user's own profile.
+ *
+ * Pinned by execution in desktop/terminal-ipc.verify.ts: a sentinel set in
+ * process.env is asserted absent from the result, and removing this filter
+ * makes that verify fail.
+ */
+export function terminalEnvironment(): NodeJS.ProcessEnv {
+  const environment: NodeJS.ProcessEnv = {};
+  for (const name of [...CHILD_ENV_NAMES, ...TERMINAL_ENV_NAMES]) {
+    const value = process.env[name];
+    if (value !== undefined) environment[name] = value;
+  }
+  for (const [name, value] of Object.entries(process.env)) {
+    if (value !== undefined && TERMINAL_ENV_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+      environment[name] = value;
+    }
+  }
+  // Set, not inherited: this panel owns its emulator (xterm.js in the renderer),
+  // so the terminfo name is ours to state. Inheriting it would let a `TERM=dumb`
+  // launch environment degrade the panel. node-pty's `name` option would be a
+  // second, contradicting source for the same value -- unixTerminal.js uses
+  // `opt.env` verbatim when supplied and ignores `name` -- so it is not passed.
+  environment.TERM = 'xterm-256color';
+  return environment;
+}
+
 function spawnRealPty(options: { cwd: string; cols: number; rows: number }): PtyLike {
   // Loaded lazily: the native binary is only pulled in when a terminal is
   // actually opened, so importing this module under tsx never touches it.
@@ -131,11 +173,10 @@ function spawnRealPty(options: { cwd: string; cols: number; rows: number }): Pty
   };
   const shell = defaultShell();
   return pty.spawn(shell.file, shell.args, {
-    name: 'xterm-color',
     cols: options.cols,
     rows: options.rows,
     cwd: options.cwd,
-    env: { ...process.env, TERM: 'xterm-256color' },
+    env: terminalEnvironment(),
   });
 }
 

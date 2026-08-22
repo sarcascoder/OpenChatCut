@@ -2,7 +2,7 @@
 // runs under tsx with no native module and no real shell.
 // How to run: npx tsx desktop/terminal-session.verify.ts (wired into verify:desktop-window).
 import assert from 'node:assert/strict';
-import { TerminalRegistry, type PtyLike, type PtySpawn } from './terminal-session.ts';
+import { MAX_TERMINAL_SESSIONS, TerminalRegistry, type PtyLike, type PtySpawn } from './terminal-session.ts';
 import { isTerminalSessionId } from '../shared/terminal-session.ts';
 
 interface FakePty extends PtyLike {
@@ -71,9 +71,31 @@ assert.deepEqual(exits, [{ id, code: 0 }]);
 assert.equal(registry.has(id), false, 'an exited session must be forgotten');
 assert.equal(registry.write(id, 'x'), false, 'writes to an exited session must be refused');
 
+// -- concurrent sessions are bounded: a loop of starts cannot spawn shells forever --
+const capRegistry = new TerminalRegistry({ spawn, onData: () => {}, onExit: () => {} });
+const capIds: string[] = [];
+for (let index = 0; index < MAX_TERMINAL_SESSIONS; index += 1) {
+  capIds.push(capRegistry.start({ cwd: '/tmp/project', cols: 80, rows: 24 }));
+}
+assert.equal(capRegistry.size(), MAX_TERMINAL_SESSIONS);
+const spawnedAtCap = spawned.length;
+assert.throws(
+  () => capRegistry.start({ cwd: '/tmp/project', cols: 80, rows: 24 }),
+  'starting past the ceiling must throw rather than spawn',
+);
+assert.equal(spawned.length, spawnedAtCap, 'a refused start must not spawn anything');
+
+// -- closing one session frees one slot: the ceiling is not a one-way latch --
+assert.equal(capRegistry.stop(capIds[0]!), true);
+const reopened = capRegistry.start({ cwd: '/tmp/project', cols: 80, rows: 24 });
+assert.ok(isTerminalSessionId(reopened), 'a freed slot must be reusable');
+assert.equal(capRegistry.size(), MAX_TERMINAL_SESSIONS);
+capRegistry.disposeAll();
+assert.equal(capRegistry.size(), 0);
+
 // -- disposeAll kills every live pty: no orphaned shells --
 registry.disposeAll();
 assert.equal(spawned[1]!.killed, true, 'disposeAll must kill live sessions');
 assert.equal(registry.size(), 0);
 
-console.log('terminal-session.verify: lifecycle, id opacity, routing and disposal OK');
+console.log('terminal-session.verify: lifecycle, id opacity, routing, disposal and the session ceiling OK');

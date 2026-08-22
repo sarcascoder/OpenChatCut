@@ -25,6 +25,15 @@ export interface TerminalRegistryOptions {
   readonly onExit: (id: string, code: number) => void;
 }
 
+/**
+ * A hard ceiling on live PTYs. The panel shows one terminal at a time, so this
+ * is far above any real use; it exists because nothing else bounded the count
+ * and a loop of start calls would otherwise spawn shells until the process ran
+ * out of file descriptors. Callers surface the overflow as their own generic
+ * refusal, so the renderer cannot tell a full registry from a denied directory.
+ */
+export const MAX_TERMINAL_SESSIONS = 32;
+
 export class TerminalRegistry {
   readonly #options: TerminalRegistryOptions;
   readonly #sessions = new Map<string, PtyLike>();
@@ -33,7 +42,9 @@ export class TerminalRegistry {
     this.#options = options;
   }
 
+  /** Throws once MAX_TERMINAL_SESSIONS sessions are live. Pinned in terminal-session.verify.ts. */
   start(options: PtySpawnOptions): string {
+    if (this.#sessions.size >= MAX_TERMINAL_SESSIONS) throw new Error('too many terminal sessions');
     // randomBytes, not a counter or a hash of the cwd: the id travels to an
     // untrusted renderer, so it must carry no information and be unguessable.
     const id = randomBytes(16).toString('hex');

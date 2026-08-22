@@ -41,7 +41,14 @@ const APP_SERVER_ARGS: readonly string[] = [
   '-c', 'web_search=disabled',
   'app-server', '--listen', 'stdio://',
 ];
-const CHILD_ENV_NAMES = [
+/**
+ * The only variables a process this app spawns inherits. Exported because it is
+ * house policy, not a codex detail: desktop/terminal-ipc.ts builds a PTY's
+ * environment from this same list. Pinned by execution in codex-agent.verify.ts
+ * and desktop/terminal-ipc.verify.ts, which each set a sentinel in process.env
+ * and assert it does not reach the child.
+ */
+export const CHILD_ENV_NAMES = [
   'PATH', 'Path', 'PATHEXT',
   'HOME', 'USER', 'LOGNAME', 'USERPROFILE', 'USERNAME',
   'APPDATA', 'LOCALAPPDATA', 'PROGRAMDATA',

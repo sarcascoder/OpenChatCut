@@ -14,8 +14,8 @@ import {
   isTerminalSessionId,
 } from '../shared/terminal-session.ts';
 import { clearProjectRootGrants, grantProjectRoot } from './project-root-grants.ts';
-import { TerminalAccessError, createTerminalController } from './terminal-ipc.ts';
-import type { PtyLike, PtySpawnOptions } from './terminal-session.ts';
+import { TerminalAccessError, createTerminalController, terminalEnvironment } from './terminal-ipc.ts';
+import { MAX_TERMINAL_SESSIONS, type PtyLike, type PtySpawnOptions } from './terminal-session.ts';
 
 interface FakePty extends PtyLike {
   written: string[];
@@ -173,13 +173,79 @@ assert.deepEqual(sent.at(-1), { channel: TERMINAL_CHANNELS.exit, payload: { id, 
 controller.write(id, 'after-exit');
 assert.equal(live.written.length, 1, 'writes to an exited session must be dropped');
 
+// -- concurrent sessions are bounded, and the overflow is the SAME refusal --
+// A full registry must not be distinguishable from a denied directory.
+const capIndex = ptys.length;
+for (let index = 0; index < MAX_TERMINAL_SESSIONS; index += 1) {
+  await controller.start(granted, 80, 24);
+}
+const spawnsAtCap = spawns.length;
+let overflow: unknown;
+try {
+  await controller.start(granted, 80, 24);
+} catch (error) {
+  overflow = error;
+}
+assert.ok(overflow instanceof TerminalAccessError, 'starting past the ceiling must refuse');
+assert.equal(
+  (overflow as Error).message,
+  refusals[0],
+  'a full registry must be indistinguishable from a denied directory',
+);
+assert.equal(spawns.length, spawnsAtCap, 'a refused start must not spawn anything');
+
 // -- disposeAll leaves nothing running --
-const survivor = await controller.start(granted, 80, 24);
-assert.ok(isTerminalSessionId(survivor));
 controller.disposeAll();
-assert.equal(ptys.at(-1)!.killed, true, 'disposeAll must kill every live session');
+const capped = ptys.slice(capIndex);
+assert.equal(capped.length, MAX_TERMINAL_SESSIONS, 'the ceiling must bound live sessions');
+assert.ok(capped.every((pty) => pty.killed), 'disposeAll must kill every live session');
 
 clearProjectRootGrants();
+
+// -- the spawned shell inherits only the shared child allowlist --
+// Same shape as codex-agent.verify.ts:181: plant a sentinel in process.env and
+// assert by execution that it does not reach the child. This is hygiene and
+// consistency with house policy, NOT a boundary -- the session runs as the
+// user's own uid and can read whatever the user can read.
+const previousEnv = {
+  sentinel: process.env.OPENCHATCUT_TERMINAL_SENTINEL,
+  messaging: process.env.CLAUDE_CODE_MESSAGING_TOKEN,
+  sshAgent: process.env.SSH_AUTH_SOCK,
+  shell: process.env.SHELL,
+  locale: process.env.LC_TERMINAL,
+  term: process.env.TERM,
+};
+process.env.OPENCHATCUT_TERMINAL_SENTINEL = 'must-not-reach-the-shell';
+process.env.CLAUDE_CODE_MESSAGING_TOKEN = 'must-not-reach-the-shell';
+process.env.SSH_AUTH_SOCK = '/tmp/must-not-reach-the-shell';
+process.env.SHELL = previousEnv.shell ?? '/bin/zsh';
+process.env.LC_TERMINAL = 'occ-verify';
+process.env.TERM = 'dumb';
+
+const shellEnv = terminalEnvironment();
+for (const name of ['OPENCHATCUT_TERMINAL_SENTINEL', 'CLAUDE_CODE_MESSAGING_TOKEN', 'SSH_AUTH_SOCK']) {
+  assert.equal(shellEnv[name], undefined, `${name} must not reach the spawned shell`);
+}
+assert.ok(shellEnv.PATH ?? shellEnv.Path, 'PATH must survive: the shell is unusable without it');
+assert.equal(shellEnv.HOME, process.env.HOME, 'HOME must survive');
+assert.equal(shellEnv.SHELL, process.env.SHELL, 'SHELL must survive');
+assert.equal(shellEnv.LC_TERMINAL, 'occ-verify', 'LC_* must survive so the shell keeps the user locale');
+// TERM is set by this module, not inherited, so a `TERM=dumb` launch environment
+// cannot degrade a panel that renders through xterm.js.
+assert.equal(shellEnv.TERM, 'xterm-256color', 'TERM must be the emulator this panel actually is');
+
+// Restore, deleting rather than assigning undefined: `process.env.X = undefined`
+// stores the string "undefined".
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+restoreEnv('OPENCHATCUT_TERMINAL_SENTINEL', previousEnv.sentinel);
+restoreEnv('CLAUDE_CODE_MESSAGING_TOKEN', previousEnv.messaging);
+restoreEnv('SSH_AUTH_SOCK', previousEnv.sshAgent);
+restoreEnv('SHELL', previousEnv.shell);
+restoreEnv('LC_TERMINAL', previousEnv.locale);
+restoreEnv('TERM', previousEnv.term);
 
 // -- every registered channel validates its sender before touching the controller --
 // This is a SOURCE-TEXT check, not an executed one: installTerminalIpc needs a live
@@ -197,4 +263,4 @@ for (const handler of handlers) {
   assert.ok(useAt >= 0 && guardAt < useAt, 'the sender check must run before the controller is touched');
 }
 
-console.log('terminal-ipc.verify: grant gating, command opacity and uniform refusals hold');
+console.log('terminal-ipc.verify: grant gating, command opacity, the env allowlist, the session ceiling and uniform refusals hold');
