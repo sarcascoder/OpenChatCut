@@ -35,19 +35,22 @@ function ChangeLogPortal({ controller }: { controller: ChatPanelController }) {
   );
 }
 
-function CollapsedPanel({ controller }: { controller: ChatPanelController }) {
-  const { props } = controller;
-  return <>
-    <ChangeLogPortal controller={controller} />
-    <aside className="cc-chat-panel collapsed" data-cc-shortcut-surface="agent-chat" tabIndex={-1}
-      style={{ gridColumn: 1, gridRow: '2 / 5', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '10px 0', borderRight: `0.5px solid ${theme.border}`, background: theme.panel }}>
-      <button type="button" onClick={props.onToggleCollapse} title={'Expand OpenChatCut Agent'}
-        style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 14 }}>
-        <span style={{ transform: 'rotate(-90deg)', display: 'inline-flex' }}><Icon name="chevronDown" size={14} /></span>
-      </button>
-      <div className="cc-chat-collapsed-brand">OpenChatCut</div>
-    </aside>
-  </>;
+function CollapsedPanel({ hidden, onOpen }: {
+  hidden: boolean;
+  onOpen: (tab: 'chat' | 'terminal') => void;
+}) {
+  return <aside className="cc-chat-panel collapsed" data-cc-shortcut-surface="agent-chat" tabIndex={-1}
+    style={{ gridColumn: 1, gridRow: '2 / 5', display: hidden ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '10px 0', borderRight: `0.5px solid ${theme.border}`, background: theme.panel }}>
+    <button type="button" onClick={() => onOpen('chat')} title={'Open the agent chat'}
+      style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', fontSize: 14 }}>
+      <span style={{ transform: 'rotate(-90deg)', display: 'inline-flex' }}><Icon name="chevronDown" size={14} /></span>
+    </button>
+    <button type="button" onClick={() => onOpen('terminal')} title={'Open the terminal'}
+      style={{ background: 'none', border: 'none', color: theme.textDim, cursor: 'pointer', padding: 2, lineHeight: 0 }}>
+      <Icon name="terminal" size={14} />
+    </button>
+    <div className="cc-chat-collapsed-brand">OpenChatCut</div>
+  </aside>;
 }
 
 export function CapabilityBanner({ controller }: { controller: ChatPanelController }) {
@@ -258,13 +261,15 @@ function ComposerSection({ controller }: { controller: ChatPanelController }) {
   </div>;
 }
 
-function ExpandedPanel({ controller }: { controller: ChatPanelController }) {
+function ExpandedPanel({ controller, hidden, tab, setTab }: {
+  controller: ChatPanelController;
+  hidden: boolean;
+  tab: 'chat' | 'terminal';
+  setTab: (next: 'chat' | 'terminal') => void;
+}) {
   const { scroll } = controller;
-  const [tab, setTab] = useState<'chat' | 'terminal'>('chat');
   const projectRoot = controller.props.projectRoot ?? null;
-  return <>
-    <ChangeLogPortal controller={controller} />
-    <aside className="cc-chat-panel" data-cc-chat-popover-boundary data-cc-shortcut-surface="agent-chat"
+  return <aside className="cc-chat-panel" data-cc-chat-popover-boundary data-cc-shortcut-surface="agent-chat"
       tabIndex={-1} onKeyDown={scroll.onKeyDown}
       onPointerDownCapture={(event) => {
         if (!(event.target instanceof HTMLElement)) return;
@@ -272,8 +277,8 @@ function ExpandedPanel({ controller }: { controller: ChatPanelController }) {
           event.currentTarget.focus({ preventScroll: true });
         }
       }}
-      style={{ gridColumn: 1, gridRow: '2 / 5', display: 'flex', flexDirection: 'column', borderRight: `0.5px solid ${theme.border}`, background: theme.panel, minHeight: 0, minWidth: 0 }}>
-      <ChatHeader controller={controller} tab={tab} onToggleTab={() => setTab((t) => (t === 'chat' ? 'terminal' : 'chat'))} />
+      style={{ gridColumn: 1, gridRow: '2 / 5', display: hidden ? 'none' : 'flex', flexDirection: 'column', borderRight: `0.5px solid ${theme.border}`, background: theme.panel, minHeight: 0, minWidth: 0 }}>
+      <ChatHeader controller={controller} tab={tab} onToggleTab={() => setTab(tab === 'chat' ? 'terminal' : 'chat')} />
       {/* Both panes stay mounted: unmounting the terminal would kill a running
           `claude`, and unmounting chat would drop its scroll position. The chat
           pane's own markup is unchanged -- it is only wrapped so it can be
@@ -287,12 +292,29 @@ function ExpandedPanel({ controller }: { controller: ChatPanelController }) {
       <div style={{ display: tab === 'terminal' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <TerminalView projectRoot={projectRoot} />
       </div>
-    </aside>
-  </>;
+    </aside>;
 }
 
 export function ChatPanelView({ controller }: { controller: ChatPanelController }) {
-  return controller.props.collapsed
-    ? <CollapsedPanel controller={controller} />
-    : <ExpandedPanel controller={controller} />;
+  const { collapsed, onToggleCollapse } = controller.props;
+  const [tab, setTab] = useState<'chat' | 'terminal'>('chat');
+
+  // Both panels stay MOUNTED and the inactive one is hidden, rather than
+  // rendering one or the other. Swapping them would unmount ExpandedPanel, and
+  // with it TerminalView, whose cleanup stops the session -- so collapsing the
+  // panel would kill a running `claude`. Keeping it mounted also preserves the
+  // terminal's scrollback and the chat's scroll position across collapse.
+  // The session is therefore ended only by closing the app (the main process
+  // disposes every session when the window closes) or by changing folder
+  // (TerminalView's effect is keyed on the root).
+  const open = (next: 'chat' | 'terminal') => {
+    setTab(next);
+    if (collapsed) onToggleCollapse();
+  };
+
+  return <>
+    <ChangeLogPortal controller={controller} />
+    <CollapsedPanel hidden={!collapsed} onOpen={open} />
+    <ExpandedPanel controller={controller} hidden={collapsed} tab={tab} setTab={setTab} />
+  </>;
 }

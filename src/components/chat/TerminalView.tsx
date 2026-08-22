@@ -54,7 +54,16 @@ export function TerminalView({ projectRoot }: { projectRoot: string | null }) {
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(host);
-    fit.fit();
+
+    // The panel can be collapsed or on the chat tab, in which case this host is
+    // display:none and measures 0x0. Fitting then would compute nonsense
+    // dimensions (or throw), so only fit when the element actually has a box.
+    // The ResizeObserver below fires when it becomes visible again and refits.
+    const safeFit = () => {
+      if (!host.offsetWidth || !host.offsetHeight) return false;
+      try { fit.fit(); return true; } catch { return false; }
+    };
+    safeFit();
 
     // Build the xterm shell first either way: a bare `return` before term.open()
     // would leave a silently blank pane rather than a readable message.
@@ -86,7 +95,8 @@ export function TerminalView({ projectRoot }: { projectRoot: string | null }) {
     });
 
     const observer = new ResizeObserver(() => {
-      fit.fit();
+      // Skips while hidden, and runs on the transition back to visible.
+      if (!safeFit()) return;
       const id = sessionRef.current;
       if (id) void desktop.resizeTerminal(id, term.cols, term.rows);
     });
