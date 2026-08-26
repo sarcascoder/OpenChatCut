@@ -39,6 +39,25 @@ export function sameEditorBinding(left: EditorBinding, right: EditorBinding): bo
     && left.ownershipEpoch === right.ownershipEpoch;
 }
 
+/**
+ * Whether two bindings are the same editor under the same ownership, IGNORING
+ * the document revision.
+ *
+ * `sameEditorBinding` is the right test for a call in flight: it must not settle
+ * against a document that moved. It is the wrong test for something that spans
+ * many calls, like an MCP edit session, because the revision is expected to
+ * advance while the session is open -- an autosave landing, or a committed edit
+ * -- and matching on it orphans the session on the first advance.
+ *
+ * `ownershipEpoch` is still compared: an epoch change is a browser takeover, and
+ * that must invalidate the session. Only `baseRevision` is excluded.
+ */
+export function sameEditorOwnership(left: EditorBinding, right: EditorBinding): boolean {
+  return left.projectId === right.projectId
+    && left.editorInstanceId === right.editorInstanceId
+    && left.ownershipEpoch === right.ownershipEpoch;
+}
+
 export function sameEditorIdentity(left: EditorBinding, right: EditorBinding): boolean {
   return left.projectId === right.projectId
     && left.editorInstanceId === right.editorInstanceId;

@@ -3,6 +3,7 @@ import type { ProjectEditOwnershipClaim } from './project-edit-ownership.ts';
 import {
   EditorConnectionRegistry,
   sameEditorBinding as sameBinding,
+  sameEditorOwnership,
   sameEditorIdentity,
 } from './broker-registry.ts';
 import {
@@ -299,10 +300,14 @@ export function editSessionOwnerMatches(
 ): boolean {
   if (typeof editSessionId !== 'string') return false;
   const owner = editSessionOwners.get(editSessionId.trim());
+  // Ownership deliberately ignores the document revision: it is expected to
+  // advance while the session is open, and matching it orphaned the session on
+  // the first advance. A takeover is still caught, via ownershipEpoch inside
+  // sameEditorOwnership. Pinned by edit-session-revision.verify.ts.
   return Boolean(
     owner
     && owner.ownerId === ownerId
-    && sameBinding(owner.binding, binding)
+    && sameEditorOwnership(owner.binding, binding)
   );
 }
 
